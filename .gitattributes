@@ -1,0 +1,2 @@
+# Preserve unified-diff context markers, including empty context lines.
+handoff/frontend-integration.patch -whitespace

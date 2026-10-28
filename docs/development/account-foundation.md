@@ -1,0 +1,83 @@
+# 账号与数据库基础
+
+> 历史阶段记录：下文是 2026-10-25 的实现过程，保留当时的“尚未完成”描述。当前状态以 [STATUS.md](../STATUS.md)、[ARCHITECTURE.md](../ARCHITECTURE.md) 为准；不能据此推断现在仍无多草稿／OSS／ECS。文中网页目录和 test:auth:browser 属于原单仓库，不是本后端仓库的命令；前端接入使用 [交接步骤](../../handoff/FRONTEND.md)。
+
+2026-10-25 · H5 技术方案 v1.0 的第二阶段。仅新 v2 工程，不复用旧 Supabase 或旧项目凭据。
+
+## 已有的服务端能力
+
+`apps/api` 使用 Node 24、Fastify 5、Drizzle／pg 与独立 PostgreSQL 17。邀请码单次使用、7 天有效、仅存摘要；兑换和老师账号创建在一个事务中完成。注册接口不能指定管理员角色。
+
+账号使用独立的登录用户名和显示昵称字段；用户名 3–32 位 ASCII 字母、数字、下划线或短横线，统一小写。目前昵称初值为用户名，个人资料编辑入口尚未做。
+
+密码默认 15–128 个 Unicode 字符，支持空格和口令句，不裁切、不去空格、不强制字符类别。首版无 MFA，采用 [OWASP 的长度建议](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#implement-proper-password-strength-controls)；尚未接泄露口令查询服务，不宣称完成所有身份安全标准。
+散列为 Argon2id（19 MiB、2 次、并行度 1），最多同时运行两个密码任务，另容纳四个排队任务，超出返回 429。
+
+会话使用 `@fastify/session` 与 PostgreSQL 存储：
+
+- Cookie 为 `__Host-wanwu`、HttpOnly、Secure、SameSite=Lax、Path=/，不设置 Domain；浏览器不持有长期身份令牌。
+- 会话 ID 随机生成，数据库只存其摘要。登录／注册轮换会话 ID 和 CSRF token。
+- 闲置 24 小时、绝对期限 7 天；改密、重置密码、账号启停变更均递增认证版本并撤销旧会话。
+- 退出使用撤销记录和每会话事务锁，防止重叠请求的迟到保存重新建立已退出的会话。
+- 写操作同时检查精确 Origin 与 CSRF；IP 和账号限流不把客户端身份头当认证。账号限流返回实际剩余冷却时间。
+
+密码重置由管理员核实身份后发起，链接 15 分钟有效、单次使用；新链接撤销该账号之前未使用的链接，消费时再次锁定账号并验证状态。链接令牌放在 URL fragment，服务端接口只接收 POST 正文中的令牌，不把它拼入 API 日志路径。网页 `/reset-password` 已接入；读取后立刻移除地址栏 fragment，只在本页内存中保留，刷新不恢复。再次打开同一路径的链接会重新读取，而不沿用之前的成功状态；真正发布仍需完成 Netlify 路由与 HTTPS 验收。
+
+管理接口目前支持发放／查看／撤销邀请、老师账号启停和密码恢复。禁止通过账号启停接口停用管理员，以免误锁唯一管理入口。管理员通过独立管理命令创建，不从公开注册接口产生。
+
+## 接口与契约
+
+前缀 `/api/v1`：`/auth/csrf`、`/auth/register`、`/auth/login`、`/auth/logout`、`/auth/me`、`/auth/change-password`、`/auth/reset-password`；管理员接口沿用技术方案路径。`GET /health` 只检查新项目数据库连接，不作为完整产品验收。
+
+`packages/contracts/account` 定义账号、邀请与密码字段校验；`packages/contracts/api` 定义错误体及新增原因码。遵循 v0.6 示例的 `{status:"error",reason,message?,requestId}`，HTTP 数字状态码在响应状态行中；不另造数字 `status` 协议。
+
+生产请求日志默认关闭原始 URL／请求体记录，错误仅记录服务端 requestId、固定原因及必要 SQL 状态码；不输出密码、Cookie、邀请码、重置令牌或签名 URL。
+
+## 数据库与权限
+
+首份校验和锁定迁移为 `apps/api/migrations/0001_accounts.sql`：账号、邀请、会话、撤销记录、密码重置及追加式审计。迁移文件变更后不能覆盖已执行版本；迁移加独立数据库事务锁。
+
+只接受库名 `wanwu_sound`（测试为专属随机后缀）与角色 `wanwu_owner`／`wanwu_app`，不回退到通用 `DATABASE_URL`，也不接受默认 `postgres`、`supabase_admin` 等连接。
+应用角色无超级用户、继承、建库、建角色、复制或绕过 RLS 权限，无其他角色成员关系；仅授予必要表操作与账号列写权限，不能创建／修改管理员角色、修改审计历史或执行迁移。
+
+这不是新购 RDS；最终仍在本项目独立 PostgreSQL 容器中运行。目前没有创建常驻数据库、生产账号、真实邀请码或 ECS 数据卷。测试库均为临时数据。
+
+## 环境与命令
+
+两份模板都故意留空密钥；空值会使启动失败，不提供通用默认口令：
+
+- `.env.api.example` → 本项目 `.env.api`，只放运行账号、会话密钥等 API 配置。
+- `.env.admin.example` → 本项目 `.env.admin`，只供初始化／迁移／首次管理员命令使用。API 主进程检测到管理凭据会拒绝启动。
+
+真实文件应限制到所属用户可读写（0600），不得提交、放进镜像、发到聊天或复制旧项目环境文件。当前不需要用户立即填写；没有用示例空值假装连通服务。
+
+在独立开发或部署环境先准备好专属 PostgreSQL 后，依次使用 `npm run db:bootstrap`、`npm run db:migrate`，再通过受保护 stdin 向 `npm run admin:create -- <用户名>` 提供首次密码。管理命令不接受密码命令行参数，不在终端回显。`db:bootstrap` 不会静默轮换已有角色密码，提供不匹配密码会明确失败。
+`npm run api:start` 默认只监听本机 127.0.0.1:3100，拒用已有项目的 3000 端口。未来容器内监听与宿主端口映射必须分别配置；不因此放开宿主监听地址。
+
+云端认证默认 `disabled`。即使服务端会话实现已有测试，也须等真实 H5 适配器和入口联调通过，才能在 ECS 改为 `session`。
+
+代理信任仅接受显式 IP，不接受 `true`、跳数、通配网段或整个 Docker 子网。部署时只读确认本项目 Docker 网关／Nginx 的实际来源地址后再配置；测试中的示例 IP 不能照搬。Nginx 应覆盖来源协议头，真实 Netlify 代理 Cookie 与来源头行为仍待第五阶段验收。
+
+## 验证与未完成项
+
+`npm run test:api` 只使用本机 Unix socket Docker：构建测试镜像，在 UUID 命名的内部网络创建 API 和临时 PostgreSQL，**二者均无发布端口**，结束后仅删除本次容器和网络。PostgreSQL 固定到 17.11 镜像摘要，账号与口令每次随机生成，不进入报告。
+
+API 测试进程为非 root、drop ALL capabilities、no-new-privileges、只读根文件系统、0.25 CPU／256 MiB、无 swap、128 PID；数据库按 0.25 CPU／512 MiB 配置。API 内核计数与实际 PostgreSQL 版本随证据保存，测试是功能回归，不是容量压测。
+
+覆盖邀请码竞争／过期／撤销、用户名冲突回滚、Cookie 与 CSRF 轮换、来源／身份伪造、两种退出竞争顺序、跨设备改密撤销、重置链接过期／替换／并发消费、停用后旧会话失效、精确代理白名单、限流和数据库最小权限。失败版本也保留 JSON，不能因为其中一个资源子测试输出 pass 就把整组标成通过；脚本还要求整个测试进程退出 0。
+
+## 网页账号入口与本机端到端验证
+
+`app/services.ts` 中的账号端口使用 `CookieAccountClient`，业务创作端口暂仍为本地／mock，不能把“登录成功”当作“已云端保存”。首页及流程页提供登录、邀请码注册、当前账号、退出和改密；新增组件沿用现有 Dialog、字体和颜色体系，流程页头的账号按钮在手机上不会随次要导航隐藏。
+
+所有请求固定走同源 `/api/v1/auth/*`、`credentials:same-origin` 和 `cache:no-store`；没有跨域地址配置、身份头、localStorage／sessionStorage 身份令牌。写请求先取 CSRF，登录／注册使用服务端返回的新 CSRF；失败不自动重放注册／改密／重置等写操作，遇到 CSRF 失效需用户再次提交。服务未部署、返回 HTML 或错误契约时不会生成假身份。
+
+同标签页的身份变更串行执行，重复提交被阻止；已有身份查询完成后才发起改变 Cookie 的操作。仅忽略迟到 JSON 不足以防止旧响应的 Set-Cookie 覆盖新登录，因此初始／焦点查询合并，且必须先排空查询。窗口获得焦点时重查服务端状态，网络中断时明确标记“未确认”，不会凭浏览器缓存授予权限。
+
+登录不读写 `workSession` 或音源原件，既不自动导入访客作品，也不清空本地修改。后续主动导入与云端适配尚未实现。退出也不会假称清除了本地作品，页面会提示共用设备风险。
+
+`npm run build` 后运行 `npm run test:auth:browser`：只在本机 Unix-socket Docker 中创建 UUID 命名的临时 PostgreSQL 17，唯一数据库宿主绑定为经过核对的 `127.0.0.1` 随机端口。API、HTTPS 测试代理和无痕 Chrome 同样只在本机；浏览器忽略的是一次性自签名测试证书，没有安装系统信任或修改生产证书。此用例和无发布端口的 `test:api` 是不同验证，不能混称为生产／Netlify 验收。
+
+覆盖实际网页邀请注册、最小身份与 Secure／HttpOnly Cookie、刷新恢复、第二浏览器登录、改密撤销其他浏览器、一次性密码重置及同页重开、真实退出、无效邀请回滚、6 组屏宽／焦点包含，以及 503 负例。仅最后的不可用负例拦截响应；其余成功操作均走真实 API 与 PostgreSQL。报告不保存凭据，成功证据只在所有依赖场景通过后写入独立 `artifacts/auth-browser-UUID/report.json`；失败不计为通过。用后关闭本次 API／代理／浏览器，并删除本次容器、网络和一次性测试证书，不留下常驻账号。
+
+尚未完成：多草稿、OSS 上传及音源授权、数据库任务队列、素材库、分享、正式管理页面、长期清理调度、备份恢复、真实 Netlify HTTPS 入口联调与部署。账号之外的业务端口仍使用本地／mock 实现；没有自动接通云端创作，也没有启用 ECS 的认证模式。

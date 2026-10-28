@@ -1,0 +1,5 @@
+{
+  "name": "@wanwu-v2/worker", "version": "0.1.0", "private": true, "type": "module",
+  "scripts": {"typecheck": "tsc --noEmit"},
+  "dependencies": {"@wanwu-v2/api":"0.1.0", "@wanwu-v2/contracts": "0.1.0", "@wanwu-v2/sound-rules": "0.1.0", "@wanwu-v2/audio-engine": "0.1.0", "esbuild":"0.28.2", "playwright":"1.64.1"}
+}

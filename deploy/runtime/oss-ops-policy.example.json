@@ -1,0 +1,7 @@
+{
+ "Version":"1",
+ "Statement":[
+  {"Effect":"Allow","Action":["oss:GetObject","oss:GetObjectVersion","oss:PutObject","oss:DeleteObject","oss:DeleteObjectVersion"],"Resource":["acs:oss:*:*:wanwu-sound-dev-a7k3/wanwu/prod/*"]},
+  {"Effect":"Allow","Action":["oss:ListObjectVersions"],"Resource":["acs:oss:*:*:wanwu-sound-dev-a7k3"],"Condition":{"StringLike":{"oss:Prefix":["wanwu/prod/*"]}}}
+ ]
+}

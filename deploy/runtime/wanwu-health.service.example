@@ -1,0 +1,9 @@
+[Unit]
+Description=Wanwu isolated queue, backup and storage health
+[Service]
+Type=oneshot
+User=wudaizii
+WorkingDirectory=/srv/wudaizii/wanwu-sound
+ExecStart=/usr/bin/node operate.mjs status
+UMask=0077
+NoNewPrivileges=true

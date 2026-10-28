@@ -1,0 +1,13 @@
+{
+ "Version":"1",
+ "Statement":[{
+  "Effect":"Allow",
+  "Action":["oss:GetObject","oss:GetObjectVersion","oss:PutObject"],
+  "Resource":[
+   "acs:oss:*:*:wanwu-sound-dev-a7k3/wanwu/prod/tmp/*",
+   "acs:oss:*:*:wanwu-sound-dev-a7k3/wanwu/prod/originals/*",
+   "acs:oss:*:*:wanwu-sound-dev-a7k3/wanwu/prod/playback/*",
+   "acs:oss:*:*:wanwu-sound-dev-a7k3/wanwu/prod/renders/*"
+  ]
+ }]
+}

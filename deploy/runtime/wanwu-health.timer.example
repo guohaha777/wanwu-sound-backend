@@ -1,0 +1,8 @@
+[Unit]
+Description=Five minute Wanwu operational health check
+[Timer]
+OnBootSec=10min
+OnUnitActiveSec=5min
+Persistent=true
+[Install]
+WantedBy=timers.target

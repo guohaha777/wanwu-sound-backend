@@ -1,0 +1,9 @@
+[Unit]
+Description=Wanwu isolated encrypted database backup
+[Service]
+Type=oneshot
+User=wudaizii
+WorkingDirectory=/srv/wudaizii/wanwu-sound
+ExecStart=/usr/bin/node operate.mjs backup --apply
+UMask=0077
+NoNewPrivileges=true

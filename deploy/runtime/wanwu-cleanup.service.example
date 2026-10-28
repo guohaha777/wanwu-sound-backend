@@ -1,0 +1,9 @@
+[Unit]
+Description=Wanwu scoped expired object collection
+[Service]
+Type=oneshot
+User=wudaizii
+WorkingDirectory=/srv/wudaizii/wanwu-sound
+ExecStart=/usr/bin/node operate.mjs cleanup --apply
+UMask=0077
+NoNewPrivileges=true
