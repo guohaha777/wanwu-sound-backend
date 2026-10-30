@@ -1,6 +1,8 @@
 // Measures a song recording for a textbook feature card. Everything here is counted from the sound, no model involved:
 // - tempo from the periodicity of note onsets (spectral flux), with a gentle preference for walking pace;
-// - metre from which bar length (2 / 3 / 4 beats) repeats best, and where the strong beat falls;
+// - metre from where the bass comes in (oom-pah-pah: a bass note every third beat is 3/4) when it clearly groups the
+//   beats, otherwise from which bar length (2 / 3 / 4 beats) repeats best; the strong beat where the bass comes in,
+//   else where the chords change (harmony moves on the bar line), else on the loudest onsets;
 // - rhythm candidates: each bar's onsets snapped to the beat grid, the patterns that recur (internal: the model or
 //   pickRhythm chooses one, nobody else sees them);
 // - key and mode from the pitch-class profile (major / minor / pentatonic), brightness from the spectral centroid,
@@ -12,12 +14,22 @@ import {magnitudes} from './fft.ts';
 
 export const MEASURE_VERSION='music-features-v1';
 const FRAME=2048,HOP=512,TARGET_RATE=22050;
+/** Below this the onsets count as bass (the accompaniment's strong-beat notes). */
+const BASS_HZ=250;
+/** How much stronger the bass's beat in a bar must be than its other beats before it decides the metre (0–1). */
+const BASS_GROUPING=.45;
+/** How much more the chords must change on one beat of the bar than on the others before it is taken as the first. */
+const CHORD_CHANGE=.15;
+/** The bass marks the beat when it is this many times stronger on one grid than half a beat away. */
+const BASS_ON_BEAT=2;
 
 /** A bar pattern found in the recording, in beats (sums to one bar), and how many bars had it. */
 export type RhythmCandidate={cell:number[];bars:number};
 export type Measurement={
  version:typeof MEASURE_VERSION;seconds:number;
  tempoBpm:number;meter:Metre;meterConfidence:number;
+ /** When the first full bar starts in the recording (seconds): with tempoBpm and meter, where every strong beat falls. */
+ downbeatSeconds:number;
  onsetsPerBeat:number;onsetDensity:Density;
  centroidHz:number;brightness:Brightness;
  mode:TextbookMode;tonic:number;keyConfidence:number;
@@ -51,20 +63,23 @@ export function measure(input:Float32Array,sampleRate:number):Measurement{
  const binHz=rate/FRAME,bins=FRAME/2+1;
  const pitchClass=new Int8Array(bins).fill(-1),melodyLow=Math.ceil(200/binHz),melodyHigh=Math.floor(1100/binHz);
  for(let k=1;k<bins;k++){const f=k*binHz;if(f>80&&f<2000)pitchClass[k]=((Math.round(12*Math.log2(f/440))+69)%12+12)%12;}
+ const bassTop=Math.floor(BASS_HZ/binHz),bassFlux=new Float32Array(frames);
  const flux=new Float32Array(frames),energy=new Float32Array(frames),centroid=new Float32Array(frames),f0=new Float32Array(frames);
  const chroma=new Float32Array(frames*12),frame=new Float32Array(FRAME);
  let previous:Float32Array|null=null;
  for(let t=0;t<frames;t++){
   for(let i=0;i<FRAME;i++)frame[i]=samples[t*HOP+i]!*window[i]!;
   const spectrum=magnitudes(frame,FRAME),logs=new Float32Array(bins);
-  let sum=0,weighted=0,rise=0,best=0,bestBin=melodyLow;
+  let sum=0,weighted=0,rise=0,bassRise=0,best=0,bestBin=melodyLow;
   for(let k=0;k<bins;k++){
    const m=spectrum[k]!;logs[k]=Math.log1p(10*m);sum+=m;weighted+=m*k*binHz;
-   if(previous)rise+=Math.max(0,logs[k]!-previous[k]!);
+   if(previous){rise+=Math.max(0,logs[k]!-previous[k]!);
+    // The bass in plain magnitude: a log scale would count a high note's click, which leaks into every bin.
+    if(k<=bassTop)bassRise+=Math.max(0,m-Math.expm1(previous[k]!)/10);}
    const pc=pitchClass[k]!;if(pc>=0)chroma[t*12+pc]=chroma[t*12+pc]!+m;
    if(k>=melodyLow&&k<=melodyHigh&&m>best){best=m;bestBin=k;}
   }
-  flux[t]=rise;energy[t]=sum;centroid[t]=sum?weighted/sum:0;f0[t]=bestBin*binHz;previous=logs;
+  flux[t]=rise;bassFlux[t]=bassRise;energy[t]=sum;centroid[t]=sum?weighted/sum:0;f0[t]=bestBin*binHz;previous=logs;
  }
 
  // Onset envelope, smoothed; its autocorrelation gives the beat.
@@ -84,16 +99,48 @@ export function measure(input:Float32Array,sampleRate:number):Measurement{
  const beat=lag+Math.max(-.5,Math.min(.5,shift)),tempoBpm=Math.round(60*fps/beat);
  const near=(beats:number)=>{const l=Math.round(beat*beats);let m=-1;for(let i=l-2;i<=l+2;i++)if(i>0&&i<=maxLag)m=Math.max(m,ac[i]!);return m;};
  const scores={2:near(2),3:near(3),4:near(4)};
- const meter:Metre=scores[3]>Math.max(scores[2],scores[4])*1.05?3:scores[4]>scores[2]*1.15?4:2;
  const sortedScores=Object.values(scores).sort((x,y)=>y-x);
- const meterConfidence=Math.max(0,Math.min(1,(sortedScores[0]!-sortedScores[1]!)/Math.max(.05,Math.abs(sortedScores[0]!))*4));
 
- // Beat phase, then which beat of the bar is strong.
+ // Beat phase: where the onsets line up — but where the bass clearly keeps to one grid, on the bass (the melody's
+ // eighths can be busier on the off-beat than on the beat; the bass and kick mark the beat).
+ const bassEnv=new Float32Array(frames);for(let t=0;t<frames;t++){let s=0;for(let j=-2;j<=2;j++)s+=(bassFlux[t+j]??0)*kernel[j+2]!;bassEnv[t]=s/2.5;}
  const at=(position:number)=>env[Math.round(position)]??0;
- let phase=0,phaseScore=-Infinity;
- for(let p=0;p<Math.ceil(beat);p++){let s=0;for(let x=p;x<frames;x+=beat)s+=at(x);if(s>phaseScore){phaseScore=s;phase=p;}}
- let downbeat=0,downScore=-Infinity;
- for(let m=0;m<meter;m++){let s=0;for(let x=phase+m*beat;x<frames;x+=beat*meter)s+=at(x);if(s>downScore){downScore=s;downbeat=m;}}
+ const onGrid=(curve:Float32Array,p:number)=>{let s=0;for(let x=p;x<frames;x+=beat)s+=curve[Math.round(x)]??0;return s;};
+ let phase=0,phaseScore=-Infinity,bassPhase=0,bassScore=-Infinity;
+ for(let p=0;p<Math.ceil(beat);p++){
+  const s=onGrid(env,p);if(s>phaseScore){phaseScore=s;phase=p;}
+  const b=onGrid(bassEnv,p);if(b>bassScore){bassScore=b;bassPhase=p;}
+ }
+ if(bassScore>BASS_ON_BEAT*onGrid(bassEnv,(bassPhase+beat/2)%beat))phase=bassPhase;
+
+ // The bass on each beat, folded into bars of 2, 3 and 4: in a bar it groups, one beat stands out (oom-pah-pah). A bar
+ // of 4 also stands out for a 2-beat bass, so 4 has to beat 2 clearly.
+ const bassOnBeats:number[]=[];
+ for(let x=phase;x<frames;x+=beat){let m=0;for(let j=-2;j<=2;j++)m=Math.max(m,bassEnv[Math.round(x)+j]??0);bassOnBeats.push(m);}
+ const grouping=(size:number)=>{
+  const profile=new Array<number>(size).fill(0),bars=Math.floor(bassOnBeats.length/size);
+  for(let i=0;i<bars*size;i++)profile[i%size]=profile[i%size]!+bassOnBeats[i]!;
+  const top=Math.max(...profile),strong=profile.indexOf(top),rest=profile.filter((_,i)=>i!==strong);
+  return {contrast:top?(top-rest.reduce((s,v)=>s+v,0)/rest.length)/top:0,strong};
+ };
+ const bass={2:grouping(2),3:grouping(3),4:grouping(4)};
+ const bassMeter:Metre|null=bass[3].contrast>=BASS_GROUPING&&bass[3].contrast>Math.max(bass[2].contrast,bass[4].contrast)?3
+  :bass[2].contrast>=BASS_GROUPING?(bass[4].contrast>bass[2].contrast*1.3?4:2):null;
+ const meter:Metre=bassMeter??(scores[3]>Math.max(scores[2],scores[4])*1.05?3:scores[4]>scores[2]*1.15?4:2);
+ const meterConfidence=bassMeter?Math.min(1,bass[bassMeter].contrast)
+  :Math.max(0,Math.min(1,(sortedScores[0]!-sortedScores[1]!)/Math.max(.05,Math.abs(sortedScores[0]!))*4));
+
+ // Which beat of the bar is strong: where the bass comes in when it groups the beats; else where the chords change (how
+ // different each beat's pitch classes are from the beat before, folded into bars); else the loudest onsets.
+ const beatChroma:number[][]=[];
+ for(let x=phase;x+beat<=frames;x+=beat){const v=new Array<number>(12).fill(0);
+  for(let t=Math.round(x);t<Math.round(x+beat);t++)for(let k=0;k<12;k++)v[k]=v[k]!+chroma[t*12+k]!;
+  const length=Math.hypot(...v)||1;beatChroma.push(v.map(value=>value/length));}
+ const change=new Array<number>(meter).fill(0);
+ for(let i=1;i<beatChroma.length;i++)change[i%meter]=change[i%meter]!+1-beatChroma[i]!.reduce((s,value,k)=>s+value*beatChroma[i-1]![k]!,0);
+ const mostChange=Math.max(...change),changeAt=change.indexOf(mostChange),otherChange=(change.reduce((s,v)=>s+v,0)-mostChange)/Math.max(1,meter-1);
+ let downbeat=bassMeter?bass[bassMeter].strong:mostChange>otherChange*(1+CHORD_CHANGE)?changeAt:-1,downScore=-Infinity;
+ if(downbeat<0)for(let m=0;m<meter;m++){let s=0;for(let x=phase+m*beat;x<frames;x+=beat*meter)s+=at(x);if(s>downScore){downScore=s;downbeat=m;}}
 
  // Onsets: local peaks above the upper quartile and a quarter of the strongest onsets (sparse songs would otherwise
  // count the accompaniment's small ripples), at least 0.12 s apart.
@@ -152,6 +199,7 @@ export function measure(input:Float32Array,sampleRate:number):Measurement{
  const repetition:Level=alike>.92?'high':alike<.8?'low':'medium';
 
  return {version:MEASURE_VERSION,seconds:Math.round(seconds*10)/10,tempoBpm,meter,meterConfidence:Math.round(meterConfidence*100)/100,
+  downbeatSeconds:Math.round((phase+downbeat*beat)*HOP/rate*1000)/1000,
   onsetsPerBeat:Math.round(onsetsPerBeat*100)/100,onsetDensity,centroidHz,brightness,mode,tonic,keyConfidence:Math.round(keyConfidence*100)/100,
   pitchRange:{low,high},repetition,candidates};
 }

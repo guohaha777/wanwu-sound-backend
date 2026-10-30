@@ -96,6 +96,8 @@ export const backgroundLimits={
  variations:{stretchFactor:[1,4],squeezeFactor:[.25,1],offsetBeats:[0,2],registerSemitones:[0,24]},
  // A chosen textbook song: which layers play its characteristic rhythm (0 = no, 1 = yes) and whether the key follows it.
  song:{chordsFollow:[0,1],drumsFollow:[0,1],bassFollow:[0,1],keyFollow:[0,1],chordLengthPortion:[.2,1],offbeatAccent:[0,1]},
+ // 万物声场 with a song: only its beat — how strong the first beat of a bar and the others are, and the beat's level.
+ beat:{strong:[0,1],weak:[0,1],gain:[0,1]},
  meeting:{toleranceSeconds:[0,.5],alignShare:[0,1],answerTurns:[1,8]},
  fade:{inSeconds:[0,5],outSeconds:[0,6]},
 } as const satisfies Limits;

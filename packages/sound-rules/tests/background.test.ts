@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {ORIGINAL_PLAYER,assignParts,backgroundMeeting,backgroundPlan} from '../src/background.ts';
+import {ORIGINAL_PLAYER,assignParts,backgroundMeeting,backgroundPlan,beatPlan} from '../src/background.ts';
 import {suggestVariations} from '../src/textbookVariation.ts';
 import type {BackgroundInput} from '../src/background.ts';
 import {duckPoints,mergeSpans} from '../src/mix.ts';
@@ -139,4 +139,14 @@ test('the melody answers the child\'s sounds: away from their register, along th
  assert.ok(accent(as({intensity:'loud'}))>accent(as({intensity:'soft'})));
  const off={...BACKGROUND_RULES,answer:{...BACKGROUND_RULES.answer,registerShiftSemitones:0,followContour:0,intensityAccent:0}};
  assert.deepEqual(backgroundPlan(input({sounding:spans.map(span=>({...span,pitch:'high',contour:'rising',intensity:'loud'}))}),off).notes,backgroundPlan(input(),off).notes,'switched off: the child\'s choices change nothing');
+});
+
+test('万物声场\'s beat: every beat of the song\'s tempo, strong on each bar\'s first, nothing but the drum part, steady under the sounds',()=>{
+ const plan=beatPlan({seconds:10,tempo:90,metre:3}),beat=60/90;
+ assert.equal(plan.notes.length,Math.ceil(10/beat-1e-9));
+ assert.ok(plan.notes.every((note,i)=>Math.abs(note.at-i*beat)<1e-9&&note.part==='rhythm'&&note.at+note.length<=10+1e-9));
+ assert.deepEqual(plan.notes.slice(0,4).map(note=>note.accent),[BACKGROUND_RULES.beat.strong,BACKGROUND_RULES.beat.weak,BACKGROUND_RULES.beat.weak,BACKGROUND_RULES.beat.strong]);
+ assert.deepEqual(plan.duck,[]);assert.equal(plan.fadeInSeconds,0);
+ const louder=structuredClone(BACKGROUND_RULES);louder.beat.strong=.3;louder.beat.weak=.5;
+ assert.match(backgroundProblems(louder).join('\n'),/background\.beat\.weak 不能比 strong 还响/);
 });

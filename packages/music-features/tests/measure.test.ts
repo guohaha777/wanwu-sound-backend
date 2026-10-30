@@ -45,6 +45,27 @@ test('a 3/4 song at 72 BPM with 嗒— 嗒 in A minor',()=>{
  assert.equal(m.mode,'minor');assert.equal(m.tonic,9);
 });
 
+test('oom-pah-pah: an even melody over a bass note every third beat is 3/4, the bar starting with the bass',()=>{
+ const bpm=136,beat=60/bpm,seconds=40,out=song({bpm,meter:1,cell:[1],chord:C_MAJOR,seconds});
+ // A low plucked bass (65 Hz) on the first beat of every bar of three, starting on the second beat of the recording.
+ for(let at=beat;at<seconds-1;at+=3*beat){const start=Math.round(at*RATE);
+  for(let i=0;i<RATE*.35&&start+i<out.length;i++){const t=i/RATE;out[start+i]=out[start+i]!+1.2*Math.exp(-t*8)*Math.sin(2*Math.PI*65.4*t);}}
+ const m=measure(out,RATE);
+ assert.ok(Math.abs(m.tempoBpm-bpm)<=4,`tempo ${m.tempoBpm}`);
+ assert.equal(m.meter,3);
+});
+
+test('the beat is where the bass plays, even when the melody\'s off-beat eighths are louder',()=>{
+ const bpm=96,beat=60/bpm,seconds=40,out=new Float32Array(RATE*seconds),hz=(midi:number)=>440*2**((midi-69)/12);
+ const pluck=(at:number,freq:number,level:number,decay:number)=>{const start=Math.round(at*RATE);
+  for(let i=0;i<RATE*.3&&start+i<out.length;i++){const t=i/RATE;out[start+i]=out[start+i]!+level*Math.exp(-t*decay)*Math.sin(2*Math.PI*freq*t);}};
+ // Bass on every beat from 0.4 s; eighths above it, the ones between the beats twice as loud.
+ for(let at=.4,i=0;at<seconds-1;at+=beat/2,i++){pluck(at,hz(72+(i%4)*2),i%2?1:.5,12);if(i%2===0)pluck(at,65.4,1.2,8);}
+ const m=measure(out,RATE),offset=((m.downbeatSeconds-.4)/beat%1+1)%1;
+ assert.ok(Math.abs(m.tempoBpm-bpm)<=3,`tempo ${m.tempoBpm}`);
+ assert.ok(offset<.12||offset>.88,`downbeat ${m.downbeatSeconds} s is ${offset.toFixed(2)} of a beat off the bass`);
+});
+
 test('higher sample rates give the same answer; too short a recording is refused',()=>{
  const base=song({bpm:96,meter:2,cell:[.5,.5,1],chord:C_MAJOR,seconds:30});
  const doubled=new Float32Array(base.length*2);for(let i=0;i<doubled.length;i++)doubled[i]=base[i>>1]!;

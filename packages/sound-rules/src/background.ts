@@ -176,6 +176,22 @@ export function backgroundPlan(input:BackgroundInput,rules:BackgroundRules=BACKG
  };
 }
 
+/** 万物声场's beat: what renderBackground needs, nothing else (no key, chords or colour). */
+export type BeatPlan=Pick<BackgroundPlan,'rules'|'seconds'|'tempo'|'metre'|'fadeInSeconds'|'fadeOutSeconds'|'notes'|'duck'>;
+
+/**
+ * 万物声场 with a textbook song: only its beat — at the song's tempo and metre, the first beat of every bar strong and the
+ * others light, from the start to the end of the piece, all on the rhythm part (a metronome plays it). No chords, key or
+ * characteristic rhythm (the full background is 万物成曲's), and it does not make room under the child's sounds, so the
+ * beat stays steady to place sounds against.
+ */
+export function beatPlan({seconds,tempo,metre}:{seconds:number;tempo:number;metre:2|3|4},rules:BackgroundRules=BACKGROUND_RULES):BeatPlan{
+ const beat=60/tempo,{strong,weak}=rules.beat,notes:BackgroundNote[]=[];
+ for(let b=0;b*beat<seconds-1e-9;b++){const at=b*beat;notes.push({at,length:Math.min(beat,seconds-at),midi:0,part:'rhythm',accent:b%metre===0?strong:weak});}
+ // The first strong beat is heard at once; a short fade only so the last stroke does not click off.
+ return {rules:rules.version,seconds,tempo,metre,fadeInSeconds:0,fadeOutSeconds:Math.min(.3,seconds/3),notes,duck:[]};
+}
+
 /** What an instrument is for: parts it leads, and parts it can also cover when nobody leading them is chosen. */
 export type PlayerRoles={id:string;lead:readonly BackgroundPart[];can:readonly BackgroundPart[]};
 /** The background as generated: soft and plain, for the pitched parts nobody chosen can play. */

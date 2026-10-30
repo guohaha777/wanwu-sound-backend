@@ -43,6 +43,7 @@ export function backgroundProblems(rules:BackgroundRules){
   [moods.every(mood=>mood.progression.every(Number.isInteger)),'background.moods.*.progression 要写 1–7 的级数'],
   [Object.values(rules.modes).every(mode=>mode.scale.length===7&&mode.scale[0]===0&&mode.scale.every((step,i)=>i===0||step>mode.scale[i-1]!)),'background.modes.*.scale 要是从 0 开始、逐个变高的 7 个音'],
   [Object.values(rules.modes).every(mode=>mode.melody[0]===0&&mode.melody.every((step,i)=>i===0||step>mode.melody[i-1]!)),'background.modes.*.melody 要从 0 开始、逐个变高'],
+  [rules.beat.weak<=rules.beat.strong,'background.beat.weak 不能比 strong 还响'],
  ]);
 }
 export function mixProblems(rules:MixRules){return checkRules('mix',rules,mixLimits);}

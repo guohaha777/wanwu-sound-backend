@@ -7,8 +7,8 @@ import type {BackgroundNote,BackgroundPart,BackgroundPlan} from '@wanwu-v2/sound
 import {ORIGINAL_PLAYER} from '@wanwu-v2/sound-rules/background';
 import type {InstrumentRecipe} from './instruments.ts';
 
-/** `original` is the background as generated: a soft, plain voice. */
-export type Voice='original'|InstrumentRecipe;
+/** `original` is the background as generated: a soft, plain voice. `click` is a metronome (万物声场's beat). */
+export type Voice='original'|'click'|InstrumentRecipe;
 
 const hz=(midi:number)=>440*2**((midi-69)/12);
 const SAMPLE_RATE=22050;
@@ -61,16 +61,22 @@ function play(ctx:BaseAudioContext,out:AudioNode,voice:Voice,note:BackgroundNote
    osc.type='sine';osc.frequency.setValueAtTime(note.accent>=.9?90:130,at);osc.frequency.exponentialRampToValueAtTime(45,at+.25);
    strike(env,at,Math.min(end,at+.35),.4*note.accent);
    break;
+  case 'click':
+   // 节拍器: a short bright tick on the beat, higher and louder on a bar's first beat.
+   if(part!=='rhythm')return false;
+   osc.type='triangle';osc.frequency.value=note.accent>=.9?1760:1320;
+   strike(env,at,Math.min(end,at+.05),.5*note.accent);
+   break;
  }
  osc.connect(env).connect(out);osc.start(at);osc.stop(end+.02);
  return true;
 }
 
 /**
- * Renders the plan (mono, low sample rate: it sits underneath). `parts` says which players play each part
+ * Renders the plan — a background or 万物声场's beat (beatPlan) — mono, at a low sample rate (it sits underneath). `parts` says which players play each part
  * (ORIGINAL_PLAYER or an instrument id) and `voices` how each instrument id sounds.
  */
-export async function renderBackground(plan:BackgroundPlan,parts:Record<BackgroundPart,string[]>,voices:Readonly<Record<string,InstrumentRecipe>>):Promise<AudioBuffer>{
+export async function renderBackground(plan:Pick<BackgroundPlan,'seconds'|'fadeInSeconds'|'fadeOutSeconds'|'duck'|'notes'>,parts:Record<BackgroundPart,string[]>,voices:Readonly<Record<string,Voice>>):Promise<AudioBuffer>{
  const {seconds}=plan;
  const Offline=window.OfflineAudioContext||(window as unknown as {webkitOfflineAudioContext:OfflineConstructor}).webkitOfflineAudioContext;
  const ctx=new Offline(1,Math.max(1,Math.ceil(seconds*SAMPLE_RATE)),SAMPLE_RATE);
@@ -80,7 +86,7 @@ export async function renderBackground(plan:BackgroundPlan,parts:Record<Backgrou
  fade.gain.setValueAtTime(1,seconds-plan.fadeOutSeconds);fade.gain.linearRampToValueAtTime(0,seconds);
  duck.gain.setValueAtTime(plan.duck[0]?.gain??1,0);for(const point of plan.duck.slice(1))duck.gain.linearRampToValueAtTime(point.gain,point.at);
  const voiceOf=(player:string):Voice=>player===ORIGINAL_PLAYER?'original':voices[player]??'original';
- const bright=Object.values(parts).some(players=>players.some(player=>voiceOf(player)==='bells'));
+ const bright=Object.values(parts).some(players=>players.some(player=>voiceOf(player)==='bells'||voiceOf(player)==='click'));
  const tone=ctx.createBiquadFilter();tone.type='lowpass';tone.frequency.value=bright?5200:2400;
  fade.connect(duck).connect(tone).connect(ctx.destination);
  for(const [part,players] of Object.entries(parts) as [BackgroundPart,string[]][]){

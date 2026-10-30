@@ -23,6 +23,7 @@
  "ending": {"minRingSeconds": 1.5},
  "variations": {"stretchFactor": 2, "squeezeFactor": 0.5, "offsetBeats": 0.5, "registerSemitones": 12},
  "song": {"chordsFollow": 1, "drumsFollow": 1, "bassFollow": 1, "keyFollow": 1, "chordLengthPortion": 0.8, "offbeatAccent": 0.45},
+ "beat": {"strong": 1, "weak": 0.45, "gain": 0.6},
  "meeting": {"toleranceSeconds": 0.12, "alignShare": 0.5, "answerTurns": 2},
  "fade": {"inSeconds": 1.2, "outSeconds": 2}
 }
