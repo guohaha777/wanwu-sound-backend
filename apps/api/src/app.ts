@@ -15,13 +15,15 @@ import {Passwords,randomToken,sameToken,tokenDigest} from './security.ts';
 import {PgSessionStore} from './session-store.ts';
 import {cloudRoutes} from './cloud/routes.ts';
 import type {CloudContext} from './cloud/context.ts';
+import {guestRoutes} from './guest/routes.ts';
+import type {GuestContext} from './guest/routes.ts';
 
 export const COOKIE_NAME='__Host-wanwu';
 const uuid=(value:unknown)=>typeof value==='string'&&/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(value);
 const token=(value:unknown):value is string=>typeof value==='string'&&/^[A-Za-z0-9_-]{43}$/.test(value);
 
-export async function buildApp(config:ApiConfig,database:ReturnType<typeof openDatabase>,logging=false,cloud?:CloudContext){
- const app=Fastify({logger:logging?{redact:['req.headers.cookie','req.headers.authorization','res.headers["set-cookie"]']}:false,
+export async function buildApp(config:ApiConfig,database:ReturnType<typeof openDatabase>,logging=false,cloud?:CloudContext,guest?:GuestContext){
+ const app=Fastify({logger:logging?{redact:['req.headers.cookie','req.headers.authorization','req.headers["x-wanwu-model-config"]','res.headers["set-cookie"]']}:false,
   logController:new LogController({disableRequestLogging:true}),requestIdHeader:false,genReqId:()=>randomUUID(),bodyLimit:256*1024,
   trustProxy:config.trustedProxyAddresses.length?config.trustedProxyAddresses:false,requestTimeout:20_000});
  const passwords=new Passwords();await passwords.ready();
@@ -136,5 +138,6 @@ export async function buildApp(config:ApiConfig,database:ReturnType<typeof openD
   state.count++;attempts.set(key,state);
  });
  if(cloud)cloudRoutes(app,cloud,authenticated);
+ if(guest)guestRoutes(app,guest);
  await app.ready();return app;
 }

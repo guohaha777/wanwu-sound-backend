@@ -14,6 +14,7 @@ COPY apps/api/package.json ./apps/api/package.json
 COPY packages/contracts/package.json ./packages/contracts/package.json
 COPY packages/sound-rules/package.json ./packages/sound-rules/package.json
 COPY packages/audio-engine/package.json ./packages/audio-engine/package.json
+COPY packages/prompts/package.json ./packages/prompts/package.json
 RUN npm ci --ignore-scripts --no-audit --no-fund \
     && mkdir -p /app/artifacts \
     && chown node:node /app/artifacts

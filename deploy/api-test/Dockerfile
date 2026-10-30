@@ -7,11 +7,13 @@ COPY apps/api/package.json ./apps/api/package.json
 COPY packages/contracts/package.json ./packages/contracts/package.json
 COPY packages/sound-rules/package.json ./packages/sound-rules/package.json
 COPY packages/audio-engine/package.json ./packages/audio-engine/package.json
+COPY packages/prompts/package.json ./packages/prompts/package.json
 RUN npm ci --omit=dev --ignore-scripts --workspace=@wanwu-v2/api --include-workspace-root=false --no-audit --no-fund
 COPY apps/api ./apps/api
 COPY packages/contracts ./packages/contracts
 COPY packages/sound-rules ./packages/sound-rules
 COPY packages/audio-engine ./packages/audio-engine
+COPY packages/prompts ./packages/prompts
 COPY data/catalogue ./data/catalogue
 USER node
 CMD ["node","--test","--test-reporter=tap","--test-isolation=none","apps/api/tests/integration/auth.test.ts"]

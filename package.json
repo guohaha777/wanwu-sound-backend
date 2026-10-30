@@ -5,10 +5,10 @@
   "type": "module",
   "description": "万物声谱独立后端、音频任务与前端接入交接包",
   "engines": {"node": ">=24.21.0"},
-  "workspaces": ["apps/api", "apps/worker", "packages/contracts", "packages/sound-rules", "packages/audio-engine"],
+  "workspaces": ["apps/api", "apps/worker", "packages/contracts", "packages/sound-rules", "packages/audio-engine", "packages/prompts"],
   "scripts": {
     "typecheck": "npm run typecheck --workspace=@wanwu-v2/api && npm run typecheck --workspace=@wanwu-v2/worker",
-    "test": "node --experimental-strip-types --test packages/sound-rules/tests/*.test.ts packages/audio-engine/tests/*.test.ts apps/worker/tests/unit/*.test.ts apps/api/tests/unit/*.test.ts tests/*.test.mjs",
+    "test": "node --experimental-strip-types --test packages/sound-rules/tests/*.test.ts packages/audio-engine/tests/*.test.ts packages/prompts/tests/*.test.ts apps/worker/tests/unit/*.test.ts apps/api/tests/unit/*.test.ts tests/*.test.mjs",
     "build": "npm run typecheck && npm run check:catalogue && npm run check:handoff",
     "check:catalogue": "node scripts/check-catalogue.mjs",
     "check:handoff": "node scripts/frontend-handoff.mjs verify-bundle",

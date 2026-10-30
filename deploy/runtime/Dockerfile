@@ -8,6 +8,7 @@ COPY apps/api/package.json ./apps/api/package.json
 COPY packages/contracts/package.json ./packages/contracts/package.json
 COPY packages/sound-rules/package.json ./packages/sound-rules/package.json
 COPY packages/audio-engine/package.json ./packages/audio-engine/package.json
+COPY packages/prompts/package.json ./packages/prompts/package.json
 RUN npm ci --omit=dev --ignore-scripts --workspace=@wanwu-v2/api --include-workspace-root=false --no-audit --no-fund
 
 FROM api-deps AS api
@@ -17,6 +18,7 @@ COPY data/catalogue ./data/catalogue
 COPY packages/contracts ./packages/contracts
 COPY packages/sound-rules ./packages/sound-rules
 COPY packages/audio-engine ./packages/audio-engine
+COPY packages/prompts ./packages/prompts
 USER 1000:1000
 CMD ["node","apps/api/src/main.ts"]
 
@@ -39,6 +41,7 @@ COPY apps/worker ./apps/worker
 COPY packages/contracts ./packages/contracts
 COPY packages/sound-rules ./packages/sound-rules
 COPY packages/audio-engine ./packages/audio-engine
+COPY packages/prompts ./packages/prompts
 COPY data/catalogue ./data/catalogue
 RUN mkdir -p /var/lib/wanwu-media && chown 1000:1000 /var/lib/wanwu-media
 USER 1000:1000
