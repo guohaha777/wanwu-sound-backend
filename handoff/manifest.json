@@ -690,7 +690,7 @@
     },
     {
       "path": "packages/prompts/prompts/textbook-features.v1.json",
-      "sha256": "1808a6586ed0014d140ad6bef648eca74cbef972b282d1abd55d909fea07a7d7"
+      "sha256": "3df5e1031ac727de04ba464fd9dc390d0fd26b71670cdd002d640806e1815f15"
     },
     {
       "path": "packages/prompts/prompts/textbook-talk.v1.json",
@@ -726,7 +726,7 @@
     },
     {
       "path": "packages/prompts/src/tasks/features.ts",
-      "sha256": "6e12eb43b7e050493f62f5705f4e6487c4f05520e08459734cda3d459adc4e44"
+      "sha256": "c7e23db63f40122778c2788573907eddc0ca3abbbcdf7184317f4376885d6bf5"
     },
     {
       "path": "packages/prompts/src/tasks/files.ts",
@@ -754,7 +754,7 @@
     },
     {
       "path": "packages/prompts/tests/features.test.ts",
-      "sha256": "2d2837d68bc977234578728c96498c0568134defa80d04e39c6d3246ec7cc3fd"
+      "sha256": "66f32824b72c153dcabe4311b831ec93b3c6ddcd1f1a787f2203b3f036142e58"
     },
     {
       "path": "packages/prompts/tests/fixtures/briefs.ts",

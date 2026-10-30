@@ -99,17 +99,20 @@ export function guestRoutes(app:FastifyInstance,context:GuestContext){
   const audio=body.audio===undefined?null:typeof body.audio==='string'&&body.audio.length<=EXCERPT_MAX_CHARS&&/^[A-Za-z0-9+/=]+$/.test(body.audio)?body.audio:'bad';
   if(audio==='bad')throw new ApiError(400,'invalid-request');
   const brief=body.brief,started=Date.now(),{language}=providers(request),listener=context.config.audio;
-  const tries:{source:'audio'|'language';provider:Provider;run:(provider:Provider)=>Promise<string>;prompt:ReturnType<typeof buildTextbookFeatures>}[]=[];
-  if(audio&&listener){const prompt=buildTextbookFeatures(brief);tries.push({source:'audio',provider:listener,prompt,run:provider=>chatWithAudio(context.post,provider,prompt,audio,GUEST_TIMEOUT_MS.listen)});}
-  if(language){const prompt=buildTextbookFeatures({...brief,listenSeconds:0});tries.push({source:'language',provider:language,prompt,run:provider=>chat(context.post,provider,prompt,GUEST_TIMEOUT_MS.features)});}
+  // Each try is asked and checked with its own brief: the language model hears nothing (listenSeconds 0), so its rhythm,
+  // metre and tempo are not taken — only its mood and words.
+  const tries:{source:'audio'|'language';provider:Provider;brief:typeof brief;run:(provider:Provider)=>Promise<string>;prompt:ReturnType<typeof buildTextbookFeatures>}[]=[];
+  if(audio&&listener){const prompt=buildTextbookFeatures(brief);tries.push({source:'audio',provider:listener,brief,prompt,run:provider=>chatWithAudio(context.post,provider,prompt,audio,GUEST_TIMEOUT_MS.listen)});}
+  if(language){const numbers={...brief,listenSeconds:0},prompt=buildTextbookFeatures(numbers);tries.push({source:'language',provider:language,brief:numbers,prompt,run:provider=>chat(context.post,provider,prompt,GUEST_TIMEOUT_MS.features)});}
   if(!tries.length){outcome(request,'textbook-features',started,'not-open',null);throw new ApiError(503,'not-open');}
   for(const attempt of tries){
    if(spend(attempt.provider)){outcome(request,'textbook-features',started,'quota',attempt.provider);continue;}
    try{
-    const read=readTextbookFeatures(await attempt.run(attempt.provider),brief);
+    const read=readTextbookFeatures(await attempt.run(attempt.provider),attempt.brief);
     if(read.acceptance.value){
      outcome(request,`textbook-features:${attempt.source}`,started,read.acceptance.status,attempt.provider);
-     return {...read.acceptance.value,source:attempt.source,model:attempt.provider.builtIn?attempt.provider.model:'visitor',promptVersion:attempt.prompt.version};
+     // `checked`: accepted as answered, or partly (some of it replaced by the program's own measurement) — the page says so.
+     return {...read.acceptance.value,checked:read.acceptance.status,source:attempt.source,model:attempt.provider.builtIn?attempt.provider.model:'visitor',promptVersion:attempt.prompt.version};
     }
     outcome(request,`textbook-features:${attempt.source}`,started,'rejected',attempt.provider);
    }catch(error){outcome(request,`textbook-features:${attempt.source}`,started,error instanceof GuestFailure?error.reason:'failed',attempt.provider);}

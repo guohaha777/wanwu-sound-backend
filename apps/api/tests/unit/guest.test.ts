@@ -185,6 +185,7 @@ test('background jobs: notes-ai ready, audio-ai not open yet, failures and teach
 const featuresBrief={title:'小鸟在唱歌',listenSeconds:30,tempoBpm:96,meter:2,meterConfidence:.29,mode:'major',onsetDensity:'medium',brightness:'mid',
  candidates:[{cell:[.5,.5,.5,.5],bars:51},{cell:[.5,.5,1],bars:4}],fallbackCell:[.5,.5,.25,.75],others:[]};
 const featuresReply={rhythmCell:[.5,.5,1],meter:2,tempo:'same',mood:'lively',childLine:'像小鸟蹦蹦跳跳',teacherNote:'先两下快的再一下长的，带孩子拍手念“小鸟—叫”。'};
+const checkedOf=(reply:{json():unknown})=>reply.json() as {source:string;checked:string;rhythmCell:number[];meter:number;tempoBpm:number};
 const isAudio=(call:Call)=>Array.isArray(call.body.messages.at(-1)!.content);
 
 test('textbook features: the audio model hears the excerpt; its checked answer comes back',async()=>{
@@ -193,7 +194,7 @@ test('textbook features: the audio model hears the excerpt; its checked answer c
  assert.equal(reply.statusCode,200);
  const body=reply.json() as {rhythmCell:number[];source:string;model:string;childLine:string;tempoBpm:number;promptVersion:string};
  assert.deepEqual(body.rhythmCell,[.5,.5,1]);assert.equal(body.source,'audio');assert.equal(body.model,'qwen3.8-omni-flash');assert.equal(body.tempoBpm,96);
- assert.equal(body.promptVersion,'textbook-features-prompt-v1');
+ assert.equal(body.promptVersion,'textbook-features-prompt-v1');assert.equal(checkedOf(reply).checked,'accepted');
  assert.equal(calls.length,1);assert.ok(isAudio(calls[0]!));assert.equal((calls[0]!.body as unknown as {reasoning_effort:string}).reasoning_effort,'none');
 });
 
@@ -201,6 +202,10 @@ test('textbook features: no excerpt, or the audio model failing, falls to the la
  const calls:Call[]=[];const {server}=await app(fakeModel(()=>featuresReply,calls));
  const numbersOnly=(await server.inject({method:'POST',url:'/api/v1/textbook/features',payload:{brief:featuresBrief}})).json() as {source:string};
  assert.equal(numbersOnly.source,'language');assert.equal(isAudio(calls[0]!),false);assert.ok(calls[0]!.body.messages.at(-1)!.content.includes('没有附音频'));
+ // The language model heard nothing: its rhythm, metre and tempo are not taken, only its mood and words.
+ const guessing=await app(fakeModel(()=>({...featuresReply,rhythmCell:[1,1,1],meter:3,tempo:'half'})));
+ const guessed=checkedOf(await guessing.server.inject({method:'POST',url:'/api/v1/textbook/features',payload:{brief:featuresBrief}}));
+ assert.deepEqual([guessed.source,guessed.meter,guessed.tempoBpm,guessed.rhythmCell],['language',2,96,[.5,.5,.25,.75]]);
  const deaf=await app(fakeModel(prompt=>prompt.includes('附带的这段音频')?new GuestFailure('timeout'):featuresReply));
  assert.equal(((await deaf.server.inject({method:'POST',url:'/api/v1/textbook/features',payload:{brief:featuresBrief,audio:'AAAA'}})).json() as {source:string}).source,'language');
  const broken=await app(fakeModel(()=>'不知道'));
