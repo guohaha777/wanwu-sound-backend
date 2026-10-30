@@ -3,7 +3,6 @@
 import {MOODS} from '@wanwu-v2/contracts/arrangement';
 import {DISCOVERY_KINDS,MEETING_KINDS,isTextbookTalk,isWorkTalkReply} from '@wanwu-v2/contracts/talk';
 import type {TextbookTalkBrief,WorkTalkBrief} from '@wanwu-v2/contracts/talk';
-import {TEXTBOOK_VARIATIONS} from '@wanwu-v2/contracts/textbook';
 import workTalkFile from '../../prompts/work-talk.v1.json' with {type:'json'};
 import textbookTalkFile from '../../prompts/textbook-talk.v1.json' with {type:'json'};
 import {acceptTextbookTalk,acceptWorkTalk} from '../accept.ts';
@@ -44,21 +43,21 @@ export function readWorkTalk(text:string,brief:WorkTalkBrief){
 
 export const TEXTBOOK_TALK_PROMPT=loadPrompt(textbookTalkFile as PromptFile,{
  task:'textbook-talk',model:'language',
- placeholders:['title','metre','rhythm','childLine','variation','meeting','feature','shape','meetingLine','task','talkMax','example'],
- tables:{'words.variation':TEXTBOOK_VARIATIONS,'words.meeting':MEETING_KINDS},
- example:value=>shapeOnly(isTextbookTalk(value),'要有 feature、shape、meeting、task 四句'),
+ placeholders:['title','metre','rhythm','childLine','meeting','feature','meetingLine','task','talkMax','example'],
+ tables:{'words.meeting':MEETING_KINDS},
+ example:value=>shapeOnly(isTextbookTalk(value),'要有 feature、meeting、task 三句'),
 });
 
 export function buildTextbookTalk(brief:TextbookTalkBrief){
  const file=TEXTBOOK_TALK_PROMPT;
  return buildPrompt(file,{
   title:brief.title,metre:metreNames()[brief.metre],rhythm:brief.rhythm,childLine:brief.childLine,
-  variation:word(file,'words.variation',brief.variation),meeting:word(file,'words.meeting',brief.meeting),
-  feature:brief.local.feature,shape:brief.local.shape,meetingLine:brief.local.meeting,task:brief.local.task,
+  meeting:word(file,'words.meeting',brief.meeting),
+  feature:brief.local.feature,meetingLine:brief.local.meeting,task:brief.local.task,
   talkMax:STYLE.slots.talk.maxChars,example:exampleJson(file),
  });
 }
 export function readTextbookTalk(text:string,brief:TextbookTalkBrief){
  const read=readReply(text);
- return {repairs:read.repairs,acceptance:'problem' in read?{status:'rejected' as const,value:{feature:null,shape:null,meeting:null,task:null},notes:[read.problem]}:acceptTextbookTalk(read.value,brief)};
+ return {repairs:read.repairs,acceptance:'problem' in read?{status:'rejected' as const,value:{feature:null,meeting:null,task:null},notes:[read.problem]}:acceptTextbookTalk(read.value,brief)};
 }

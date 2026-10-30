@@ -5,7 +5,7 @@
 //   it with the shared rules, fits it into the gaps between the child's sounds and checks every note.
 import {MOODS} from '@wanwu-v2/contracts/arrangement';
 import type {BackgroundBrief} from '@wanwu-v2/contracts/background';
-import {DENSITIES,LEVELS,TEXTBOOK_MODES,TEXTBOOK_VARIATIONS} from '@wanwu-v2/contracts/textbook';
+import {DENSITIES,LEVELS,TEXTBOOK_MODES} from '@wanwu-v2/contracts/textbook';
 import type {Density} from '@wanwu-v2/contracts/textbook';
 import audioFile from '../../prompts/background-audio.v1.json' with {type:'json'};
 import notesFile from '../../prompts/background-notes.v1.json' with {type:'json'};
@@ -29,8 +29,8 @@ export const colourOf=(brief:BackgroundBrief)=>brief.mood??brief.textbook?.mood?
 export const BACKGROUND_AUDIO_PROMPT=loadPrompt(audioFile as PromptFile,{
  task:'background-audio',model:'music',
  placeholders:['seconds','mood','tempo','metre','mode','energy','room','register','textbook'],
- templates:{room:['percent'],'words.textbook':['metre','rhythm','variation'],'words.noTextbook':[]},
- tables:{'words.metre':METRES,'words.mode':TEXTBOOK_MODES,'words.mood':['none',...MOODS],'words.energy':DENSITIES,'words.register':LEVELS,'words.variation':TEXTBOOK_VARIATIONS},
+ templates:{room:['percent'],'words.textbook':['metre','rhythm'],'words.noTextbook':[]},
+ tables:{'words.metre':METRES,'words.mode':TEXTBOOK_MODES,'words.mood':['none',...MOODS],'words.energy':DENSITIES,'words.register':LEVELS},
 });
 
 /** How much of the piece the child's sounds fill (0–100). */
@@ -38,7 +38,7 @@ export const soundingPercent=(brief:BackgroundBrief)=>Math.round(100*merged(brie
 
 export function buildBackgroundAudio(brief:BackgroundBrief){
  const file=BACKGROUND_AUDIO_PROMPT;
- const textbook=brief.textbook?fill(word(file,'words','textbook'),{metre:word(file,'words.metre',brief.metre),rhythm:rhythmOf(brief),variation:word(file,'words.variation',brief.variation??'original')})
+ const textbook=brief.textbook?fill(word(file,'words','textbook'),{metre:word(file,'words.metre',brief.metre),rhythm:rhythmOf(brief)})
   :word(file,'words','noTextbook');
  return buildPrompt(file,{
   seconds:Math.round(brief.seconds),mood:word(file,'words.mood',colourOf(brief)),tempo:Math.round(brief.tempo),
@@ -88,8 +88,8 @@ export function acceptMusicIdea(value:unknown):Acceptance<MusicIdea|null>{
 export const BACKGROUND_NOTES_PROMPT=loadPrompt(notesFile as PromptFile,{
  task:'background-notes',model:'language',
  placeholders:['seconds','tempo','metre','mode','mood','moodHint','textbook','sections','retry','example'],
- templates:{sectionLine:['name','start','end','count'],retry:['attempt'],'words.textbook':['metre','rhythm','variation'],'words.noTextbook':[]},
- tables:{'words.section':['0','1','2','3'],'words.metre':METRES,'words.mode':TEXTBOOK_MODES,'words.mood':['none',...MOODS],'words.moodHint':['none',...MOODS],'words.variation':TEXTBOOK_VARIATIONS},
+ templates:{sectionLine:['name','start','end','count'],retry:['attempt'],'words.textbook':['metre','rhythm'],'words.noTextbook':[]},
+ tables:{'words.section':['0','1','2','3'],'words.metre':METRES,'words.mode':TEXTBOOK_MODES,'words.mood':['none',...MOODS],'words.moodHint':['none',...MOODS]},
  example:value=>{const result=acceptMusicIdea(value);return result.status==='accepted'?[]:result.notes;},
 });
 
@@ -103,7 +103,7 @@ export function sectionCounts(brief:BackgroundBrief){
 export function buildBackgroundNotes(brief:BackgroundBrief,attempt=0){
  const file=BACKGROUND_NOTES_PROMPT;
  const sections=sectionCounts(brief).map((section,i)=>fill(file.sectionLine as string,{name:word(file,'words.section',i),...section})).join('\n');
- const textbook=brief.textbook?fill(word(file,'words','textbook'),{metre:word(file,'words.metre',brief.metre),rhythm:rhythmOf(brief),variation:word(file,'words.variation',brief.variation??'original')})
+ const textbook=brief.textbook?fill(word(file,'words','textbook'),{metre:word(file,'words.metre',brief.metre),rhythm:rhythmOf(brief)})
   :word(file,'words','noTextbook');
  return buildPrompt(file,{
   seconds:Math.round(brief.seconds),tempo:Math.round(brief.tempo),metre:word(file,'words.metre',brief.metre),mode:word(file,'words.mode',brief.mode),

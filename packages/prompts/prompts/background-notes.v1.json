@@ -40,8 +40,7 @@
    "scared": "小心翼翼，音少、留白多，bassPulse 用 none。",
    "curious": "像在探头张望，上下试探，bassPulse 用 slow。"
   },
-  "variation": {"original": "原样", "stretch": "节奏拉长一倍", "squeeze": "节奏压短一半", "offset": "晚半拍出来", "higher": "搬到高处", "lower": "搬到低处"},
-  "textbook": "借「课本歌曲」的节奏：{metre}，节奏型 {rhythm}（拍），这次{variation}。动机的时值可以照这个节奏型，只借节奏和感觉，不借旋律。",
+  "textbook": "借「课本歌曲」的节奏：{metre}，节奏型 {rhythm}（拍）。动机的时值可以照这个节奏型，只借节奏和感觉，不借旋律。",
   "noTextbook": "没选课本歌曲，节奏按心情来。"
  },
  "example": {"motifDegrees": [0, 2, 4, 2], "motifBeats": [1, 0.5, 0.5, 2], "sections": [{"density": "sparse", "register": "mid"}, {"density": "medium", "register": "mid"}, {"density": "medium", "register": "high"}, {"density": "sparse", "register": "low"}], "bassPulse": "slow"}

@@ -7,8 +7,6 @@
 import {parseArrangement} from './arrangement.ts';
 import type {Arrangement} from './arrangement';
 import {BACKGROUND_SOURCES} from './background.ts';
-import {TEXTBOOK_VARIATIONS} from './textbook.ts';
-import type {TextbookVariation} from './textbook';
 import type {BackgroundSource,RuleVersions} from './background';
 
 export const WORK_CONTRACT_VERSION='work-v1' as const;
@@ -29,8 +27,7 @@ export const MAX_INSTRUMENTS=6;
  *   with the child's arrangement and generate a matching background; `musicId` refers to that upload.
  */
 export type Inspiration={kind:'none'}
- /** `variation`: which shape of the song's feature the background plays (换几种样子); missing = as it is. */
- |{kind:'textbook';entryId:string;variation?:TextbookVariation}
+ |{kind:'textbook';entryId:string}
  |{kind:'teaching-music';musicId:string;name:string;durationMs:number};
 export type ComposeSettings={background:BackgroundLayer;inspiration:Inspiration};
 
@@ -82,7 +79,8 @@ export function isValidInspiration(value:unknown):value is Inspiration{
  if(!value||typeof value!=='object')return false;
  const raw=value as Record<string,unknown>;
  if(raw.kind==='none')return true;
- if(raw.kind==='textbook')return nonEmpty(raw.entryId)&&(raw.variation===undefined||TEXTBOOK_VARIATIONS.includes(raw.variation as TextbookVariation));
+ // A `variation` kept by an older version (换几种样子, removed 2026-10-30) is ignored: the song plays as it is.
+ if(raw.kind==='textbook')return nonEmpty(raw.entryId);
  return raw.kind==='teaching-music'&&nonEmpty(raw.musicId)&&nonEmpty(raw.name)&&Number.isInteger(raw.durationMs)&&(raw.durationMs as number)>0;
 }
 

@@ -73,8 +73,8 @@ export function acceptWorkTalk(reply:unknown,brief:WorkTalkBrief):Acceptance<Wor
 // ----- 课本讲解润色 -----
 export type TextbookTalkLines={[K in keyof TextbookTalk]:string|null};
 export function acceptTextbookTalk(reply:unknown,brief:TextbookTalkBrief):Acceptance<TextbookTalkLines>{
- const none={feature:null,shape:null,meeting:null,task:null};
- if(!isTextbookTalk(reply))return {status:'rejected',value:none,notes:['回复的格式不对：要有 feature、shape、meeting、task 四句']};
+ const none={feature:null,meeting:null,task:null};
+ if(!isTextbookTalk(reply))return {status:'rejected',value:none,notes:['回复的格式不对：要有 feature、meeting、task 三句']};
  const notes:string[]=[],tokens=brief.example?[brief.example]:[];
  const value={...none} as TextbookTalkLines;
  for(const part of TEXTBOOK_TALK_PARTS){

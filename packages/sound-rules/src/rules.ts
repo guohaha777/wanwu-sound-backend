@@ -48,13 +48,9 @@ export function backgroundProblems(rules:BackgroundRules){
 }
 export function mixProblems(rules:MixRules){return checkRules('mix',rules,mixLimits);}
 export function textbookMatchProblems(rules:TextbookMatchRules){
- const w=rules.weights;
  return checkRules('textbookMatch',rules,textbookMatchLimits,[
-  [w.density+w.repetition+w.register+w.mood>0,'textbookMatch.weights 不能全是 0'],
   [rules.density.sparseBelow<rules.density.busyAbove,'textbookMatch.density.sparseBelow 要小于 busyAbove'],
   [rules.repetition.lowBelow<rules.repetition.highAbove,'textbookMatch.repetition.lowBelow 要小于 highAbove'],
-  [rules.register.lowBelowMidi<rules.register.highAboveMidi,'textbookMatch.register.lowBelowMidi 要小于 highAboveMidi'],
-  [Number.isInteger(rules.top),'textbookMatch.top 要是整数'],
  ]);
 }
 

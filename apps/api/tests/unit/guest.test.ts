@@ -36,7 +36,7 @@ function fakeModel(answer:(prompt:string)=>unknown,calls:Call[]=[]):Post{
  };
 }
 const good=(prompt:string)=>prompt.includes('motifDegrees')?idea
- :prompt.includes('feature')?{feature:'《摇篮曲》是三拍子，嗒— 嗒，像摇篮轻轻晃。',shape:'这次唱低一点，听起来更暖。',meeting:'「声音1」和重拍碰在一起。',task:'跟着拍手试一试。'}
+ :prompt.includes('feature')?{feature:'《摇篮曲》是三拍子，嗒— 嗒，像摇篮轻轻晃。',meeting:'「声音1」和重拍碰在一起。',task:'跟着拍手试一试。'}
  :prompt.includes('tryThis')?{lines:workBrief.facts.map(fact=>({kind:fact.kind,line:'这里听起来很有意思。'})),tryThis:'再听一遍试试。'}
  :{nearest:'calm'};
 
@@ -173,7 +173,7 @@ test('background jobs: notes-ai ready, audio-ai not open yet, failures and teach
  const ready=await background(server,'notes-ai') as {status:string;source:string;notes:unknown[];promptVersion:string};
  assert.equal(ready.status,'ready');assert.equal(ready.source,'notes-ai');assert.ok(ready.notes.length>0);assert.equal(ready.promptVersion,'background-notes-prompt-v1');
  assert.deepEqual(await background(server,'audio-ai'),{status:'unavailable',reason:'not-open'});
- assert.deepEqual(await background(server,'notes-ai',{...calmLullaby,textbook:null,variation:null,teachingMusic:{musicId:'m1'}}),{status:'unavailable',reason:'not-open'});
+ assert.deepEqual(await background(server,'notes-ai',{...calmLullaby,textbook:null,teachingMusic:{musicId:'m1'}}),{status:'unavailable',reason:'not-open'});
  const bad=await app(fakeModel(()=>({motifDegrees:[1],motifBeats:[1]})));
  assert.deepEqual(await background(bad.server,'notes-ai'),{status:'unavailable',reason:'failed'});
  const slow=await app(fakeModel(()=>new GuestFailure('timeout')));
@@ -196,6 +196,11 @@ test('textbook features: the audio model hears the excerpt; its checked answer c
  assert.deepEqual(body.rhythmCell,[.5,.5,1]);assert.equal(body.source,'audio');assert.equal(body.model,'qwen3.8-omni-flash');assert.equal(body.tempoBpm,96);
  assert.equal(body.promptVersion,'textbook-features-prompt-v1');assert.equal(checkedOf(reply).checked,'accepted');
  assert.equal(calls.length,1);assert.ok(isAudio(calls[0]!));assert.equal((calls[0]!.body as unknown as {reasoning_effort:string}).reasoning_effort,'none');
+ const sent=(call:Call)=>((call.body.messages.at(-1)!.content as unknown as {input_audio?:{format:string}}[])[0]!.input_audio!.format);
+ assert.equal(sent(calls[0]!),'mp3');
+ // The page sends a WAV excerpt (RIFF header): it goes to the model as WAV.
+ await server.inject({method:'POST',url:'/api/v1/textbook/features',payload:{brief:featuresBrief,audio:Buffer.from('RIFF....WAVEfmt ').toString('base64')}});
+ assert.equal(sent(calls[1]!),'wav');
 });
 
 test('textbook features: no excerpt, or the audio model failing, falls to the language model with numbers only; neither → 502',async()=>{

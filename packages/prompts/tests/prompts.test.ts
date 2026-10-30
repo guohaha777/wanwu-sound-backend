@@ -70,5 +70,5 @@ test('AI backgrounds take the colour the local rules take: the child\'s mood, el
  const songOnly={...calmLullaby,mood:null};
  assert.match(buildBackgroundAudio(songOnly).prompt,/情绪：平静、舒展/);
  assert.match(buildBackgroundNotes(songOnly).prompt,/【心情】平静/);
- assert.match(buildBackgroundAudio({...songOnly,textbook:null,variation:null}).prompt,/情绪：自然、中性/);
+ assert.match(buildBackgroundAudio({...songOnly,textbook:null}).prompt,/情绪：自然、中性/);
 });

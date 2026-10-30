@@ -8,8 +8,7 @@ import {SOUND_CHOICES,SOUND_DIMENSIONS,SOUND_KINDS} from '@wanwu-v2/contracts/so
 import type {SoundDimension,SoundKind} from '@wanwu-v2/contracts/sound';
 import {MEETING_KINDS} from '@wanwu-v2/contracts/talk';
 import type {Discovery,MeetingKind,TextbookTalk} from '@wanwu-v2/contracts/talk';
-import {TEXTBOOK_VARIATIONS} from '@wanwu-v2/contracts/textbook';
-import type {Metre,TextbookTrack,TextbookVariation} from '@wanwu-v2/contracts/textbook';
+import type {Metre,TextbookTrack} from '@wanwu-v2/contracts/textbook';
 import {fill,unknownPlaceholders} from './fill.ts';
 import {wordProblems} from './style.ts';
 import type {Slot} from './style.ts';
@@ -22,7 +21,9 @@ export type DiscoveryText={line:string;idea:string;explain:string;ask:string;try
 export type DiscoveriesCorpus={version:string;kinds:Record<DiscoveryKey,DiscoveryText>};
 export type TextbookTalkCorpus={
  version:string;metres:Record<`${Metre}`,string>;rhythm:{short:string;beat:string;long:string};feature:string;
- shapes:Record<TextbookVariation,string>;meetings:Record<MeetingKind,{line:string;named?:string}>;tasks:Record<MeetingKind,string>;
+ /** A teaching-music card's line for children when no model answered: what to do with the beat it has. */
+ teachingLine:Record<`${Metre}`,string>;
+ meetings:Record<MeetingKind,{line:string;named?:string}>;tasks:Record<MeetingKind,string>;
 };
 
 /** The facts each discovery sentence may name. */
@@ -67,9 +68,11 @@ export function discoveriesProblems(file:DiscoveriesCorpus){
 
 export function textbookTalkProblems(file:TextbookTalkCorpus){
  const problems:string[]=[...check('textbook-talk.feature',file.feature,'talk',['title','metre','rhythm','childLine'])];
- for(const metre of ['2','3','4'] as const)if(!file.metres[metre])problems.push(`textbook-talk.metres.${metre} 缺少`);
+ for(const metre of ['2','3','4'] as const){
+  if(!file.metres[metre])problems.push(`textbook-talk.metres.${metre} 缺少`);
+  problems.push(...check(`textbook-talk.teachingLine.${metre}`,file.teachingLine?.[metre],'childLine',[]));
+ }
  for(const beat of ['short','beat','long'] as const)if(!file.rhythm[beat])problems.push(`textbook-talk.rhythm.${beat} 缺少`);
- for(const variation of TEXTBOOK_VARIATIONS)problems.push(...check(`textbook-talk.shapes.${variation}`,file.shapes[variation],'talk',[]));
  for(const kind of MEETING_KINDS){
   const meeting=file.meetings[kind];
   problems.push(...check(`textbook-talk.meetings.${kind}.line`,meeting?.line,'talk',[]),...check(`textbook-talk.tasks.${kind}`,file.tasks[kind],'talk',[]));
@@ -130,15 +133,17 @@ export const metreNames=(corpus:TextbookTalkCorpus=TEXTBOOK_TALK)=>({2:corpus.me
 export function rhythmWords(cell:readonly number[],corpus:TextbookTalkCorpus=TEXTBOOK_TALK){
  return cell.map(beats=>beats<.75?corpus.rhythm.short:beats<1.5?corpus.rhythm.beat:corpus.rhythm.long).join(' ');
 }
+/** The line a teaching-music card carries when no model answered (by its metre). */
+export const teachingLine=(metre:Metre,corpus:TextbookTalkCorpus=TEXTBOOK_TALK)=>corpus.teachingLine[`${metre}`];
 type SongCard=Pick<TextbookTrack,'title'|'meter'|'rhythmCell'|'childLine'>;
 export function songFeature(track:SongCard,corpus:TextbookTalkCorpus=TEXTBOOK_TALK){
  return fill(corpus.feature,{title:track.title,metre:corpus.metres[`${track.meter}`],rhythm:rhythmWords(track.rhythmCell,corpus),childLine:track.childLine});
 }
-/** Four short sentences: the song's feature, the shape it took this time, what happened, one thing to try. */
-export function textbookTalk(track:SongCard,variation:TextbookVariation,meeting:MeetingKind,exampleName:string|null,corpus:TextbookTalkCorpus=TEXTBOOK_TALK):TextbookTalk{
+/** Three short sentences: the song's feature, what happened, one thing to try. */
+export function textbookTalk(track:SongCard,meeting:MeetingKind,exampleName:string|null,corpus:TextbookTalkCorpus=TEXTBOOK_TALK):TextbookTalk{
  const said=corpus.meetings[meeting];
  return {
-  feature:songFeature(track,corpus),shape:corpus.shapes[variation],
+  feature:songFeature(track,corpus),
   meeting:exampleName&&said.named?fill(said.named,{name:exampleName}):said.line,
   task:corpus.tasks[meeting],
  };

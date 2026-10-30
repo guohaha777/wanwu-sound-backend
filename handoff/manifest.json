@@ -466,7 +466,7 @@
   "sharedFiles": [
     {
       "path": "packages/contracts/README.md",
-      "sha256": "ffca242ec848af17dbc1cb167b449fb0049867bab461dbf0735b127b6f3e7f5d"
+      "sha256": "91fdb4fe1356ac68450423c951379569b00c0863b99ca4ae2e867d1237ab5232"
     },
     {
       "path": "packages/contracts/package.json",
@@ -486,11 +486,11 @@
     },
     {
       "path": "packages/contracts/src/background.ts",
-      "sha256": "a588c0d716d869be9c3511c870d4250508b6b612ef25400accd76e7e97fec188"
+      "sha256": "877a22519fc14eee45eac236c3ff003cd3c9b5c7a8e9bbdb1e4a62b32bc86a39"
     },
     {
       "path": "packages/contracts/src/cloud.ts",
-      "sha256": "8cae95485673654f050fba5044e7a3ec3cb414ecf4656210404bccc04349b46c"
+      "sha256": "5f009b029e83a93dfa51da5755b61d952f64f0495d58635645a34bf46c5fefef"
     },
     {
       "path": "packages/contracts/src/sound.ts",
@@ -498,23 +498,23 @@
     },
     {
       "path": "packages/contracts/src/talk.ts",
-      "sha256": "32f46b7685f3193dab82d56dca1f46fa8ad7a9b61dcdef24bc1b8337effd55ad"
+      "sha256": "050308a42094def843f7b0c81f8a553f22f6df7d3a595112d19775b872944fe2"
     },
     {
       "path": "packages/contracts/src/textbook.ts",
-      "sha256": "0beffaf60b4c0b5579c1f7291488d7cb565a1a13a22f35d76532f621967b17be"
+      "sha256": "24412dc5a108c5174b4d5f284ef8d114b6a041f7797d5b636aefb4cd0fdb5f99"
     },
     {
       "path": "packages/contracts/src/work.ts",
-      "sha256": "84022c4a8842410ad40a1d393c96ed056f6241c6f6f7712e959e51080c600bf7"
+      "sha256": "775a35b2de686d08b6a6945c116ff2d27404e7f076d86552bd887ee9671aff11"
     },
     {
       "path": "packages/sound-rules/README.md",
-      "sha256": "f18bb4f39e083ce5b9a0533e8e7a72b4ebf499881c2d5342ea267f21bc9e02cf"
+      "sha256": "6604fe96efa96f05ba4ef85fe05f30d851465f7d4218ee69c4cc2ea0517aec20"
     },
     {
       "path": "packages/sound-rules/package.json",
-      "sha256": "30495c4d84c7f883c438b80338392d25eaeb1417f65db5b19338658574133150"
+      "sha256": "dca64c9647d32d27877eb3f2119fd871650bf20b73a28102c834e7cd2e440e80"
     },
     {
       "path": "packages/sound-rules/rules/analysis.v2.json",
@@ -522,7 +522,7 @@
     },
     {
       "path": "packages/sound-rules/rules/background.v1.json",
-      "sha256": "17a49892a5f620974c2d7b5fd5a686501340b6d4177d47f775b151673930ef88"
+      "sha256": "20a28c7d1c01a2cef23f61aa43fb64bb8b0a4b86ebbd2ba3da37c5baddd42840"
     },
     {
       "path": "packages/sound-rules/rules/mix.v1.json",
@@ -534,7 +534,7 @@
     },
     {
       "path": "packages/sound-rules/rules/textbook-match.v1.json",
-      "sha256": "27b8aae60486f3ca7520c0eb0fd4489b3da68de84bb40fff1ddb264fc76178f1"
+      "sha256": "2c7235d097bc96ce204801b36ccba175a7451c4dd543ade1e15a07dddd95329a"
     },
     {
       "path": "packages/sound-rules/src/analysis.ts",
@@ -546,7 +546,7 @@
     },
     {
       "path": "packages/sound-rules/src/background.ts",
-      "sha256": "2ff5871ab6d3c08e48440aee640cf390fc03c7dd30ae61730dbc7bd2b8a8d28c"
+      "sha256": "5f02958924c354e53208601f16e527947207d78e9199ea38584a3f6d8d41a607"
     },
     {
       "path": "packages/sound-rules/src/mix.ts",
@@ -558,11 +558,11 @@
     },
     {
       "path": "packages/sound-rules/src/rules.ts",
-      "sha256": "1f19c4e46169155036f6d7debed767516e5d6de453843d94e5363ccd4e3d0f01"
+      "sha256": "bf2db1b3bc1761a38eacb673820e1deab47b95c0ff4b880d916bc22437df5fb0"
     },
     {
       "path": "packages/sound-rules/src/schema.ts",
-      "sha256": "a30f861f95a467e8698fc5d22615195c367759b4a21ebb1ba280a07e90a53ba3"
+      "sha256": "f63dd28ece76d43c2e191e5b5b7872cf1d72adf946af9432dc9481696d22e25b"
     },
     {
       "path": "packages/sound-rules/src/shaping.ts",
@@ -574,11 +574,7 @@
     },
     {
       "path": "packages/sound-rules/src/textbookMatch.ts",
-      "sha256": "0fe7593987330afd68e09d6d5bdccc42a8aaf79572c906191a846fdc1113c540"
-    },
-    {
-      "path": "packages/sound-rules/src/textbookVariation.ts",
-      "sha256": "0fa6764bc827839ce1210cbbeedfedb9b14a868ea5193cf4cdc3c337e19a865e"
+      "sha256": "002acd6c548adc8d35bfcd6446674206975819bd5b3dfbfbe4c6c6c0f9161c9c"
     },
     {
       "path": "packages/sound-rules/tests/analysis.test.ts",
@@ -586,7 +582,7 @@
     },
     {
       "path": "packages/sound-rules/tests/background.test.ts",
-      "sha256": "a9cf2d3641cb6357cec1bad89ef299f1c32395886fc4a40064a7a33296b29f0e"
+      "sha256": "149c4efc6bb44f4e10afa8a1ede6cdecc4381bb5da1376870f19cbbb0e2d64a2"
     },
     {
       "path": "packages/sound-rules/tests/helpers.ts",
@@ -602,7 +598,7 @@
     },
     {
       "path": "packages/sound-rules/tests/textbookMatch.test.ts",
-      "sha256": "1b29a59504596e06b8349f402160882eae15c2f2bf4705d200c3e4000c2a729e"
+      "sha256": "f2139d741ac84b46ecf011e8a41c1d13c6fe45e2ec90b4d8d3a349ac50711772"
     },
     {
       "path": "packages/audio-engine/package.json",
@@ -626,7 +622,7 @@
     },
     {
       "path": "packages/audio-engine/src/render.ts",
-      "sha256": "7b6d22787c25783631cc8ed7d7d3f7f9f0cd91161bc7db69c00290056f8e2d80"
+      "sha256": "ba35f98d0aec35b45677ca69677ab963ee9562a642ec990a5b209412e9edbb4f"
     },
     {
       "path": "packages/audio-engine/src/shaping.ts",
@@ -662,7 +658,7 @@
     },
     {
       "path": "packages/prompts/corpus/textbook-talk.v1.json",
-      "sha256": "18452eb128d1ac1ff90f879534310fd9c25c69ae681eaf186855f710c362436d"
+      "sha256": "6ef733753e8925c082ecba8d003834f6a753a104cd43bec2006a45a625bbecb5"
     },
     {
       "path": "packages/prompts/package.json",
@@ -670,11 +666,11 @@
     },
     {
       "path": "packages/prompts/prompts/background-audio.v1.json",
-      "sha256": "f97676e868d2bfdb61bb0970f4c61702d01f2c517b2deb3aa191b0de1e31e978"
+      "sha256": "3bc0d77f5b5f4225aa21dc81cc60992c44778134d53b66da838b946a68441e89"
     },
     {
       "path": "packages/prompts/prompts/background-notes.v1.json",
-      "sha256": "98db323a7990e58d9bd8956e37bfd7d2af55848373d53f8ef4dd37d7b4a0e021"
+      "sha256": "966d86f8394f5db027e125a9d5bfa30876956200c5261b6221aaa2d730b11dd6"
     },
     {
       "path": "packages/prompts/prompts/mood-words.v1.json",
@@ -690,11 +686,11 @@
     },
     {
       "path": "packages/prompts/prompts/textbook-features.v1.json",
-      "sha256": "3df5e1031ac727de04ba464fd9dc390d0fd26b71670cdd002d640806e1815f15"
+      "sha256": "a33575f58cf893ce6e83760ff32a65e308cddd3ef9582fafa97711067d23b9cd"
     },
     {
       "path": "packages/prompts/prompts/textbook-talk.v1.json",
-      "sha256": "f77715862a4f55db427df8ba18c5e69799aa4179742b39e37b91ae0494adb48c"
+      "sha256": "9d46cdcbecda4a91d380e304a100f244e655b53f64baacaf8bfe067897a1f5b1"
     },
     {
       "path": "packages/prompts/prompts/textbook-words.v1.json",
@@ -706,11 +702,11 @@
     },
     {
       "path": "packages/prompts/src/accept.ts",
-      "sha256": "5c1e636d934db4169b2b9d2f74fe0428c689f2d72771f223de95f1c23dd1c468"
+      "sha256": "3f24b7dada2837cf340826eeee6413f273c6e817e0f46c82aa06330d3c5892bb"
     },
     {
       "path": "packages/prompts/src/corpus.ts",
-      "sha256": "3443cb733a0d273910d78fe94e6c3329b5265986cd5dbc514f8ee887ea74946c"
+      "sha256": "a0dffc6f157926e6d4e0b99b6327c0a5e3eae28def1155be64a87a5f68516337"
     },
     {
       "path": "packages/prompts/src/fill.ts",
@@ -722,11 +718,11 @@
     },
     {
       "path": "packages/prompts/src/tasks/background.ts",
-      "sha256": "b57c766b3748ac1e265f3cae90afe35442f0eba9c619cee87c75660877eacadd"
+      "sha256": "2c561723debd82e6bd21377c6f255ec041c2f86e7f46a8f4217856b510bf1055"
     },
     {
       "path": "packages/prompts/src/tasks/features.ts",
-      "sha256": "c7e23db63f40122778c2788573907eddc0ca3abbbcdf7184317f4376885d6bf5"
+      "sha256": "3d2c49379f34b089c99edfb1384491d44e0458fa84d5b13dd7f5bd5da56d75c0"
     },
     {
       "path": "packages/prompts/src/tasks/files.ts",
@@ -742,7 +738,7 @@
     },
     {
       "path": "packages/prompts/src/tasks/talk.ts",
-      "sha256": "a19e7d23e6db1278a322508e68920f6a3ddb14b7a93e633dc0d542b84a53a974"
+      "sha256": "15bdc84052eb5f656c8f0eecd418fb3c0b9ca3c9c37f88445616c8f29b6bb123"
     },
     {
       "path": "packages/prompts/src/tasks/words.ts",
@@ -750,23 +746,23 @@
     },
     {
       "path": "packages/prompts/tests/corpus.test.ts",
-      "sha256": "740db4cf0c50ace1fd448b14255d0854f2771dabc53485add1ca27add89c8de3"
+      "sha256": "be50dae723140dadee1c6668c4a7abe05d8958f94d3899ada2c91114b42ac040"
     },
     {
       "path": "packages/prompts/tests/features.test.ts",
-      "sha256": "66f32824b72c153dcabe4311b831ec93b3c6ddcd1f1a787f2203b3f036142e58"
+      "sha256": "39986ca1619979d0b1aebb2caa1066281c73876b135b72945e958e28b3eade67"
     },
     {
       "path": "packages/prompts/tests/fixtures/briefs.ts",
-      "sha256": "bbcffef4a6b3136f32cbc807268369e158801fbb00d18125a5416c6cc9a76fcd"
+      "sha256": "f17f7639b5fb22a838aa173ae3f6a1bfed0f585b49c0b3184d739081c52ed7a7"
     },
     {
       "path": "packages/prompts/tests/prompts.test.ts",
-      "sha256": "d719fdb7e86998d380b1ceddd106bad08c3de743026f28ff6a70bbf18cc91578"
+      "sha256": "a95ae9670aecc52a5c05739a3eb88637f6278899eb9fa44f227be56ff47e349e"
     },
     {
       "path": "packages/prompts/tests/replies.test.ts",
-      "sha256": "643acfe2464a71260bc7f4a74c1085085959d965bf62a7a68df80b8d64b65742"
+      "sha256": "276e71c71d1ecba6f950f799e82ab9d91485cd55ea0fb9ef2952235842077352"
     },
     {
       "path": "packages/music-features/package.json",
@@ -778,7 +774,7 @@
     },
     {
       "path": "packages/music-features/src/index.ts",
-      "sha256": "7608836b6cae7c102ba0004fd2c6d643309e83976fe5051b7ef7a8b600c7027d"
+      "sha256": "f3e0fd351de26fa7f88d4ffcd845f7e03988d782713677256f38d10eca13480f"
     },
     {
       "path": "packages/music-features/src/measure.ts",

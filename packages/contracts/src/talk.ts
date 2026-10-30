@@ -6,8 +6,7 @@
 // are written as numbered tokens (「声音1」) and the page puts the names back after checking the reply.
 import {MOODS} from './arrangement.ts';
 import type {MoodId} from './arrangement';
-import {TEXTBOOK_VARIATIONS} from './textbook.ts';
-import type {Metre,TextbookVariation} from './textbook';
+import type {Metre} from './textbook';
 
 export const TALK_CONTRACT_VERSION='talk-v1' as const;
 
@@ -50,15 +49,15 @@ export type WorkTalkReply={lines:{kind:DiscoveryKind;line:string}[];tryThis:stri
 
 // ----- 课本讲解 -----
 export const TEXTBOOK_TALK_BRIEF_VERSION='textbook-talk-brief-v1' as const;
-export type TextbookTalk={feature:string;shape:string;meeting:string;task:string};
-export const TEXTBOOK_TALK_PARTS:readonly (keyof TextbookTalk)[]=['feature','shape','meeting','task'];
+export type TextbookTalk={feature:string;meeting:string;task:string};
+export const TEXTBOOK_TALK_PARTS:readonly (keyof TextbookTalk)[]=['feature','meeting','task'];
 export type TextbookTalkBrief={
  version:typeof TEXTBOOK_TALK_BRIEF_VERSION;
  title:string;metre:Metre;rhythm:string;childLine:string;
- variation:TextbookVariation;meeting:MeetingKind;
+ meeting:MeetingKind;
  /** The child's sound that met the beat, as a token; null when none. */
  example:SoundToken|null;
- /** The four local sentences (with tokens): the AI rewords these, it does not start from nothing. */
+ /** The three local sentences (with tokens): the AI rewords these, it does not start from nothing. */
  local:TextbookTalk;
 };
 
@@ -93,7 +92,7 @@ export function isTextbookTalkBrief(value:unknown):value is TextbookTalkBrief{
  if(!value||typeof value!=='object')return false;
  const raw=value as Record<string,unknown>,local=raw.local as Record<string,unknown>|null;
  return raw.version===TEXTBOOK_TALK_BRIEF_VERSION&&nonEmpty(raw.title)&&[2,3,4].includes(raw.metre as number)&&nonEmpty(raw.rhythm)&&nonEmpty(raw.childLine)
-  &&TEXTBOOK_VARIATIONS.includes(raw.variation as TextbookVariation)&&MEETING_KINDS.includes(raw.meeting as MeetingKind)
+  &&MEETING_KINDS.includes(raw.meeting as MeetingKind)
   &&(raw.example===null||isSoundToken(raw.example))
   &&!!local&&typeof local==='object'&&TEXTBOOK_TALK_PARTS.every(part=>nonEmpty(local[part]));
 }

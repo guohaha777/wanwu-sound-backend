@@ -21,8 +21,8 @@ test('a bad corpus edit is reported in plain words, naming the line',()=>{
  assert.match(soundHintsProblems(hints).join('\n'),/sound-hints\.pattern\.once 至少要有一句/);
  const discoveries=structuredClone(DISCOVERIES);discoveries.kinds.repeat.line='「{nmae}」出现了 {times} 次。';
  assert.match(discoveriesProblems(discoveries).join('\n'),/discoveries\.repeat\.line 用了不认识的占位符 \{nmae\}/);
- const talk=structuredClone(TEXTBOOK_TALK);delete (talk.shapes as Record<string,unknown>).offset;
- assert.match(textbookTalkProblems(talk).join('\n'),/textbook-talk\.shapes\.offset 应该是一句话/);
+ const talk=structuredClone(TEXTBOOK_TALK);delete (talk.tasks as Record<string,unknown>).answer;
+ assert.match(textbookTalkProblems(talk).join('\n'),/textbook-talk\.tasks\.answer 应该是一句话/);
 });
 
 test('teacher sentences may use music terms; child sentences may not; a placeholder counts as a typical name',()=>{
@@ -53,11 +53,11 @@ test('discoveries: every fact fills its sentences, the same wording the page sho
  assert.equal(localTryThis([{kind:'opening',first:'蛙鸣',next:null}]),'换一个声音放在最前面，听听开头有什么不同。');
 });
 
-test('textbook talk: four sentences from the song card and what the rules found',()=>{
+test('textbook talk: three sentences from the song card and what the rules found',()=>{
  const lullaby={title:'摇篮曲',meter:3 as const,rhythmCell:[2,1],childLine:'像摇篮轻轻晃'};
  assert.equal(songFeature(lullaby),'「摇篮曲」是三拍子，节奏是「嗒— 嗒」，像摇篮轻轻晃。');
- const talk=textbookTalk(lullaby,'lower','together','蛙鸣');
+ const talk=textbookTalk(lullaby,'together','蛙鸣');
  assert.equal(talk.meeting,'你的「蛙鸣」正好落在拍子上，和背景一起用力。');
- assert.equal(textbookTalk(lullaby,'lower','together',null).meeting,'你的声音落在拍子上，和背景一起用力。');
- assert.match(talk.shape,/唱低了一点/);
+ assert.equal(textbookTalk(lullaby,'together',null).meeting,'你的声音落在拍子上，和背景一起用力。');
+ assert.deepEqual(Object.keys(talk),['feature','meeting','task']);
 });

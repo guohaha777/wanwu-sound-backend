@@ -87,7 +87,7 @@ export function guestRoutes(app:FastifyInstance,context:GuestContext){
   const {reply,model,promptVersion}=await text(request,'textbook-talk',()=>buildTextbookTalk(brief));
   const value=readReply(reply).value;
   if(readTextbookTalk(reply,brief).acceptance.status==='rejected'||!isTextbookTalk(value))throw new ApiError(502,'failed');
-  return {feature:value.feature,shape:value.shape,meeting:value.meeting,task:value.task,model,promptVersion};
+  return {feature:value.feature,meeting:value.meeting,task:value.task,model,promptVersion};
  });
 
  // 课本特征卡: the page measured the recording; the audio model hears the excerpt (when sent and set up), else the language

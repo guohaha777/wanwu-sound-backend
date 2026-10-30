@@ -17,12 +17,6 @@ export const DENSITIES:readonly Density[]=['sparse','medium','busy'];
 export type Brightness='dark'|'mid'|'bright';
 export const BRIGHTNESSES:readonly Brightness[]=['dark','mid','bright'];
 export type Metre=2|3|4;
-/**
- * 换几种样子: how the song's feature is played in the background this time — as it is, its rhythm cell twice as long or
- * half as long, half a beat later, or moved up / down. Only the feature changes shape, never the child's sounds.
- */
-export type TextbookVariation='original'|'stretch'|'squeeze'|'offset'|'higher'|'lower';
-export const TEXTBOOK_VARIATIONS:readonly TextbookVariation[]=['original','stretch','squeeze','offset','higher','lower'];
 
 export type TextbookTrack={
  version:typeof TEXTBOOK_CONTRACT_VERSION;
@@ -46,8 +40,9 @@ export type TextbookTrack={
  tonic?:number;
  /** One line a child understands: “像走路，一步一步”. */
  childLine:string;
- /** What made which part: `example` marks the made-up examples. */
- extraction:{numbers:'code'|'score'|'example';words:'ai'|'teacher'|'example';confidence:number;earChecked:boolean};
+ /** What made which part: `example` marks the made-up examples; words by `code` = the corpus line used when no model
+  *  answered (a teaching-music card made on the page). */
+ extraction:{numbers:'code'|'score'|'example';words:'ai'|'teacher'|'code'|'example';confidence:number;earChecked:boolean};
 };
 
 const nonEmpty=(value:unknown):value is string=>typeof value==='string'&&value.length>0;
@@ -69,6 +64,6 @@ export function isTextbookTrack(value:unknown):value is TextbookTrack{
  if(!LEVELS.includes(raw.repetition as Level)||!MOODS.includes(raw.mood as MoodId))return false;
  if(raw.tonic!==undefined&&!(Number.isInteger(raw.tonic)&&(raw.tonic as number)>=0&&(raw.tonic as number)<=11))return false;
  const extraction=raw.extraction as Record<string,unknown>|null;
- return !!extraction&&['code','score','example'].includes(extraction.numbers as string)&&['ai','teacher','example'].includes(extraction.words as string)
+ return !!extraction&&['code','score','example'].includes(extraction.numbers as string)&&['ai','teacher','code','example'].includes(extraction.words as string)
   &&typeof extraction.confidence==='number'&&extraction.confidence>=0&&extraction.confidence<=1&&typeof extraction.earChecked==='boolean';
 }

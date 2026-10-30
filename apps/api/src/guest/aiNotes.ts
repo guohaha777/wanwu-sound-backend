@@ -18,8 +18,7 @@ const REST={sparse:2,medium:1,busy:0} as const;
 const MIDI_LOW=36,MIDI_HIGH=96;
 
 export function developIdea(brief:BackgroundBrief,idea:MusicIdea,rules:BackgroundRules=BACKGROUND_RULES):BackgroundNoteData[]{
- const textbook=brief.textbook?{...brief.textbook,...(brief.variation?{variation:brief.variation}:{})}:null;
- const plan=backgroundPlan({seconds:brief.seconds,sounding:brief.sounding,mood:brief.mood,textbook,seed:brief.workId},rules);
+ const plan=backgroundPlan({seconds:brief.seconds,sounding:brief.sounding,mood:brief.mood,textbook:brief.textbook,seed:brief.workId},rules);
  const beat=60/plan.tempo,bar=beat*plan.metre,end=plan.cadenceAt,seconds=plan.seconds;
  const {scale}=rules.modes[plan.mode],{liftSemitones,minGapBeats,marginSeconds,noteLengthPortion}=rules.melody;
  const base=plan.tonic+liftSemitones;

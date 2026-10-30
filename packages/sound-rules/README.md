@@ -8,7 +8,7 @@
 | `rules/shaping.v3.json` | 五个维度 | `src/shaping.ts`、`src/arrange.ts` |
 | `rules/background.v1.json` | 本地背景（心情、课本节奏、旋律空档、结尾） | `src/background.ts` |
 | `rules/mix.v1.json` | 混音（两层音量、背景让一让、限幅） | `src/mix.ts` |
-| `rules/textbook-match.v1.json` | 帮我找找（课本歌曲匹配） | `src/textbookMatch.ts` |
+| `rules/textbook-match.v1.json` | 作品概况（疏密、重复，随 AI 背景请求发送） | `src/textbookMatch.ts` |
 
 - **数值**在 `rules/*.json`。音乐角色只需要改这里，不用碰代码。
 - **算法**在 `src/`，都是纯函数：输入采样或体检结果，输出数据。
@@ -80,7 +80,6 @@
 | 好奇 | 多利亚调式 | i–IV–i–IV | 88 / 3 | 每拍 |
 
 - **节奏跟课本**：选了课本歌曲，就用它的速度、拍子，旋律按它的节奏型 `rhythmCell` 走。心情和课本冲突时，心情管色彩、课本管节奏。只借节奏和气质，不照搬旋律。
-- **换几种样子**（`variations`，算法 `shapeOf` 在 `src/textbookVariation.ts`）：压短 = 节奏型每个音乘 `squeezeFactor`（0.5，快一倍）；慢一倍 = 乘 `stretchFactor`（2）；晚半拍 = 晚 `offsetBeats` 拍进来；唱高一点 / 唱低一点 = 旋律升 / 降 `registerSemitones`（12，一个八度）。只改背景旋律，和弦、低音和孩子的声音不变。本地背景和小松鼠说的节奏变化（「嗒— 嗒」变成「嗒 嘀」）读的是同一个函数。
 - **调式**（`modes.*`）：`scale` 是 7 个音（定和弦），`melody` 是旋律可用的音（五声为主，孩子容易接受）。
 - **和弦和低音一直都在**；**旋律只在空档里**：孩子的声音前后各留 `melody.marginSeconds`，空档至少 `melody.minGapBeats` 拍才进来，在音区 `liftSemitones` 起 `rangeSemitones` 之内小步走（每步不超过 `leapSteps`），重拍和乐句最后一个音落在和弦音上。
 - **节奏声部**（`rhythm.two/three/four`）：每拍一下，按拍子分强弱；重拍再加 `accentBoost × 心情的 accent`。只有选了小鼓这类乐器才听得到。
@@ -96,11 +95,10 @@
 - **背景让一让**（`duck`）：孩子的声音响起时，背景在 `attackSeconds` 内压低 `depthDb`，声音结束后 `releaseSeconds` 内回来；离得很近的几声算一段，不来回抽动。
 - **限幅**（`limiter`）：总线上的限幅器，防止两层叠加后爆音。
 
-## 帮我找找（`textbook-match.v1.json`，`src/textbookMatch.ts`）
+## 作品概况（`textbook-match.v1.json`，`src/textbookMatch.ts`）
 
-- 孩子的摆放和每首课本歌曲用同一组字段描述：**疏密**（每秒响几声，`density`）、**重复**（再放一次的声音、选了重复 / 一阵一阵的声音占多少，`repetition`）、**高低**（声音的高低档；歌曲按音区中点，`register`）、**心情**（`moods.*` 的愉悦度和激动度）。
-- 按 `weights` 加权求相似度，取前 `top` 首；每首带上最相似的那一项，页面据此说“为什么像”。孩子没选心情时，心情这一项不参与。
-- 全在本机算，不用模型、不用联网。课本歌曲的特征模板见 `@wanwu-v2/contracts/textbook`。
+- 孩子的摆放用课本歌曲同样的说法概括：**疏密**（每秒响几声，`density.sparseBelow / busyAbove`）、**重复**（再放一次的声音、选了重复 / 一阵一阵的声音占多少，`repetition.lowBelow / highAbove`）、**高低**、**心情**。只把这几个词随 AI 背景请求发出去。
+- 全在本机算，不用模型、不用联网。（「帮我找找」已在 2026-10-30 去掉，匹配用的权重等已删除。）
 
 ## 改规则的流程（给音乐角色）
 
@@ -116,7 +114,6 @@
 > - “悲伤的背景太亮” → `background.moods.sad.mode` / `tonic`
 > - “背景旋律太碎、插不进去” → `background.melody.minGapBeats`
 > - “孩子的声音一响背景就塌下去” → `mix.duck.depthDb`
-> - “帮我找找总推同一首” → `textbookMatch.weights`
 > - 改了体检规则（`analysis.v2.json`）后，要运行 `npm run assets:library` 重算示例声音的体检结果，否则检查会报错。
 
 ### 调音台（2026-10-24 已做：`/lab/sound-rules`）

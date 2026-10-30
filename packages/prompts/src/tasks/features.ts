@@ -28,7 +28,7 @@ export type TextbookFeaturesBrief={
 export type TextbookFeatures={rhythmCell:number[];meter:Metre;tempoBpm:number;mood:MoodId;childLine:string|null;teacherNote:string|null};
 /** From this metre confidence the program counts as sure: the prompt says so, and the model may not change the metre. */
 export const METRE_SURE=.3;
-type AcceptBrief=Pick<TextbookFeaturesBrief,'tempoBpm'|'meter'|'meterConfidence'|'listenSeconds'|'fallbackCell'>;
+type AcceptBrief=Pick<TextbookFeaturesBrief,'tempoBpm'|'meter'|'meterConfidence'|'listenSeconds'|'fallbackCell'|'candidates'>;
 
 const finite=(value:unknown):value is number=>typeof value==='number'&&Number.isFinite(value);
 export function isTextbookFeaturesBrief(value:unknown):value is TextbookFeaturesBrief{
@@ -44,14 +44,17 @@ export function isTextbookFeaturesBrief(value:unknown):value is TextbookFeatures
 export const TEXTBOOK_FEATURES_PROMPT=loadPrompt(featuresFile as PromptFile,{
  task:'textbook-features',model:'audio',
  placeholders:['title','listen','tempo','metre','metreSure','mode','density','brightness','candidates','others','moods','childLineMax','noteMax','example'],
- templates:{candidateLine:['cell','bars'],otherLine:['title','rhythm','childLine'],'words.listen.audio':['seconds'],'words.listen.numbers':['fallback'],'words.noCandidates':[],'words.noOthers':[]},
- tables:{'words.metre':['2','3','4'],'words.sure':['high','low'],'words.mode':TEXTBOOK_MODES,'words.density':DENSITIES,'words.brightness':BRIGHTNESSES,'words.mood':MOODS},
- example:value=>{const result=acceptTextbookFeatures(value,{tempoBpm:96,meter:2,meterConfidence:.1,listenSeconds:30,fallbackCell:[1,1]});return result.status==='accepted'?[]:result.notes;},
+ templates:{candidateLine:['cell','say','bars'],otherLine:['title','rhythm','childLine'],'words.listen.audio':['seconds'],'words.listen.numbers':['fallback'],'words.noCandidates':[],'words.noOthers':[]},
+ tables:{'words.beats':['0.25','0.5','0.75','1','1.5','2','3','4'],'words.metre':['2','3','4'],'words.sure':['high','low'],'words.mode':TEXTBOOK_MODES,'words.density':DENSITIES,'words.brightness':BRIGHTNESSES,'words.mood':MOODS},
+ example:value=>{const result=acceptTextbookFeatures(value,{tempoBpm:96,meter:2,meterConfidence:.1,listenSeconds:30,fallbackCell:[1,1],candidates:[]});return result.status==='accepted'?[]:result.notes;},
 });
 
 export function buildTextbookFeatures(brief:TextbookFeaturesBrief){
  const file=TEXTBOOK_FEATURES_PROMPT;
- const candidates=brief.candidates.map(item=>fill(file.candidateLine as string,{cell:item.cell.join(', '),bars:item.bars})).join('；')||word(file,'words','noCandidates');
+ // Each candidate also in words (短 / 稍长 / 一拍 …), so the teacher's note can follow it without reading numbers.
+ const beatWords=['0.25','0.5','0.75','1','1.5','2','3','4'] as const;
+ const say=(beats:number)=>word(file,'words.beats',beatWords.reduce((best,key)=>Math.abs(Number(key)-beats)<Math.abs(Number(best)-beats)?key:best));
+ const candidates=brief.candidates.map(item=>fill(file.candidateLine as string,{cell:item.cell.join(', '),say:item.cell.map(say).join(' '),bars:item.bars})).join('；')||word(file,'words','noCandidates');
  const others=brief.others.filter(other=>other.title!==brief.title)
   .map(other=>fill(file.otherLine as string,{title:other.title,rhythm:other.rhythmCell.join(', '),childLine:other.childLine})).join('；')||word(file,'words','noOthers');
  return buildPrompt(file,{
@@ -68,7 +71,8 @@ export function buildTextbookFeatures(brief:TextbookFeaturesBrief){
  * Checks a reply. Mood is required (else the reply is refused). Rhythm, metre and tempo are taken only from a model that
  * heard the music: without audio they stay the program's. The metre may change only when the program was not sure, and
  * only together with a rhythm that fills a bar of it; otherwise the measured metre stays, with the model's rhythm if it
- * fits that metre, else the program's choice. Tempo may only be halved or doubled. When the rhythm or metre is not the
+ * fits that metre and is one the program found in the recording (a candidate), else the program's choice — the model
+ * picks among what is really there, it does not invent a bar. Tempo may only be halved or doubled. When the rhythm or metre is not the
  * model's own, its teacher's note (which walks through its bar) is dropped. Each sentence passes the style check or is
  * dropped (null) for the page to leave out.
  */
@@ -89,7 +93,11 @@ export function acceptTextbookFeatures(reply:unknown,brief:AcceptBrief):Acceptan
    else if(!fills(asked,askedMeter))notes.push(`改成 ${askedMeter} 拍但 rhythmCell 不是一小节，拍子用程序测的`);
    else meter=askedMeter;
   }
-  if(fills(asked,meter))rhythmCell=asked;
+  const same=(a:readonly number[],b:readonly number[])=>a.length===b.length&&a.every((n,i)=>n===b[i]);
+  // The candidates are bars of the measured metre; a new metre's bar cannot be among them.
+  const found=meter!==brief.meter||!brief.candidates.length||same(asked,brief.fallbackCell)||brief.candidates.some(item=>same(item.cell,asked));
+  if(fills(asked,meter)&&found)rhythmCell=asked;
+  else if(fills(asked,meter)){notes.push('rhythmCell 不在程序找到的候选里，用程序选的');rhythmCell=fills(brief.fallbackCell,meter)?[...brief.fallbackCell]:new Array<number>(meter).fill(1);}
   else{notes.push(`rhythmCell 不是一小节（${meter} 拍），用程序选的`);rhythmCell=fills(brief.fallbackCell,meter)?[...brief.fallbackCell]:new Array<number>(meter).fill(1);}
  }
  const factor=heard?raw.tempo==='half'?.5:raw.tempo==='double'?2:1:1;

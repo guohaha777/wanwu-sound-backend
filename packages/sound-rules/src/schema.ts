@@ -93,7 +93,6 @@ export const backgroundLimits={
  bass:{dropSemitones:[0,36],lengthPortion:[.2,1]},
  rhythm:{two:[0,1,2,2],three:[0,1,3,3],four:[0,1,4,4],accentBoost:[0,1]},
  ending:{minRingSeconds:[.5,6]},
- variations:{stretchFactor:[1,4],squeezeFactor:[.25,1],offsetBeats:[0,2],registerSemitones:[0,24]},
  // A chosen textbook song: which layers play its characteristic rhythm (0 = no, 1 = yes) and whether the key follows it.
  song:{chordsFollow:[0,1],drumsFollow:[0,1],bassFollow:[0,1],keyFollow:[0,1],chordLengthPortion:[.2,1],offbeatAccent:[0,1]},
  // 万物声场 with a song: only its beat — how strong the first beat of a bar and the others are, and the beat's level.
@@ -110,13 +109,8 @@ export const mixLimits={
  limiter:{thresholdDb:[-24,0],kneeDb:[0,40],ratio:[1,20],attackSeconds:[0,1],releaseSeconds:[0,1]},
 } as const satisfies Limits;
 
-const moodPoint={valence:[-1,1],arousal:[-1,1]} as const;
 export const textbookMatchLimits={
  version:'version',
- weights:{density:[0,1],repetition:[0,1],register:[0,1],mood:[0,1]},
  density:{sparseBelow:[0,10],busyAbove:[0,10]},
  repetition:{lowBelow:[0,1],highAbove:[0,1]},
- register:{lowBelowMidi:[36,96],highAboveMidi:[36,96]},
- moods:{happy:moodPoint,lively:moodPoint,calm:moodPoint,sad:moodPoint,angry:moodPoint,scared:moodPoint,curious:moodPoint},
- top:[1,10],
 } as const satisfies Limits;

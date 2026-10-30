@@ -28,5 +28,6 @@ app.get('/api/v1/auth/csrf',async()=>({csrfToken:token}));
 app.get('/api/v1/auth/me',async(_request,reply)=>reply.code(401).send({status:'error',reason:'needs-account',requestId:'dev'}));
 const config=readGuestConfig();
 guestRoutes(app,guestContext(config,viaFetch));
-await app.listen({host:'127.0.0.1',port:3199});
+// WANWU_DEV_PORT: another port when 3199 is taken (a second preview beside the first).
+await app.listen({host:'127.0.0.1',port:Number(process.env.WANWU_DEV_PORT??3199)});
 console.log(`guest AI dev: language=${!!config.language} audio=${!!config.audio} music=${!!config.music}`);

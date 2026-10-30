@@ -1,14 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {ORIGINAL_PLAYER,assignParts,backgroundMeeting,backgroundPlan,beatPlan} from '../src/background.ts';
-import {suggestVariations} from '../src/textbookVariation.ts';
 import type {BackgroundInput} from '../src/background.ts';
 import {duckPoints,mergeSpans} from '../src/mix.ts';
 import {BACKGROUND_RULES,MIX_RULES,backgroundProblems,mixProblems} from '../src/rules.ts';
 
 const input=(extra:Partial<BackgroundInput>={}):BackgroundInput=>({seconds:30,sounding:[{start:2,end:6},{start:10,end:12},{start:20,end:27}],mood:null,textbook:null,seed:'work:1',...extra});
 const lullaby={id:'tb:mock:lullaby',tempoBpm:66,meter:3 as const,rhythmCell:[2,1],mode:'major' as const,mood:'calm' as const};
-const lullabyV:typeof lullaby&{variation?:'original'|'stretch'|'squeeze'|'offset'|'higher'|'lower'}=lullaby;
 
 test('the background and mix rule files load and pass their checks',()=>{
  assert.deepEqual(backgroundProblems(BACKGROUND_RULES),[]);
@@ -78,21 +76,6 @@ test('who plays which part: lead first, then whoever can; pitched parts nobody c
  assert.deepEqual(assignParts([drum]),{chord:[ORIGINAL_PLAYER],bass:[ORIGINAL_PLAYER],melody:[ORIGINAL_PLAYER],rhythm:['drum']},'a drum alone joins the original');
  assert.deepEqual(assignParts([organ]),{chord:['organ'],bass:['organ'],melody:['organ'],rhythm:[]});
  assert.deepEqual(assignParts([organ,xylophone,drum]),{chord:['organ'],bass:['organ'],melody:['xylophone'],rhythm:['drum']},'each does its own job');
-});
-
-test('换几种样子: the song\'s rhythm cell is stretched or squeezed, starts half a beat late, or moves up or down',()=>{
- const melody=(variation?:typeof lullabyV.variation)=>backgroundPlan(input({sounding:[],textbook:{...lullabyV,variation}})).notes.filter(note=>note.part==='melody');
- const beat=60/66,{stretchFactor,squeezeFactor,offsetBeats,registerSemitones}=BACKGROUND_RULES.variations,portion=BACKGROUND_RULES.melody.noteLengthPortion;
- assert.ok(Math.abs(melody('stretch')[0]!.length-2*stretchFactor*beat*portion)<1e-9,'stretched: twice as long');
- assert.ok(Math.abs(melody('squeeze')[0]!.length-2*squeezeFactor*beat*portion)<1e-9,'squeezed: half as long');
- assert.ok(Math.abs(melody('offset')[0]!.at-offsetBeats*beat)<1e-9,'half a beat late');
- const pitch=(notes:ReturnType<typeof melody>)=>notes.slice(0,-1).reduce((sum,note)=>sum+note.midi,0)/(notes.length-1);
- assert.ok(pitch(melody('higher'))-pitch(melody())>registerSemitones/2&&pitch(melody())-pitch(melody('lower'))>registerSemitones/2,'moved up / down');
- assert.equal(backgroundPlan(input({textbook:lullabyV})).variation,'original');
- assert.equal(backgroundPlan(input()).variation,null);
- assert.deepEqual(suggestVariations({density:'busy',register:'high'},{brightness:'mid'}),['stretch','lower']);
- assert.deepEqual(suggestVariations({density:'sparse',register:'low'},{brightness:'mid'}),['squeeze','higher']);
- assert.deepEqual(suggestVariations({density:'medium',register:'medium'},{brightness:'bright'}),['offset','lower']);
 });
 
 test('碰一碰: together on the beat, call and answer between sounds, filling the gaps, or carrying them',()=>{

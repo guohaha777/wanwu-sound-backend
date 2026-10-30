@@ -31,8 +31,7 @@
    "medium": "孩子的声音在中间，背景避开中音区，上下各留一点。",
    "high": "孩子的声音偏高，背景以中低音区为主。"
   },
-  "variation": {"original": "原样", "stretch": "节奏放慢一倍", "squeeze": "节奏加快一倍", "offset": "错开半拍", "higher": "放在高音区", "lower": "放在低音区"},
-  "textbook": "节奏参考：{metre}，节奏型 {rhythm}（拍），{variation}；只借节奏和感觉。",
+  "textbook": "节奏参考：{metre}，节奏型 {rhythm}（拍）；只借节奏和感觉。",
   "noTextbook": "不参考任何已有歌曲。"
  }
 }

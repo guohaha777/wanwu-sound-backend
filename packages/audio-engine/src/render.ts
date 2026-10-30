@@ -101,7 +101,7 @@ export async function renderWork(input:RenderInput,load:SourceLoader,release:()=
   const mood=arrangement.mood;
   const plan=backgroundPlan({seconds,seed:arrangement.id,sounding:timedEvents(arrangement).map(({start,end})=>({start,end})),
    mood:mood?.kind==='preset'?mood.id:mood?.kind==='custom'?mood.nearest:null,
-   textbook:inspiration.kind==='textbook'&&input.textbook?{...input.textbook,variation:inspiration.variation??'original'}:null});
+   textbook:inspiration.kind==='textbook'&&input.textbook?input.textbook:null});
   const chosen=background.instruments.map(id=>LOCAL_INSTRUMENTS.find(instrument=>instrument.id===id)!);
   const under=await renderBackground(plan,assignParts(chosen),Object.fromEntries(chosen.map(instrument=>[instrument.id,instrument.recipe])));
   const node=ctx.createBufferSource(),gain=ctx.createGain();node.buffer=under;

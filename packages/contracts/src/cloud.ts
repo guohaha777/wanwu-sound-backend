@@ -48,7 +48,7 @@ export function cloudSettings(value:unknown):ComposeSettings|null{
  if(!exactObject(value,['background','inspiration'])||!exactObject(value.background,['enabled','instruments','volume']))return null;
  const inspiration=value.inspiration as Record<string,unknown>|null;
  if(!inspiration||inspiration.kind==='teaching-music')return null;
- if(inspiration.kind==='none'?!exactObject(inspiration,['kind']):!keys(inspiration,['kind','entryId'],['variation']))return null;
+ if(inspiration.kind==='none'?!exactObject(inspiration,['kind']):!keys(inspiration,['kind','entryId'],['variation'/* older versions; ignored */]))return null;
  return parseComposeSettings(value);
 }
 export function workContent(value:unknown):WorkContent|null{

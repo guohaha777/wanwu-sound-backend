@@ -10,7 +10,7 @@ test('the prompt names the song, the numbers, the candidates and the other songs
  assert.ok(isTextbookFeaturesBrief(brief));
  const built=buildTextbookFeatures(brief);
  assert.equal(built.model,'audio');assert.ok(built.system,'the shared system prompt goes along');
- for(const part of ['「小鸟在唱歌」','96','二拍子','[0.5, 0.5, 1] ×4','「法国号」','30 秒','JSON'])assert.ok(built.prompt.includes(part),part);
+ for(const part of ['「小鸟在唱歌」','96','二拍子','[0.5, 0.5, 1]（短 短 一拍）×4','「法国号」','30 秒','JSON'])assert.ok(built.prompt.includes(part),part);
  const numbersOnly=buildTextbookFeatures({...brief,listenSeconds:0,others:[]});
  assert.ok(numbersOnly.prompt.includes('没有附音频'));assert.ok(numbersOnly.prompt.includes('程序选的 [0.5, 0.5, 0.25, 0.75]'));assert.ok(numbersOnly.prompt.includes('还没有'));
  assert.equal(isTextbookFeaturesBrief({...brief,meter:5}),false);assert.equal(isTextbookFeaturesBrief({...brief,title:''}),false);
@@ -32,8 +32,11 @@ test('a good reply is accepted; tempo may be halved; a wrong bar falls back to t
  assert.equal(kept.value?.teacherNote,null,'the note described the refused bar');assert.ok(kept.value?.childLine);
  assert.deepEqual(acceptTextbookFeatures({...good,meter:4,rhythmCell:[.5,.5,1]},sure).value?.rhythmCell,[.5,.5,1]);
  // A new metre without a bar of it: the measured metre and the program's rhythm stay (not 1,1,1,1).
- const half=acceptTextbookFeatures({...good,meter:4,rhythmCell:[.5,.5,.5,.25,.25]},brief);
- assert.equal(half.value?.meter,2);assert.deepEqual(half.value?.rhythmCell,[.5,.5,.5,.25,.25]);
+ const half=acceptTextbookFeatures({...good,meter:4,rhythmCell:[.5,.5,1]},brief);
+ assert.equal(half.value?.meter,2);assert.deepEqual(half.value?.rhythmCell,[.5,.5,1]);
+ // A bar the program never found in the recording is not taken (the model picks among what is there).
+ const invented=acceptTextbookFeatures({...good,rhythmCell:[.5,.5,.25,.5,.25]},brief);
+ assert.deepEqual(invented.value?.rhythmCell,[.5,.5,.25,.75]);assert.equal(invented.value?.teacherNote,null);assert.equal(invented.status,'partly');
  // A model that did not hear the music writes only the mood and the words.
  const deaf=acceptTextbookFeatures({...good,meter:3,rhythmCell:[1,1,1],tempo:'half'},{...brief,listenSeconds:0});
  assert.equal(deaf.value?.meter,2);assert.deepEqual(deaf.value?.rhythmCell,[.5,.5,.25,.75]);assert.equal(deaf.value?.tempoBpm,96);

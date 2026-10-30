@@ -10,11 +10,10 @@
 // Who plays which part is decided separately (assignParts), so instruments never change the notes.
 // Pure; the web renders the plan, a later server can render the same plan.
 import type {MoodId} from '@wanwu-v2/contracts/arrangement';
-import type {TextbookTrack,TextbookVariation} from '@wanwu-v2/contracts/textbook';
+import type {TextbookTrack} from '@wanwu-v2/contracts/textbook';
 import {duckPoints,mergeSpans} from './mix.ts';
 import type {GainPoint,Span} from './mix.ts';
 import {seeded} from './random.ts';
-import {shapeOf} from './textbookVariation.ts';
 import {BACKGROUND_RULES,MIX_RULES} from './rules.ts';
 import type {BackgroundMode,BackgroundRules,MixRules} from './rules.ts';
 
@@ -26,9 +25,7 @@ export const BACKGROUND_PARTS:readonly BackgroundPart[]=['chord','bass','melody'
 /** `accent` 0–1: how strongly the note is played. */
 export type BackgroundNote={at:number;length:number;midi:number;part:BackgroundPart;accent:number};
 /** What the background borrows from a textbook card. */
-export type BackgroundTextbook=Pick<TextbookTrack,'id'|'tempoBpm'|'meter'|'rhythmCell'|'mode'|'mood'|'tonic'>&{
- /** 换几种样子: the shape of the song's feature this time (missing = as it is). */
- variation?:TextbookVariation};
+export type BackgroundTextbook=Pick<TextbookTrack,'id'|'tempoBpm'|'meter'|'rhythmCell'|'mode'|'mood'|'tonic'>;
 export type BackgroundInput={
  /** The piece's real length (the chosen length, or longer when a sound runs past it). The background never adds to it. */
  seconds:number;
@@ -47,8 +44,6 @@ export type BackgroundPlan={
  /** Whose colour it has: the child's mood, the textbook song's, or neutral. */
  colour:MoodId|'none';
  textbook:string|null;
- /** The shape of the textbook song's feature that was played (null without a song). */
- variation:TextbookVariation|null;
  /** Where the tonic lands for the ending, in seconds. */
  cadenceAt:number;
  fadeInSeconds:number;fadeOutSeconds:number;
@@ -70,13 +65,12 @@ export function backgroundPlan(input:BackgroundInput,rules:BackgroundRules=BACKG
  const songTonic=keyFromSong&&textbook?.tonic!==undefined?feel.tonic+((((textbook.tonic-feel.tonic)%12)+18)%12)-6:null;
  const beat=60/tempo,bar=beat*metre,tonic=songTonic??feel.tonic;
  const notes:BackgroundNote[]=[];
- // 换几种样子 shapes the song's rhythm cell; the same shaped cell drives every layer that follows the song.
- const variation=textbook?textbook.variation??'original':null;
- const songCell=textbook?.rhythmCell.length?textbook.rhythmCell:null,shape=songCell&&variation?shapeOf(songCell,variation,rules):null;
- /** The song's rhythm repeated from the start (after a 晚半拍 delay) up to `until`: where each note of it falls. */
+ // The song's rhythm cell, as it is; every layer that follows the song plays it.
+ const songCell=textbook?.rhythmCell.length?textbook.rhythmCell:null;
+ /** The song's rhythm repeated from the start up to `until`: where each note of it falls. */
  const songOnsets=(until:number)=>{
-  const out:{at:number;length:number}[]=[];if(!shape)return out;
-  for(let t=shape.delayBeats*beat,i=0;t<until-1e-9;i++){const length=shape.cell[i%shape.cell.length]!*beat;out.push({at:t,length});t+=length;}
+  const out:{at:number;length:number}[]=[];if(!songCell)return out;
+  for(let t=0,i=0;t<until-1e-9;i++){const length=songCell[i%songCell.length]!*beat;out.push({at:t,length});t+=length;}
   return out;
  };
 
@@ -88,7 +82,7 @@ export function backgroundPlan(input:BackgroundInput,rules:BackgroundRules=BACKG
  const degreeOf=(barIndex:number)=>barIndex>=cadenceBar?1:barIndex===cadenceBar-1&&cadenceBar>=2?5:feel.progression[barIndex%feel.progression.length]!;
  // With a song, chords are struck on its rhythm and the bass on the rhythm's notes that fall on a beat (so the song's
  // pattern is heard all the time, not only in the gaps); the final chord still rings to the end.
- const onsets=songOnsets(cadenceAt),chordsFollow=!!shape&&on(song.chordsFollow),bassFollow=!!shape&&on(song.bassFollow);
+ const onsets=songOnsets(cadenceAt),chordsFollow=!!songCell&&on(song.chordsFollow),bassFollow=!!songCell&&on(song.bassFollow);
  for(let i=0;i<=cadenceBar;i++){
   const at=i*bar,end=i<cadenceBar?Math.min(seconds,at+bar):seconds;if(end<=at)break;
   const chord=triad(degreeOf(i)),inBar=onsets.filter(onset=>onset.at>=at-1e-9&&onset.at<end-1e-9),last=i===cadenceBar;
@@ -104,7 +98,7 @@ export function backgroundPlan(input:BackgroundInput,rules:BackgroundRules=BACKG
  // ----- rhythm: every beat, strong and weak by the metre; one last stroke on the tonic -----
  const levels=metre===2?rules.rhythm.two:metre===3?rules.rhythm.three:rules.rhythm.four;
  // With a song (drumsFollow), the drum plays the song's rhythm: strong where it falls on a beat, lighter off the beat.
- if(shape&&on(song.drumsFollow)){
+ if(songCell&&on(song.drumsFollow)){
   for(const onset of onsets){
    const onBeat=near(onset.at,beat),inBar=Math.round(onset.at/beat)%metre;
    notes.push({at:onset.at,length:Math.min(onset.length,seconds-onset.at),midi:0,part:'rhythm',
@@ -123,20 +117,19 @@ export function backgroundPlan(input:BackgroundInput,rules:BackgroundRules=BACKG
  const busy=mergeSpans(input.sounding.map(span=>({start:span.start-marginSeconds,end:span.end+marginSeconds})),seconds);
  const gaps:Span[]=[];let from=0;
  for(const span of [...busy,{start:seconds,end:seconds}]){if(span.start-from>=minGapBeats*beat)gaps.push({start:from,end:span.start});from=Math.max(from,span.end);}
- // 换几种样子 moves the melody up or down, stretches or squeezes the song's rhythm cell, or starts it half a beat late.
  // 一问一答: the melody keeps out of the register most of the child's sounds use (higher sounds → a lower melody).
  const answer=rules.answer,heights=input.sounding.map(span=>span.pitch==='high'?1:span.pitch==='low'?-1:0);
  const lean=heights.reduce((sum:number,h)=>sum+h,0),known=heights.filter(h=>h!==0).length;
  const away=known&&Math.abs(lean)*2>=heights.length?-Math.sign(lean)*answer.registerShiftSemitones:0;
- const base=tonic+liftSemitones+(shape?.semitones??0)+away,pool:number[]=[];
+ const base=tonic+liftSemitones+away,pool:number[]=[];
  for(let octave=0;octave<3;octave++)for(const step of melodySteps){const midi=base+step+12*octave;if(midi<=base+rangeSemitones)pool.push(midi);}
- const random=seeded(input.seed),cell=shape?shape.cell:[feel.melodyEveryBeats];
+ const random=seeded(input.seed),cell=songCell??[feel.melodyEveryBeats];
  const chordTone=(midi:number,at:number)=>{
   const classes=new Set(triad(degreeOf(Math.floor(at/bar+1e-9))).map(note=>((note%12)+12)%12));
   return pool.reduce((best,candidate)=>classes.has(candidate%12)&&Math.abs(candidate-midi)<Math.abs(best-midi)?candidate:best,
    pool.find(candidate=>classes.has(candidate%12))??midi);
  };
- let index=Math.floor(pool.length/2),t=(shape?.delayBeats??0)*beat,step=0;
+ let index=Math.floor(pool.length/2),t=0,step=0;
  const phrase:{at:number;length:number;gap:number}[]=[];
  while(t<cadenceAt-1e-9){
   const length=cell[step%cell.length]!*beat,gap=gaps.findIndex(item=>t>=item.start-1e-9&&t+length*noteLengthPortion<=Math.min(item.end,cadenceAt)+1e-9);
@@ -169,7 +162,7 @@ export function backgroundPlan(input:BackgroundInput,rules:BackgroundRules=BACKG
   notes.push({at:cadenceAt,length:seconds-cadenceAt,midi:base,part:'melody',accent:.85});
 
  return {
-  rules:rules.version,mix:mix.version,source:'local-rules',seconds,tempo,metre,mode,tonic,colour,textbook:textbook?.id??null,variation,cadenceAt,
+  rules:rules.version,mix:mix.version,source:'local-rules',seconds,tempo,metre,mode,tonic,colour,textbook:textbook?.id??null,cadenceAt,
   fadeInSeconds:Math.min(rules.fade.inSeconds,seconds/3),fadeOutSeconds:Math.min(rules.fade.outSeconds,seconds/3,Math.max(rules.ending.minRingSeconds,seconds-cadenceAt)),
   notes:notes.sort((a,b)=>a.at-b.at),
   duck:duckPoints(input.sounding,seconds,mix),

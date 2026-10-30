@@ -1,8 +1,9 @@
 // @wanwu-v2/music-features: numbers for a textbook feature card, measured from a recording (measure.ts), and the
-// program's own choices for when no model answers in time (pickRhythm, modelExcerpt).
+// program's own choices for when no model answers in time (pickRhythm, pickMood, modelExcerpt).
 export {MEASURE_VERSION,measure} from './measure.ts';
 export type {Measurement,RhythmCandidate} from './measure.ts';
-import type {RhythmCandidate} from './measure.ts';
+import type {Measurement,RhythmCandidate} from './measure.ts';
+import type {MoodId} from '@wanwu-v2/contracts/arrangement';
 
 /**
  * The program's choice of the song's characteristic rhythm: a pattern that recurs, preferring one whose notes are not
@@ -16,6 +17,18 @@ export function pickRhythm(candidates:readonly RhythmCandidate[],meter:number):n
   if(score>bestScore){bestScore=score;best=candidate;}
  }
  return best?[...best.cell]:new Array<number>(meter).fill(1);
+}
+
+/** At or above this tempo a major-key song counts as lively; below the slow mark a minor-key one counts as sad. */
+const LIVELY_BPM=100,SLOW_BPM=80;
+/**
+ * The program's mood for a card when no model answers: major / pentatonic songs are lively when quick, else happy;
+ * minor songs are sad when slow, else calm; dorian is curious.
+ */
+export function pickMood(measurement:Pick<Measurement,'mode'|'tempoBpm'>):MoodId{
+ if(measurement.mode==='dorian')return 'curious';
+ if(measurement.mode==='minor')return measurement.tempoBpm<SLOW_BPM?'sad':'calm';
+ return measurement.tempoBpm>=LIVELY_BPM?'lively':'happy';
 }
 
 /** The part of the recording the audio model listens to: 30 s, skipping a short intro when the song is long enough. */

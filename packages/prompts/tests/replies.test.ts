@@ -57,7 +57,7 @@ test('work talk: wrong order or kind, extra or missing lines, a wrong shape',()=
 });
 
 test('textbook talk: the feature must name the song; each part falls back on its own',()=>{
- const reply={feature:'这首歌是三拍子，像摇篮在晃。',shape:'它搬到了低处，背景更稳。',meeting:'你的「声音1」踩在拍子上。',task:'把一个声音往后挪一点，再听听。'};
+ const reply={feature:'这首歌是三拍子，像摇篮在晃。',meeting:'你的「声音1」踩在拍子上。',task:'把一个声音往后挪一点，再听听。'};
  const {acceptance}=readTextbookTalk(JSON.stringify(reply),textbookBrief);
  assert.equal(acceptance.status,'partly');assert.equal(acceptance.value.feature,null);
  assert.match(acceptance.notes.join(),/没有提到歌名「摇篮曲」/);
