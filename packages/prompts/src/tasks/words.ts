@@ -10,6 +10,7 @@ import moodWordsFile from '../../prompts/mood-words.v1.json' with {type:'json'};
 import textbookWordsFile from '../../prompts/textbook-words.v1.json' with {type:'json'};
 import {acceptMood,acceptSoundHint,acceptTextbookWords} from '../accept.ts';
 import type {Acceptance} from '../accept.ts';
+import {fill} from '../fill.ts';
 import {hintLines,metreNames} from '../corpus.ts';
 import {STYLE} from '../style.ts';
 import {buildPrompt,exampleJson,loadPrompt,word} from './files.ts';
@@ -54,16 +55,22 @@ export function buildMoodWords(brief:MoodWordsBrief){
 export const readMoodWords=(text:string)=>read(text,acceptMood,null);
 
 // ----- 课本歌曲的文字（开发期，结果再由人耳核对） -----
-export type TextbookWordsBrief=Pick<TextbookTrack,'tempoBpm'|'meter'|'rhythmCell'|'onsetDensity'|'pitchRange'|'brightness'|'mode'|'repetition'>;
+/** The song's title and numbers, and the lines already written for other songs (so a different rhythm gets a different line). */
+export type TextbookWordsBrief=Pick<TextbookTrack,'title'|'tempoBpm'|'meter'|'rhythmCell'|'onsetDensity'|'pitchRange'|'brightness'|'mode'|'repetition'>
+ &{others?:readonly Pick<TextbookTrack,'title'|'tempoBpm'|'rhythmCell'|'childLine'>[]};
 export const TEXTBOOK_WORDS_PROMPT=loadPrompt(textbookWordsFile as PromptFile,{
  task:'textbook-words',model:'language',
- placeholders:['tempo','metre','rhythm','density','range','brightness','mode','repetition','moods','childLineMax','example'],
+ placeholders:['title','tempo','metre','rhythm','density','range','brightness','mode','repetition','others','moods','childLineMax','example'],
+ templates:{otherLine:['title','rhythm','tempo','childLine'],'words.noOthers':[]},
  tables:{'words.density':DENSITIES,'words.brightness':BRIGHTNESSES,'words.mode':TEXTBOOK_MODES,'words.level':LEVELS,'words.mood':MOODS},
  example:examples(acceptTextbookWords),
 });
 export function buildTextbookWords(brief:TextbookWordsBrief){
  const file=TEXTBOOK_WORDS_PROMPT;
+ const others=(brief.others??[]).filter(other=>other.title!==brief.title)
+  .map(other=>fill(file.otherLine as string,{title:other.title,rhythm:`[${other.rhythmCell.join(', ')}]`,tempo:other.tempoBpm,childLine:other.childLine})).join('；');
  return buildPrompt(file,{
+  title:brief.title,others:others||word(file,'words','noOthers'),
   tempo:brief.tempoBpm,metre:metreNames()[brief.meter],rhythm:`[${brief.rhythmCell.join(', ')}] 拍`,
   density:word(file,'words.density',brief.onsetDensity),range:`MIDI ${brief.pitchRange.low}–${brief.pitchRange.high}`,
   brightness:word(file,'words.brightness',brief.brightness),mode:word(file,'words.mode',brief.mode),repetition:word(file,'words.level',brief.repetition),

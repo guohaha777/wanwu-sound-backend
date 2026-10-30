@@ -19,19 +19,21 @@ import {BACKGROUND_RULES,MIX_RULES} from './rules.ts';
 import type {BackgroundMode,BackgroundRules,MixRules} from './rules.ts';
 
 export type {Span} from './mix.ts';
+/** A child's sound in the piece: when it is heard and, when known, how it sounds (the five choices, or 声音体检 for 高低). */
+export type SoundingSpan=Span&{pitch?:'low'|'mid'|'high';contour?:'rising'|'falling'|'flat'|'wavy';intensity?:'soft'|'medium'|'loud'};
 export type BackgroundPart='chord'|'bass'|'melody'|'rhythm';
 export const BACKGROUND_PARTS:readonly BackgroundPart[]=['chord','bass','melody','rhythm'];
 /** `accent` 0–1: how strongly the note is played. */
 export type BackgroundNote={at:number;length:number;midi:number;part:BackgroundPart;accent:number};
 /** What the background borrows from a textbook card. */
-export type BackgroundTextbook=Pick<TextbookTrack,'id'|'tempoBpm'|'meter'|'rhythmCell'|'mode'|'mood'>&{
+export type BackgroundTextbook=Pick<TextbookTrack,'id'|'tempoBpm'|'meter'|'rhythmCell'|'mode'|'mood'|'tonic'>&{
  /** 换几种样子: the shape of the song's feature this time (missing = as it is). */
  variation?:TextbookVariation};
 export type BackgroundInput={
  /** The piece's real length (the chosen length, or longer when a sound runs past it). The background never adds to it. */
  seconds:number;
- /** When the child's sounds are heard. */
- sounding:readonly Span[];
+ /** When the child's sounds are heard (and how they sound, which the melody answers). */
+ sounding:readonly SoundingSpan[];
  mood:MoodId|null;
  textbook:BackgroundTextbook|null;
  /** The work's id: the same work always gets the same melody. */
@@ -58,12 +60,25 @@ export type BackgroundPlan={
 const near=(value:number,step:number)=>Math.abs(value/step-Math.round(value/step))<1e-6;
 
 export function backgroundPlan(input:BackgroundInput,rules:BackgroundRules=BACKGROUND_RULES,mix:MixRules=MIX_RULES):BackgroundPlan{
- const {seconds,textbook}=input;
+ const {seconds,textbook}=input,song=rules.song,on=(value:number)=>value>=.5;
  const colour:MoodId|'none'=input.mood??textbook?.mood??'none',feel=rules.moods[colour];
+ // Major or minor stays the child's mood when one is chosen (the song's otherwise); with keyFollow the key centre is the
+ // song's, moved into the mood's register, so two songs of one mood still sound in their own keys.
+ const keyFromSong=!!textbook&&on(song.keyFollow);
  const mode:BackgroundMode=input.mood?feel.mode:textbook?.mode??feel.mode,{scale,melody:melodySteps}=rules.modes[mode];
  const tempo=textbook?.tempoBpm??feel.tempo,metre=textbook?.meter??feel.metre;
- const beat=60/tempo,bar=beat*metre,tonic=feel.tonic;
+ const songTonic=keyFromSong&&textbook?.tonic!==undefined?feel.tonic+((((textbook.tonic-feel.tonic)%12)+18)%12)-6:null;
+ const beat=60/tempo,bar=beat*metre,tonic=songTonic??feel.tonic;
  const notes:BackgroundNote[]=[];
+ // 换几种样子 shapes the song's rhythm cell; the same shaped cell drives every layer that follows the song.
+ const variation=textbook?textbook.variation??'original':null;
+ const songCell=textbook?.rhythmCell.length?textbook.rhythmCell:null,shape=songCell&&variation?shapeOf(songCell,variation,rules):null;
+ /** The song's rhythm repeated from the start (after a 晚半拍 delay) up to `until`: where each note of it falls. */
+ const songOnsets=(until:number)=>{
+  const out:{at:number;length:number}[]=[];if(!shape)return out;
+  for(let t=shape.delayBeats*beat,i=0;t<until-1e-9;i++){const length=shape.cell[i%shape.cell.length]!*beat;out.push({at:t,length});t+=length;}
+  return out;
+ };
 
  // ----- harmony: one chord per bar, dominant then tonic at the end -----
  const pitch=(index:number)=>tonic+scale[((index%7)+7)%7]!+12*Math.floor(index/7);
@@ -71,16 +86,33 @@ export function backgroundPlan(input:BackgroundInput,rules:BackgroundRules=BACKG
  const triad=(degree:number)=>{const root=degree-1,notes=[root,root+2,root+4].map(pitch);return scale[root]!>6?notes.map(note=>note-12):notes;};
  const cadenceBar=Math.max(0,Math.floor((seconds-rules.ending.minRingSeconds)/bar+1e-9)),cadenceAt=cadenceBar*bar;
  const degreeOf=(barIndex:number)=>barIndex>=cadenceBar?1:barIndex===cadenceBar-1&&cadenceBar>=2?5:feel.progression[barIndex%feel.progression.length]!;
+ // With a song, chords are struck on its rhythm and the bass on the rhythm's notes that fall on a beat (so the song's
+ // pattern is heard all the time, not only in the gaps); the final chord still rings to the end.
+ const onsets=songOnsets(cadenceAt),chordsFollow=!!shape&&on(song.chordsFollow),bassFollow=!!shape&&on(song.bassFollow);
  for(let i=0;i<=cadenceBar;i++){
   const at=i*bar,end=i<cadenceBar?Math.min(seconds,at+bar):seconds;if(end<=at)break;
-  const chord=triad(degreeOf(i));
-  for(const midi of chord)notes.push({at,length:end-at,midi,part:'chord',accent:0});
-  notes.push({at,length:i<cadenceBar?(end-at)*rules.bass.lengthPortion:end-at,midi:chord[0]!-rules.bass.dropSemitones,part:'bass',accent:i===cadenceBar?1:.6});
+  const chord=triad(degreeOf(i)),inBar=onsets.filter(onset=>onset.at>=at-1e-9&&onset.at<end-1e-9),last=i===cadenceBar;
+  if(chordsFollow&&!last&&inBar.length)for(const onset of inBar)for(const midi of chord)
+   notes.push({at:onset.at,length:Math.min(onset.length*song.chordLengthPortion,end-onset.at),midi,part:'chord',accent:near(onset.at,bar)?.7:.4});
+  else for(const midi of chord)notes.push({at,length:end-at,midi,part:'chord',accent:0});
+  const bassAt=bassFollow&&!last?inBar.filter(onset=>near(onset.at,beat)):[];
+  if(bassAt.length)for(const onset of bassAt)
+   notes.push({at:onset.at,length:Math.min(onset.length,end-onset.at)*rules.bass.lengthPortion,midi:chord[0]!-rules.bass.dropSemitones,part:'bass',accent:near(onset.at,bar)?.8:.5});
+  else notes.push({at,length:!last?(end-at)*rules.bass.lengthPortion:end-at,midi:chord[0]!-rules.bass.dropSemitones,part:'bass',accent:last?1:.6});
  }
 
  // ----- rhythm: every beat, strong and weak by the metre; one last stroke on the tonic -----
  const levels=metre===2?rules.rhythm.two:metre===3?rules.rhythm.three:rules.rhythm.four;
- for(let b=0;b*beat<seconds-1e-9;b++){
+ // With a song (drumsFollow), the drum plays the song's rhythm: strong where it falls on a beat, lighter off the beat.
+ if(shape&&on(song.drumsFollow)){
+  for(const onset of onsets){
+   const onBeat=near(onset.at,beat),inBar=Math.round(onset.at/beat)%metre;
+   notes.push({at:onset.at,length:Math.min(onset.length,seconds-onset.at),midi:0,part:'rhythm',
+    accent:Math.min(1,onBeat?levels[inBar]!+(inBar===0?rules.rhythm.accentBoost*feel.accent:0):song.offbeatAccent)});
+  }
+  notes.push({at:cadenceAt,length:Math.min(beat,seconds-cadenceAt),midi:0,part:'rhythm',accent:1});
+ }
+ else for(let b=0;b*beat<seconds-1e-9;b++){
   const at=b*beat;if(at>cadenceAt+1e-9)break;
   const inBar=b%metre,level=levels[inBar]!+(inBar===0?rules.rhythm.accentBoost*feel.accent:0);
   notes.push({at,length:Math.min(beat,seconds-at),midi:0,part:'rhythm',accent:Math.min(1,level)});
@@ -92,9 +124,11 @@ export function backgroundPlan(input:BackgroundInput,rules:BackgroundRules=BACKG
  const gaps:Span[]=[];let from=0;
  for(const span of [...busy,{start:seconds,end:seconds}]){if(span.start-from>=minGapBeats*beat)gaps.push({start:from,end:span.start});from=Math.max(from,span.end);}
  // 换几种样子 moves the melody up or down, stretches or squeezes the song's rhythm cell, or starts it half a beat late.
- const variation=textbook?textbook.variation??'original':null;
- const songCell=textbook?.rhythmCell.length?textbook.rhythmCell:null,shape=songCell&&variation?shapeOf(songCell,variation,rules):null;
- const base=tonic+liftSemitones+(shape?.semitones??0),pool:number[]=[];
+ // 一问一答: the melody keeps out of the register most of the child's sounds use (higher sounds → a lower melody).
+ const answer=rules.answer,heights=input.sounding.map(span=>span.pitch==='high'?1:span.pitch==='low'?-1:0);
+ const lean=heights.reduce((sum:number,h)=>sum+h,0),known=heights.filter(h=>h!==0).length;
+ const away=known&&Math.abs(lean)*2>=heights.length?-Math.sign(lean)*answer.registerShiftSemitones:0;
+ const base=tonic+liftSemitones+(shape?.semitones??0)+away,pool:number[]=[];
  for(let octave=0;octave<3;octave++)for(const step of melodySteps){const midi=base+step+12*octave;if(midi<=base+rangeSemitones)pool.push(midi);}
  const random=seeded(input.seed),cell=shape?shape.cell:[feel.melodyEveryBeats];
  const chordTone=(midi:number,at:number)=>{
@@ -109,14 +143,26 @@ export function backgroundPlan(input:BackgroundInput,rules:BackgroundRules=BACKG
   if(gap>=0)phrase.push({at:t,length:length*noteLengthPortion,gap});
   t+=length;step++;
  }
+ /** The child's sound just before a gap: its contour shapes the melody's answer in that gap, its loudness the accent. */
+ const heardBefore=(gap:number)=>{const at=gaps[gap]!.start;let last:SoundingSpan|null=null;
+  for(const span of input.sounding)if(span.end<=at+marginSeconds+1e-9&&(!last||span.end>last.end))last=span;return last;};
+ const asked=gaps.map((_,gap)=>heardBefore(gap));
+ let turn=0;
  phrase.forEach((note,i)=>{
-  // A small step up or down (never standing still), turning back at the edges of the range.
-  const size=1+Math.floor(random()*leapSteps),up=random()<.5,next=index+(up?size:-size);
+  // A small step up or down, turning back at the edges of the range; after a child's sound with a chosen 走向 the steps
+  // follow it: 往上走 rises, 往下落 falls, 稳稳的 stays close, 有起伏 goes up and down in turn.
+  const contour=on(answer.followContour)?asked[note.gap]?.contour:undefined;
+  // A rising answer starts low in the range and a falling one high, so the whole phrase can travel that way.
+  if(phrase[i-1]?.gap!==note.gap&&(contour==='rising'||contour==='falling'))index=Math.round((pool.length-1)*(contour==='rising'?.2:.8));
+  const size=contour==='flat'?Math.floor(random()*2):1+Math.floor(random()*leapSteps);
+  const up=contour==='rising'?true:contour==='falling'?false:contour==='wavy'||contour==='flat'?(turn++)%2===0:random()<.5;
+  const next=index+(up?size:-size);
   index=next<0||next>=pool.length?index+(up?-size:size):next;
   index=Math.min(pool.length-1,Math.max(0,index));
   const downbeat=near(note.at,bar),last=phrase[i+1]?.gap!==note.gap;
   const midi=downbeat||last?chordTone(pool[index]!,note.at):pool[index]!;index=pool.indexOf(midi);
-  notes.push({at:note.at,length:note.length,midi,part:'melody',accent:downbeat?.85:.6});
+  const loud=asked[note.gap]?.intensity,lift=loud==='loud'?answer.intensityAccent:loud==='soft'?-answer.intensityAccent:0;
+  notes.push({at:note.at,length:note.length,midi,part:'melody',accent:Math.max(0,Math.min(1,(downbeat?.85:.6)+lift))});
  });
  // The melody lands on the tonic with the last chord, when no child's sound is there.
  if(gaps.some(gap=>cadenceAt>=gap.start-1e-9&&Math.min(seconds,cadenceAt+beat)<=gap.end+1e-9))

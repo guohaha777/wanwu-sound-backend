@@ -87,10 +87,15 @@ export const backgroundLimits={
  modes:{major:mode,minor:mode,pentatonic:mode,dorian:mode},
  moods:{none:moodBackground,happy:moodBackground,calm:moodBackground,lively:moodBackground,sad:moodBackground,angry:moodBackground,scared:moodBackground,curious:moodBackground},
  melody:{liftSemitones:[0,24],rangeSemitones:[5,24],leapSteps:[1,4],minGapBeats:[.5,8],marginSeconds:[0,1],noteLengthPortion:[.2,1]},
+ // The melody answers the child's sounds: moves away from their register, follows the contour of the sound just heard
+ // (0 = no, 1 = yes), and is a little stronger after a loud sound, lighter after a soft one.
+ answer:{registerShiftSemitones:[0,12],followContour:[0,1],intensityAccent:[0,.4]},
  bass:{dropSemitones:[0,36],lengthPortion:[.2,1]},
  rhythm:{two:[0,1,2,2],three:[0,1,3,3],four:[0,1,4,4],accentBoost:[0,1]},
  ending:{minRingSeconds:[.5,6]},
  variations:{stretchFactor:[1,4],squeezeFactor:[.25,1],offsetBeats:[0,2],registerSemitones:[0,24]},
+ // A chosen textbook song: which layers play its characteristic rhythm (0 = no, 1 = yes) and whether the key follows it.
+ song:{chordsFollow:[0,1],drumsFollow:[0,1],bassFollow:[0,1],keyFollow:[0,1],chordLengthPortion:[.2,1],offbeatAccent:[0,1]},
  meeting:{toleranceSeconds:[0,.5],alignShare:[0,1],answerTurns:[1,8]},
  fade:{inSeconds:[0,5],outSeconds:[0,6]},
 } as const satisfies Limits;

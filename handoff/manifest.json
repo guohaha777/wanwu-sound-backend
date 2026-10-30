@@ -465,12 +465,152 @@
   ],
   "sharedFiles": [
     {
+      "path": "packages/contracts/README.md",
+      "sha256": "ffca242ec848af17dbc1cb167b449fb0049867bab461dbf0735b127b6f3e7f5d"
+    },
+    {
+      "path": "packages/contracts/package.json",
+      "sha256": "b9489fda124e7ca0544ebe17090e82d983c96f145e4a3936e8a98bde1a442805"
+    },
+    {
+      "path": "packages/contracts/src/account.ts",
+      "sha256": "67082f67042187f12c68cbed0b873b696635fe085868ff4be5a7ec4ce29a8267"
+    },
+    {
+      "path": "packages/contracts/src/api.ts",
+      "sha256": "390269373aff6a94de4e65df49d0ee697f969d8f2852f6b2cb50a6c8ad735cc4"
+    },
+    {
+      "path": "packages/contracts/src/arrangement.ts",
+      "sha256": "9d69ed8cf6f103b38aba7bda111616d27413a0d981263e03088473adcbdd06a1"
+    },
+    {
+      "path": "packages/contracts/src/background.ts",
+      "sha256": "a588c0d716d869be9c3511c870d4250508b6b612ef25400accd76e7e97fec188"
+    },
+    {
+      "path": "packages/contracts/src/cloud.ts",
+      "sha256": "8cae95485673654f050fba5044e7a3ec3cb414ecf4656210404bccc04349b46c"
+    },
+    {
+      "path": "packages/contracts/src/sound.ts",
+      "sha256": "f707170720f206d9e6776c954ed79b481f3de2dbdf77e0809648db81cc47c44b"
+    },
+    {
+      "path": "packages/contracts/src/talk.ts",
+      "sha256": "32f46b7685f3193dab82d56dca1f46fa8ad7a9b61dcdef24bc1b8337effd55ad"
+    },
+    {
+      "path": "packages/contracts/src/textbook.ts",
+      "sha256": "0beffaf60b4c0b5579c1f7291488d7cb565a1a13a22f35d76532f621967b17be"
+    },
+    {
+      "path": "packages/contracts/src/work.ts",
+      "sha256": "84022c4a8842410ad40a1d393c96ed056f6241c6f6f7712e959e51080c600bf7"
+    },
+    {
+      "path": "packages/sound-rules/README.md",
+      "sha256": "5a9fa08e95bde767f8cbc3d56f82fa7f934dbf5be016e845eda2b0bb73652172"
+    },
+    {
+      "path": "packages/sound-rules/package.json",
+      "sha256": "30495c4d84c7f883c438b80338392d25eaeb1417f65db5b19338658574133150"
+    },
+    {
+      "path": "packages/sound-rules/rules/analysis.v2.json",
+      "sha256": "da4b7f2eee8608484d23bc837da8c7e024da8fd1a01cb59176c65c46b909d808"
+    },
+    {
+      "path": "packages/sound-rules/rules/background.v1.json",
+      "sha256": "3c2c268f97f0649d91185aef3d30415f3a42adc537addfca63e4fd1a601d0926"
+    },
+    {
+      "path": "packages/sound-rules/rules/mix.v1.json",
+      "sha256": "d2ae6458706038dd07cc5ea75762bfbf51375be3931157488e478d8406b2136f"
+    },
+    {
+      "path": "packages/sound-rules/rules/shaping.v3.json",
+      "sha256": "b8b0269747b0044e25c566b8d7544bb0f2054449766ac203dd0475bd2867addd"
+    },
+    {
+      "path": "packages/sound-rules/rules/textbook-match.v1.json",
+      "sha256": "27b8aae60486f3ca7520c0eb0fd4489b3da68de84bb40fff1ddb264fc76178f1"
+    },
+    {
+      "path": "packages/sound-rules/src/analysis.ts",
+      "sha256": "3f9694ad4a78c9f25b9607005f0a8cdcc2b0636c989275d41b161a98f1142485"
+    },
+    {
+      "path": "packages/sound-rules/src/arrange.ts",
+      "sha256": "8a64fb86c6169d442b62c4720ee244d77b9dc88fc8108a68f9b73ce7f708cf52"
+    },
+    {
+      "path": "packages/sound-rules/src/background.ts",
+      "sha256": "7056f346f4b7e1b129964e6ff207765f1d52ea89f73f0a6441868e6d7d4302c0"
+    },
+    {
+      "path": "packages/sound-rules/src/mix.ts",
+      "sha256": "c511c0085c70051ebe324756080c05b86ebba2f57a4698890667ae33ab2923d1"
+    },
+    {
+      "path": "packages/sound-rules/src/random.ts",
+      "sha256": "bd2dd034582ba1dd644993c8da8f1ae670aee5b53dd274e43a69b144dd3ed5d6"
+    },
+    {
+      "path": "packages/sound-rules/src/rules.ts",
+      "sha256": "ad3c13cfb0429d91befc84ffdfa31ad972ad99a8c3800543c6cf2ec673b535aa"
+    },
+    {
+      "path": "packages/sound-rules/src/schema.ts",
+      "sha256": "816dbbd309e2dd131f71007b433780348832664987dba6f34a2ea26f4114857f"
+    },
+    {
+      "path": "packages/sound-rules/src/shaping.ts",
+      "sha256": "5467be47189cc012f87d1683c23fd0506f832bad59e52058e319f946c7b29080"
+    },
+    {
+      "path": "packages/sound-rules/src/spectrum.ts",
+      "sha256": "cac0a0f08709c22a9040d5f2158f97407c6c424efd5853e05c5e7737e8f04ada"
+    },
+    {
+      "path": "packages/sound-rules/src/textbookMatch.ts",
+      "sha256": "0fe7593987330afd68e09d6d5bdccc42a8aaf79572c906191a846fdc1113c540"
+    },
+    {
+      "path": "packages/sound-rules/src/textbookVariation.ts",
+      "sha256": "0fa6764bc827839ce1210cbbeedfedb9b14a868ea5193cf4cdc3c337e19a865e"
+    },
+    {
+      "path": "packages/sound-rules/tests/analysis.test.ts",
+      "sha256": "bf3f941aadf2cd4c0365b37e8bc3d253a954cbe189d130865ec9363818326c5f"
+    },
+    {
+      "path": "packages/sound-rules/tests/background.test.ts",
+      "sha256": "3e48c74064192358c5cb891e116a91695d343568288f148014b93566c620db2d"
+    },
+    {
+      "path": "packages/sound-rules/tests/helpers.ts",
+      "sha256": "bc298c81d713d73072d77de8319f89854a23379954b2b7ec8f625df98dc40dc3"
+    },
+    {
+      "path": "packages/sound-rules/tests/rules.test.ts",
+      "sha256": "18965d2f01e43321ec6060628490ba43ec940c85d03e56a1884f783151ed8894"
+    },
+    {
+      "path": "packages/sound-rules/tests/shaping.test.ts",
+      "sha256": "24ac1761d85bf8c1ca560afeb20f5c9570a5afd4b4fddfab1fb6e911e9b48357"
+    },
+    {
+      "path": "packages/sound-rules/tests/textbookMatch.test.ts",
+      "sha256": "1b29a59504596e06b8349f402160882eae15c2f2bf4705d200c3e4000c2a729e"
+    },
+    {
       "path": "packages/audio-engine/package.json",
       "sha256": "eefc9f514195d33ad2b70a530fe6f1e946494ce14988a7c15377a065b882ddb1"
     },
     {
       "path": "packages/audio-engine/src/background.ts",
-      "sha256": "ecd9f45e32c7bad329288c3e11212bafe35943328fc1e331de052d5562a4d973"
+      "sha256": "90d9f40da7efa3e2b716af738a9f127b08ad22b5eafe2ba8a8f9518e884b4246"
     },
     {
       "path": "packages/audio-engine/src/grains.ts",
@@ -505,144 +645,148 @@
       "sha256": "162d1731162a5a40fa53f84efc13280e90fef941224d764db0293521f2ff0baf"
     },
     {
-      "path": "packages/contracts/package.json",
-      "sha256": "b9489fda124e7ca0544ebe17090e82d983c96f145e4a3936e8a98bde1a442805"
+      "path": "packages/prompts/README.md",
+      "sha256": "b5e7f0b0ab9b723054df2699163209b4c9c7313f66240cad2c0f489417041815"
     },
     {
-      "path": "packages/contracts/README.md",
-      "sha256": "ffca242ec848af17dbc1cb167b449fb0049867bab461dbf0735b127b6f3e7f5d"
+      "path": "packages/prompts/corpus/discoveries.v1.json",
+      "sha256": "69d30acfd93aebe1b5e94332d8754e088077f4350a19a33a0068be686b924baf"
     },
     {
-      "path": "packages/contracts/src/account.ts",
-      "sha256": "67082f67042187f12c68cbed0b873b696635fe085868ff4be5a7ec4ce29a8267"
+      "path": "packages/prompts/corpus/sound-hints.v1.json",
+      "sha256": "a412114911c0c1bff7cc69d63c5a46ac2d9299769d4fe5defaa37ed2f4f5fb6e"
     },
     {
-      "path": "packages/contracts/src/api.ts",
-      "sha256": "390269373aff6a94de4e65df49d0ee697f969d8f2852f6b2cb50a6c8ad735cc4"
+      "path": "packages/prompts/corpus/style.v1.json",
+      "sha256": "073c19ea4eb920be55285f427aebe47141866485295768037531024daa24cd59"
     },
     {
-      "path": "packages/contracts/src/arrangement.ts",
-      "sha256": "9d69ed8cf6f103b38aba7bda111616d27413a0d981263e03088473adcbdd06a1"
+      "path": "packages/prompts/corpus/textbook-talk.v1.json",
+      "sha256": "18452eb128d1ac1ff90f879534310fd9c25c69ae681eaf186855f710c362436d"
     },
     {
-      "path": "packages/contracts/src/background.ts",
-      "sha256": "08096f7c5a31733da390ce72f653a68a16c104a1f33d95f786ea2379734db4f1"
+      "path": "packages/prompts/package.json",
+      "sha256": "9dcf34ec7c2f9ee856f03fd5e0fb6bb0310f3b3ed2aa351e7978c513872a7356"
     },
     {
-      "path": "packages/contracts/src/cloud.ts",
-      "sha256": "8cae95485673654f050fba5044e7a3ec3cb414ecf4656210404bccc04349b46c"
+      "path": "packages/prompts/prompts/background-audio.v1.json",
+      "sha256": "f97676e868d2bfdb61bb0970f4c61702d01f2c517b2deb3aa191b0de1e31e978"
     },
     {
-      "path": "packages/contracts/src/sound.ts",
-      "sha256": "f707170720f206d9e6776c954ed79b481f3de2dbdf77e0809648db81cc47c44b"
+      "path": "packages/prompts/prompts/background-notes.v1.json",
+      "sha256": "98db323a7990e58d9bd8956e37bfd7d2af55848373d53f8ef4dd37d7b4a0e021"
     },
     {
-      "path": "packages/contracts/src/talk.ts",
-      "sha256": "32f46b7685f3193dab82d56dca1f46fa8ad7a9b61dcdef24bc1b8337effd55ad"
+      "path": "packages/prompts/prompts/mood-words.v1.json",
+      "sha256": "80f84f43929e97fc349b9add5cd0599d6dea8f5f1b983c8eea6d9ae159095511"
     },
     {
-      "path": "packages/contracts/src/textbook.ts",
-      "sha256": "51b831e3d3fe35537393f1d0723332864ca1f28d2a3bdc9cd3fb44ca1803bdcc"
+      "path": "packages/prompts/prompts/sound-hint.v1.json",
+      "sha256": "03b3ce9ef444187936c3ec7e17166431f3d65a495d0fc54eb9d88121bfda0b8c"
     },
     {
-      "path": "packages/contracts/src/work.ts",
-      "sha256": "84022c4a8842410ad40a1d393c96ed056f6241c6f6f7712e959e51080c600bf7"
+      "path": "packages/prompts/prompts/system.v1.json",
+      "sha256": "4bc2f393d5a7f1c2bec369a6ce51c0978897df6b2ea16cad493d1d6edaed7af0"
     },
     {
-      "path": "packages/sound-rules/package.json",
-      "sha256": "30495c4d84c7f883c438b80338392d25eaeb1417f65db5b19338658574133150"
+      "path": "packages/prompts/prompts/textbook-features.v1.json",
+      "sha256": "1808a6586ed0014d140ad6bef648eca74cbef972b282d1abd55d909fea07a7d7"
     },
     {
-      "path": "packages/sound-rules/README.md",
-      "sha256": "5a9fa08e95bde767f8cbc3d56f82fa7f934dbf5be016e845eda2b0bb73652172"
+      "path": "packages/prompts/prompts/textbook-talk.v1.json",
+      "sha256": "f77715862a4f55db427df8ba18c5e69799aa4179742b39e37b91ae0494adb48c"
     },
     {
-      "path": "packages/sound-rules/rules/analysis.v2.json",
-      "sha256": "da4b7f2eee8608484d23bc837da8c7e024da8fd1a01cb59176c65c46b909d808"
+      "path": "packages/prompts/prompts/textbook-words.v1.json",
+      "sha256": "6c9d96150fee634087d8dabb2e3783a8c4683563355f15bde604cdfe5a8225f1"
     },
     {
-      "path": "packages/sound-rules/rules/background.v1.json",
-      "sha256": "b75e5b9e28bfcf7ae629f55a823879b6915b5deb51d698f038051fb1231a8c80"
+      "path": "packages/prompts/prompts/work-talk.v1.json",
+      "sha256": "ab7073ab817ce15fc428fe876da4f2630b9868aa0e9a8e94ab35be9e960b9a14"
     },
     {
-      "path": "packages/sound-rules/rules/mix.v1.json",
-      "sha256": "d2ae6458706038dd07cc5ea75762bfbf51375be3931157488e478d8406b2136f"
+      "path": "packages/prompts/src/accept.ts",
+      "sha256": "5c1e636d934db4169b2b9d2f74fe0428c689f2d72771f223de95f1c23dd1c468"
     },
     {
-      "path": "packages/sound-rules/rules/shaping.v3.json",
-      "sha256": "b8b0269747b0044e25c566b8d7544bb0f2054449766ac203dd0475bd2867addd"
+      "path": "packages/prompts/src/corpus.ts",
+      "sha256": "3443cb733a0d273910d78fe94e6c3329b5265986cd5dbc514f8ee887ea74946c"
     },
     {
-      "path": "packages/sound-rules/rules/textbook-match.v1.json",
-      "sha256": "27b8aae60486f3ca7520c0eb0fd4489b3da68de84bb40fff1ddb264fc76178f1"
+      "path": "packages/prompts/src/fill.ts",
+      "sha256": "44d2ab089ba1c27f9fd733af4dfc2273759cf781d2d02b0fcb29b35b4776a6e0"
     },
     {
-      "path": "packages/sound-rules/src/analysis.ts",
-      "sha256": "3f9694ad4a78c9f25b9607005f0a8cdcc2b0636c989275d41b161a98f1142485"
+      "path": "packages/prompts/src/style.ts",
+      "sha256": "0caa8841a9a5eb304d93bccaa9d509b1915a45832d8c842722b89a5e6f136922"
     },
     {
-      "path": "packages/sound-rules/src/arrange.ts",
-      "sha256": "8a64fb86c6169d442b62c4720ee244d77b9dc88fc8108a68f9b73ce7f708cf52"
+      "path": "packages/prompts/src/tasks/background.ts",
+      "sha256": "b57c766b3748ac1e265f3cae90afe35442f0eba9c619cee87c75660877eacadd"
     },
     {
-      "path": "packages/sound-rules/src/background.ts",
-      "sha256": "e0a4f1c58b7d91f6cc2efab4802809b5d43df6cb1a3419ef1a1aff0c9f92e683"
+      "path": "packages/prompts/src/tasks/features.ts",
+      "sha256": "6e12eb43b7e050493f62f5705f4e6487c4f05520e08459734cda3d459adc4e44"
     },
     {
-      "path": "packages/sound-rules/src/mix.ts",
-      "sha256": "c511c0085c70051ebe324756080c05b86ebba2f57a4698890667ae33ab2923d1"
+      "path": "packages/prompts/src/tasks/files.ts",
+      "sha256": "dc1350c4a4da9127aae63021d53c441514ac7aba1fbe3dcc2569e25aa1d852d3"
     },
     {
-      "path": "packages/sound-rules/src/random.ts",
-      "sha256": "bd2dd034582ba1dd644993c8da8f1ae670aee5b53dd274e43a69b144dd3ed5d6"
+      "path": "packages/prompts/src/tasks/index.ts",
+      "sha256": "59adae47d63feb00297fd74b8532dcce2cf2ced4408268e37b62b1ed94c44fbc"
     },
     {
-      "path": "packages/sound-rules/src/rules.ts",
-      "sha256": "ad3c13cfb0429d91befc84ffdfa31ad972ad99a8c3800543c6cf2ec673b535aa"
+      "path": "packages/prompts/src/tasks/reply.ts",
+      "sha256": "39ee76698e8a03d488f77362e18203f33379eabe4f68c405b0b51b1db3766277"
     },
     {
-      "path": "packages/sound-rules/src/schema.ts",
-      "sha256": "afff5c13838b4d1c5f9f2251d2312aa5d4899426aa92690b28753f6aaac59b83"
+      "path": "packages/prompts/src/tasks/talk.ts",
+      "sha256": "a19e7d23e6db1278a322508e68920f6a3ddb14b7a93e633dc0d542b84a53a974"
     },
     {
-      "path": "packages/sound-rules/src/shaping.ts",
-      "sha256": "5467be47189cc012f87d1683c23fd0506f832bad59e52058e319f946c7b29080"
+      "path": "packages/prompts/src/tasks/words.ts",
+      "sha256": "60ddcc9dc31757a6f82a6a43d5af829c4712ef97c79ed8097d51d25dda759437"
     },
     {
-      "path": "packages/sound-rules/src/spectrum.ts",
-      "sha256": "cac0a0f08709c22a9040d5f2158f97407c6c424efd5853e05c5e7737e8f04ada"
+      "path": "packages/prompts/tests/corpus.test.ts",
+      "sha256": "740db4cf0c50ace1fd448b14255d0854f2771dabc53485add1ca27add89c8de3"
     },
     {
-      "path": "packages/sound-rules/src/textbookMatch.ts",
-      "sha256": "0fe7593987330afd68e09d6d5bdccc42a8aaf79572c906191a846fdc1113c540"
+      "path": "packages/prompts/tests/features.test.ts",
+      "sha256": "2d2837d68bc977234578728c96498c0568134defa80d04e39c6d3246ec7cc3fd"
     },
     {
-      "path": "packages/sound-rules/src/textbookVariation.ts",
-      "sha256": "0fa6764bc827839ce1210cbbeedfedb9b14a868ea5193cf4cdc3c337e19a865e"
+      "path": "packages/prompts/tests/fixtures/briefs.ts",
+      "sha256": "bbcffef4a6b3136f32cbc807268369e158801fbb00d18125a5416c6cc9a76fcd"
     },
     {
-      "path": "packages/sound-rules/tests/analysis.test.ts",
-      "sha256": "bf3f941aadf2cd4c0365b37e8bc3d253a954cbe189d130865ec9363818326c5f"
+      "path": "packages/prompts/tests/prompts.test.ts",
+      "sha256": "d719fdb7e86998d380b1ceddd106bad08c3de743026f28ff6a70bbf18cc91578"
     },
     {
-      "path": "packages/sound-rules/tests/background.test.ts",
-      "sha256": "8325740a8185bc4dc8969b524ff5560d6cbb80641acb0b840bd6713fb1c3887f"
+      "path": "packages/prompts/tests/replies.test.ts",
+      "sha256": "643acfe2464a71260bc7f4a74c1085085959d965bf62a7a68df80b8d64b65742"
     },
     {
-      "path": "packages/sound-rules/tests/helpers.ts",
-      "sha256": "bc298c81d713d73072d77de8319f89854a23379954b2b7ec8f625df98dc40dc3"
+      "path": "packages/music-features/package.json",
+      "sha256": "38047a5bc9d89e8aa1b1326198a88309bbbea198953584d70dba630718ce0f0e"
     },
     {
-      "path": "packages/sound-rules/tests/rules.test.ts",
-      "sha256": "18965d2f01e43321ec6060628490ba43ec940c85d03e56a1884f783151ed8894"
+      "path": "packages/music-features/src/fft.ts",
+      "sha256": "a48077c62e38fb0a9764b14418871b5464faf15147caad28993311d770696985"
     },
     {
-      "path": "packages/sound-rules/tests/shaping.test.ts",
-      "sha256": "24ac1761d85bf8c1ca560afeb20f5c9570a5afd4b4fddfab1fb6e911e9b48357"
+      "path": "packages/music-features/src/index.ts",
+      "sha256": "7608836b6cae7c102ba0004fd2c6d643309e83976fe5051b7ef7a8b600c7027d"
     },
     {
-      "path": "packages/sound-rules/tests/textbookMatch.test.ts",
-      "sha256": "1b29a59504596e06b8349f402160882eae15c2f2bf4705d200c3e4000c2a729e"
+      "path": "packages/music-features/src/measure.ts",
+      "sha256": "67c051a81e6707e802c3d97fb2c9a29e71eb2b19ffc02d928dafbaa0367b8f8e"
+    },
+    {
+      "path": "packages/music-features/tests/measure.test.ts",
+      "sha256": "1f8e6c432fd8006ed00c7fb78d7b55698d5cd4d85f0c4e02998cfa9ece6676ab"
     }
   ]
 }

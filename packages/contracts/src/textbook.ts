@@ -42,6 +42,8 @@ export type TextbookTrack={
  mode:TextbookMode;
  repetition:Level;
  mood:MoodId;
+ /** Key centre as a pitch class (0 = C … 11 = B), measured from the recording; missing = the background uses the mood's. */
+ tonic?:number;
  /** One line a child understands: “像走路，一步一步”. */
  childLine:string;
  /** What made which part: `example` marks the made-up examples. */
@@ -65,6 +67,7 @@ export function isTextbookTrack(value:unknown):value is TextbookTrack{
  if(!range||!midi(range.low)||!midi(range.high)||(range.low as number)>(range.high as number))return false;
  if(!DENSITIES.includes(raw.onsetDensity as Density)||!BRIGHTNESSES.includes(raw.brightness as Brightness)||!TEXTBOOK_MODES.includes(raw.mode as TextbookMode))return false;
  if(!LEVELS.includes(raw.repetition as Level)||!MOODS.includes(raw.mood as MoodId))return false;
+ if(raw.tonic!==undefined&&!(Number.isInteger(raw.tonic)&&(raw.tonic as number)>=0&&(raw.tonic as number)<=11))return false;
  const extraction=raw.extraction as Record<string,unknown>|null;
  return !!extraction&&['code','score','example'].includes(extraction.numbers as string)&&['ai','teacher','example'].includes(extraction.words as string)
   &&typeof extraction.confidence==='number'&&extraction.confidence>=0&&extraction.confidence<=1&&typeof extraction.earChecked==='boolean';

@@ -6,8 +6,8 @@ import type {FastifyInstance,FastifyRequest} from 'fastify';
 import {MOODS} from '@wanwu-v2/contracts/arrangement';
 import {AI_BACKGROUND_STEPS,isBackgroundBrief,parseBackgroundResult} from '@wanwu-v2/contracts/background';
 import type {AiBackgroundStep,BackgroundBrief,BackgroundResult,BackgroundUnavailable} from '@wanwu-v2/contracts/background';
-import {isTextbookTalkBrief,isWorkTalkBrief} from '@wanwu-v2/contracts/talk';
-import {buildBackgroundNotes,buildMoodWords,buildTextbookTalk,buildWorkTalk,readBackgroundNotes,readMoodWords,readTextbookTalk,readWorkTalk} from '@wanwu-v2/prompts/tasks';
+import {isTextbookTalk,isTextbookTalkBrief,isWorkTalkBrief,isWorkTalkReply} from '@wanwu-v2/contracts/talk';
+import {buildBackgroundNotes,buildMoodWords,buildTextbookFeatures,buildTextbookTalk,buildWorkTalk,isTextbookFeaturesBrief,readBackgroundNotes,readMoodWords,readReply,readTextbookFeatures,readTextbookTalk,readWorkTalk} from '@wanwu-v2/prompts/tasks';
 import type {BuiltPrompt} from '@wanwu-v2/prompts/tasks';
 import {ApiError} from '../errors.ts';
 import {developIdea} from './aiNotes.ts';
@@ -18,10 +18,16 @@ import {GuestFailure,postJson} from './net.ts';
 import type {Post} from './net.ts';
 import {OVERRIDE_HEADER,parseOverride} from './override.ts';
 import {chat} from './providers/language.ts';
+import {chatWithAudio} from './providers/audio.ts';
 import {generateAudio} from './providers/music.ts';
 
-/** Server waits a little less than the page (talk 6 s, AI notes 8 s, AI audio 60 s), so the page hears why. */
-export const GUEST_TIMEOUT_MS={text:5_500,notes:7_000,audio:55_000} as const;
+/**
+ * Server waits a little less than the page (talk 10 s, AI notes 8 s, AI audio 60 s), so the page hears why. Mood words
+ * are short; talk rewords up to nine facts and takes qwen3.8-flash 4–6 s (measured 2026-10-30) while the corpus shows.
+ */
+export const GUEST_TIMEOUT_MS={mood:5_500,talk:9_500,notes:7_000,audio:55_000,listen:7_500,features:4_500} as const;
+/** A teaching-music excerpt: about 30 s of low-bitrate mono mp3 (≈ 180 KB); the request may carry up to 1.2 MB of base64. */
+const EXCERPT_MAX_CHARS=1_200_000;
 export type GuestContext={config:GuestConfig;post:Post;budget:DailyBudget;jobs:BackgroundJobs};
 export const guestContext=(config:GuestConfig,post:Post=postJson):GuestContext=>({config,post,budget:new DailyBudget(config.dailyLimit),jobs:new BackgroundJobs()});
 
@@ -39,12 +45,12 @@ export function guestRoutes(app:FastifyInstance,context:GuestContext){
   request.log.info({task,result,ms:Date.now()-started,model:provider?.builtIn?provider.model:provider?'visitor':null,requestId:request.id},'Wanwu guest AI');
 
  /** A text task: language model → reply text. Failures become the error bodies the page already reads. */
- const text=async(request:FastifyRequest,task:string,built:(provider:Provider)=>BuiltPrompt)=>{
+ const text=async(request:FastifyRequest,task:string,built:(provider:Provider)=>BuiltPrompt,timeoutMs:number=GUEST_TIMEOUT_MS.talk)=>{
   const started=Date.now(),{language}=providers(request);
   if(!language){outcome(request,task,started,'not-open',null);throw new ApiError(503,'not-open');}
   if(spend(language)){outcome(request,task,started,'quota',language);throw new ApiError(429,'rate-limited',context.budget.retryAfter());}
   const prompt=built(language);
-  try{const reply=await chat(context.post,language,prompt,GUEST_TIMEOUT_MS.text);outcome(request,task,started,'ok',language);return {reply,model:language.model,promptVersion:prompt.version};}
+  try{const reply=await chat(context.post,language,prompt,timeoutMs);outcome(request,task,started,'ok',language);return {reply,model:language.model,promptVersion:prompt.version};}
   catch(error){
    const reason=error instanceof GuestFailure?error.reason:'failed';outcome(request,task,started,reason,language);
    if(reason==='quota')throw new ApiError(429,'rate-limited',60);
@@ -53,12 +59,16 @@ export function guestRoutes(app:FastifyInstance,context:GuestContext){
   }
  };
 
+ // Which built-in models are set up, so the page shows the AI choices only when they can work (a visitor's own
+ // settings open a kind on the page side too). No secrets, no model names.
+ app.get('/api/v1/guest/status',{config:{rateLimit:{max:60,timeWindow:60_000}}},async()=>({language:!!context.config.language,music:!!context.config.music,audio:!!context.config.audio}));
+
  app.post('/api/v1/moods/interpret',GUEST_RATE_LIMIT,async request=>{
   const body=request.body as {text?:unknown};
   if(!exact(body,['text'])||typeof body.text!=='string')throw new ApiError(400,'invalid-request');
   const clean=body.text.trim(),length=[...clean].length;
   if(length<1||length>12)throw new ApiError(400,'invalid-request');
-  const {reply,model,promptVersion}=await text(request,'mood-words',()=>buildMoodWords({text:clean}));
+  const {reply,model,promptVersion}=await text(request,'mood-words',()=>buildMoodWords({text:clean}),GUEST_TIMEOUT_MS.mood);
   const nearest=readMoodWords(reply).acceptance.value?.nearest??null;
   return {nearest:MOODS.includes(nearest as never)?nearest:null,model,promptVersion};
  });
@@ -66,14 +76,45 @@ export function guestRoutes(app:FastifyInstance,context:GuestContext){
  app.post('/api/v1/talk/work',GUEST_RATE_LIMIT,async request=>{
   const brief=request.body;if(!isWorkTalkBrief(brief))throw new ApiError(400,'invalid-request');
   const {reply,model,promptVersion}=await text(request,'work-talk',()=>buildWorkTalk(brief));
-  const {lines,tryThis}=readWorkTalk(reply,brief).acceptance.value;
-  return {lines,tryThis,model,promptVersion};
+  // Protocol shape (WorkTalkReply + model + promptVersion): the page runs the same acceptance again line by line.
+  const value=readReply(reply).value;
+  if(readWorkTalk(reply,brief).acceptance.status==='rejected'||!isWorkTalkReply(value))throw new ApiError(502,'failed');
+  return {lines:value.lines.map(({kind,line})=>({kind,line})),tryThis:value.tryThis,model,promptVersion};
  });
 
  app.post('/api/v1/talk/textbook',GUEST_RATE_LIMIT,async request=>{
   const brief=request.body;if(!isTextbookTalkBrief(brief))throw new ApiError(400,'invalid-request');
   const {reply,model,promptVersion}=await text(request,'textbook-talk',()=>buildTextbookTalk(brief));
-  return {...readTextbookTalk(reply,brief).acceptance.value,model,promptVersion};
+  const value=readReply(reply).value;
+  if(readTextbookTalk(reply,brief).acceptance.status==='rejected'||!isTextbookTalk(value))throw new ApiError(502,'failed');
+  return {feature:value.feature,shape:value.shape,meeting:value.meeting,task:value.task,model,promptVersion};
+ });
+
+ // 课本特征卡: the page measured the recording; the audio model hears the excerpt (when sent and set up), else the language
+ // model reads only the numbers. Both answers pass the same checks; when neither gives one, the page keeps the
+ // program's own result (this answers 502/503 and the page knows why). Server total stays under the page's 15 s.
+ app.post('/api/v1/textbook/features',{...GUEST_RATE_LIMIT,bodyLimit:EXCERPT_MAX_CHARS+64*1024},async request=>{
+  const body=request.body as {brief?:unknown;audio?:unknown};
+  if(!body||typeof body!=='object'||Object.keys(body).some(key=>key!=='brief'&&key!=='audio')||!isTextbookFeaturesBrief(body.brief))throw new ApiError(400,'invalid-request');
+  const audio=body.audio===undefined?null:typeof body.audio==='string'&&body.audio.length<=EXCERPT_MAX_CHARS&&/^[A-Za-z0-9+/=]+$/.test(body.audio)?body.audio:'bad';
+  if(audio==='bad')throw new ApiError(400,'invalid-request');
+  const brief=body.brief,started=Date.now(),{language}=providers(request),listener=context.config.audio;
+  const tries:{source:'audio'|'language';provider:Provider;run:(provider:Provider)=>Promise<string>;prompt:ReturnType<typeof buildTextbookFeatures>}[]=[];
+  if(audio&&listener){const prompt=buildTextbookFeatures(brief);tries.push({source:'audio',provider:listener,prompt,run:provider=>chatWithAudio(context.post,provider,prompt,audio,GUEST_TIMEOUT_MS.listen)});}
+  if(language){const prompt=buildTextbookFeatures({...brief,listenSeconds:0});tries.push({source:'language',provider:language,prompt,run:provider=>chat(context.post,provider,prompt,GUEST_TIMEOUT_MS.features)});}
+  if(!tries.length){outcome(request,'textbook-features',started,'not-open',null);throw new ApiError(503,'not-open');}
+  for(const attempt of tries){
+   if(spend(attempt.provider)){outcome(request,'textbook-features',started,'quota',attempt.provider);continue;}
+   try{
+    const read=readTextbookFeatures(await attempt.run(attempt.provider),brief);
+    if(read.acceptance.value){
+     outcome(request,`textbook-features:${attempt.source}`,started,read.acceptance.status,attempt.provider);
+     return {...read.acceptance.value,source:attempt.source,model:attempt.provider.builtIn?attempt.provider.model:'visitor',promptVersion:attempt.prompt.version};
+    }
+    outcome(request,`textbook-features:${attempt.source}`,started,'rejected',attempt.provider);
+   }catch(error){outcome(request,`textbook-features:${attempt.source}`,started,error instanceof GuestFailure?error.reason:'failed',attempt.provider);}
+  }
+  throw new ApiError(502,'failed');
  });
 
  const unavailable=(reason:BackgroundUnavailable):BackgroundResult=>({status:'unavailable',reason});

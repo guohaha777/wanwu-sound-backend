@@ -106,3 +106,37 @@ test('碰一碰: together on the beat, call and answer between sounds, filling t
  const wall=[{start:.4,end:30}];
  assert.equal(backgroundMeeting(backgroundPlan(input({sounding:wall})),wall).kind,'under');
 });
+
+test('a chosen song is heard in every layer: chords and drum play its rhythm, the bass its on-beat notes, the key is the song\'s',()=>{
+ const song={...lullaby,rhythmCell:[.75,.25,1],meter:2 as const,tempoBpm:120,tonic:5};
+ const plan=backgroundPlan(input({textbook:song,mood:'lively'})),beat=.5;
+ const before=plan.notes.filter(note=>note.at<plan.cadenceAt-1e-9);
+ const drumAts=before.filter(note=>note.part==='rhythm').map(note=>Math.round(note.at/beat*4)/4%2);
+ assert.ok(drumAts.every(at=>[0,.75,1].includes(at)),'the drum plays 0, ¾ and 1 of every bar');
+ assert.ok(drumAts.includes(.75),'including the off-beat note');
+ const chordAts=new Set(before.filter(note=>note.part==='chord').map(note=>Math.round(note.at/beat*4)/4%2));
+ assert.deepEqual([...chordAts].sort(),[0,.75,1],'chords are struck on the song\'s rhythm');
+ assert.ok(before.filter(note=>note.part==='bass').every(note=>Number.isInteger(Math.round(note.at/beat*1e6)/1e6)),'bass only on beats');
+ assert.equal(((plan.tonic%12)+12)%12,5,'key centre F, the song\'s');assert.equal(plan.mode,'major','lively stays major');
+ assert.ok(Math.abs(plan.tonic-BACKGROUND_RULES.moods.lively.tonic)<=6,'in the mood\'s register');
+ const off=backgroundPlan(input({textbook:song,mood:'lively'}),{...BACKGROUND_RULES,song:{...BACKGROUND_RULES.song,chordsFollow:0,drumsFollow:0,bassFollow:0,keyFollow:0}});
+ assert.equal(off.tonic,BACKGROUND_RULES.moods.lively.tonic);
+ assert.ok(off.notes.filter(note=>note.part==='rhythm'&&note.at<off.cadenceAt).every(note=>Number.isInteger(Math.round(note.at/beat*1e6)/1e6)),'switched off: even beats again');
+});
+
+test('the melody answers the child\'s sounds: away from their register, along their contour, as strong as they were',()=>{
+ const spans=input().sounding;
+ const as=(fields:object)=>backgroundPlan(input({sounding:spans.map(span=>({...span,...fields}))})).notes.filter(note=>note.part==='melody');
+ const mean=(notes:{midi:number}[])=>notes.reduce((sum,note)=>sum+note.midi,0)/notes.length;
+ assert.ok(mean(as({pitch:'high'}))<mean(as({}))&&mean(as({pitch:'low'}))>mean(as({})),'higher sounds → lower melody, lower sounds → higher');
+ // The gap after the second sound (12 s → 20 s): its phrase follows the contour of the sound just heard.
+ const inGap=(notes:{at:number;midi:number}[])=>notes.filter(note=>note.at>=12&&note.at<19.5).map(note=>note.midi);
+ const rising=inGap(as({contour:'rising'})),falling=inGap(as({contour:'falling'}));
+ assert.ok(rising.length>=3&&falling.length>=3);
+ assert.ok(rising.at(-1)!>rising[0]!,`rising answer goes up: ${rising}`);
+ assert.ok(falling.at(-1)!<falling[0]!,`falling answer goes down: ${falling}`);
+ const accent=(notes:{accent:number}[])=>notes.reduce((sum,note)=>sum+note.accent,0)/notes.length;
+ assert.ok(accent(as({intensity:'loud'}))>accent(as({intensity:'soft'})));
+ const off={...BACKGROUND_RULES,answer:{...BACKGROUND_RULES.answer,registerShiftSemitones:0,followContour:0,intensityAccent:0}};
+ assert.deepEqual(backgroundPlan(input({sounding:spans.map(span=>({...span,pitch:'high',contour:'rising',intensity:'loud'}))}),off).notes,backgroundPlan(input(),off).notes,'switched off: the child\'s choices change nothing');
+});

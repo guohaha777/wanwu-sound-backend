@@ -5,21 +5,54 @@
  "status": "open",
  "temperature": 0.3,
  "lines": [
-  "【任务】开发期为课本歌曲写特征卡里的文字。下面的数字是代码从音频或电子谱里算出来的，请根据它们写：这首歌的心情（选一种），和一句给孩子的话。",
+  "【任务】开发期为课本歌曲写特征卡里的文字。下面的数字是代码从音频或电子谱里算出来的，请根据歌名和数字写：这首歌的心情（选一种），和一句给孩子的话。",
+  "【歌名】「{title}」",
   "【数字】速度 {tempo}（每分钟拍数），{metre}，节奏型 {rhythm}，疏密：{density}，音区 {range}，明暗：{brightness}，调式：{mode}，重复：{repetition}。",
+  "【已经写好的其他歌】{others}",
   "【心情只能选一种】{moods}",
   "【要求】",
-  "· childLine 不超过 {childLineMax} 个字，像“像摇篮轻轻晃”“一步一步很有精神”，说节奏和感觉，不写歌词、不写乐理词。",
+  "· childLine 不超过 {childLineMax} 个字，像“像摇篮轻轻晃”“一步一步很有精神”，说这首歌自己的节奏和感觉，可以借歌名里的形象，不写歌词、不写乐理词。",
+  "· 不同的歌节奏不同，说法就要不同：不要和上面其他歌的那句话重复或只换一两个字；只有节奏型、速度和拍子都非常接近时，才可以说得相近。",
   "· 只描述，不评价；数字以上面为准，你不用判断速度和调式对不对。",
   "【返回格式】",
   "{example}"
  ],
  "words": {
-  "density": {"sparse": "稀", "medium": "不稀不密", "busy": "密"},
-  "brightness": {"dark": "偏暗", "mid": "中间", "bright": "偏亮"},
-  "mode": {"major": "大调", "minor": "小调", "pentatonic": "五声调式", "dorian": "多利亚调式"},
-  "level": {"low": "少", "medium": "中等", "high": "多"},
-  "mood": {"happy": "开心", "calm": "平静", "lively": "活泼", "sad": "悲伤", "angry": "生气", "scared": "害怕", "curious": "好奇"}
+  "density": {
+   "sparse": "稀",
+   "medium": "不稀不密",
+   "busy": "密"
+  },
+  "brightness": {
+   "dark": "偏暗",
+   "mid": "中间",
+   "bright": "偏亮"
+  },
+  "mode": {
+   "major": "大调",
+   "minor": "小调",
+   "pentatonic": "五声调式",
+   "dorian": "多利亚调式"
+  },
+  "level": {
+   "low": "少",
+   "medium": "中等",
+   "high": "多"
+  },
+  "mood": {
+   "happy": "开心",
+   "calm": "平静",
+   "lively": "活泼",
+   "sad": "悲伤",
+   "angry": "生气",
+   "scared": "害怕",
+   "curious": "好奇"
+  },
+  "noOthers": "还没有"
  },
- "example": {"mood": "calm", "childLine": "像摇篮轻轻晃"}
+ "example": {
+  "mood": "calm",
+  "childLine": "像摇篮轻轻晃"
+ },
+ "otherLine": "「{title}」节奏型 {rhythm}、速度 {tempo}：{childLine}"
 }

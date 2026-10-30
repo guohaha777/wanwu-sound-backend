@@ -24,7 +24,7 @@ export const AI_BACKGROUND_STEPS:readonly AiBackgroundStep[]=['audio-ai','notes-
 export type RuleVersions={analysis:string;shaping:string;background:string;mix:string};
 
 /** Only the textbook song's features — never its audio, score or melody. */
-export type TextbookFeatures=Pick<TextbookTrack,'id'|'tempoBpm'|'meter'|'rhythmCell'|'onsetDensity'|'pitchRange'|'brightness'|'mode'|'repetition'|'mood'>;
+export type TextbookFeatures=Pick<TextbookTrack,'id'|'tempoBpm'|'meter'|'rhythmCell'|'onsetDensity'|'pitchRange'|'brightness'|'mode'|'repetition'|'mood'|'tonic'>;
 
 export type BackgroundBrief={
  version:typeof BACKGROUND_REQUEST_VERSION;

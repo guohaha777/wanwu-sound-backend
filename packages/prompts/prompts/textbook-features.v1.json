@@ -1,0 +1,80 @@
+{
+ "version": "textbook-features-prompt-v1",
+ "task": "textbook-features",
+ "model": "audio",
+ "status": "open",
+ "temperature": 0.3,
+ "lines": [
+  "【任务】为小学音乐课的课本歌曲做特征卡。用卡片的老师多数没有音乐基础；孩子会借这首歌的节奏给自己的声音配背景，所以要让人一听就认得出这首歌的节奏特点（不抄旋律）。",
+  "【歌名】「{title}」",
+  "{listen}",
+  "【程序测出的数字】速度约 {tempo}（每分钟拍数；可能被测成真实速度的两倍或一半），{metre}（{metreSure}），{mode}，疏密：{density}，明暗：{brightness}。",
+  "【程序在录音里找到的反复出现的一小节节奏】（单位：拍；× 后面是出现的小节数）{candidates}",
+  "【已经写好的其他歌】{others}",
+  "【要做的事】",
+  "· rhythmCell：最能让人认出这首歌的一小节节奏，优先从上面的候选里选；每个音一样长的平均节奏哪首歌都有，除非这首歌真的就是这样，否则不要选。单位拍，每个数在 0.25–4 之间，加起来等于一小节的拍数。",
+  "· meter：一小节几拍（2、3 或 4）；听起来和程序测的不一样就改。",
+  "· tempo：程序测的速度如果是真实速度的两倍写 \"half\"，是一半写 \"double\"，差不多写 \"same\"。",
+  "· mood：只能从这些里选一个：{moods}。",
+  "· childLine：给孩子的一句话，不超过 {childLineMax} 个字，说这首歌自己的节奏和感觉，可以借歌名里的形象；节奏不同的歌说法要不同，不要和其他歌重复。",
+  "· teacherNote：给老师的一段话，不超过 {noteMax} 个字，用大白话说这首歌的节奏有什么特点、可以怎么带孩子拍出来，不用乐理术语。",
+  "· 只描述，不评价；不写歌词。",
+  "【返回格式】只回复 JSON，例如：{example}"
+ ],
+ "candidateLine": "[{cell}] ×{bars}",
+ "otherLine": "「{title}」节奏型 [{rhythm}]：{childLine}",
+ "words": {
+  "listen": {
+   "audio": "【音频】请先听附带的这段音频（约 {seconds} 秒的截取段），以你听到的为准。",
+   "numbers": "【音频】这次没有附音频，只根据歌名和数字判断。"
+  },
+  "metre": {
+   "2": "二拍子",
+   "3": "三拍子",
+   "4": "四拍子"
+  },
+  "sure": {
+   "high": "程序比较确定",
+   "low": "程序不太确定，请以听到的为准"
+  },
+  "mode": {
+   "major": "大调",
+   "minor": "小调",
+   "pentatonic": "五声调式",
+   "dorian": "多利亚调式"
+  },
+  "density": {
+   "sparse": "稀",
+   "medium": "不稀不密",
+   "busy": "密"
+  },
+  "brightness": {
+   "dark": "偏暗",
+   "mid": "中间",
+   "bright": "偏亮"
+  },
+  "mood": {
+   "happy": "开心",
+   "calm": "平静",
+   "lively": "活泼",
+   "sad": "悲伤",
+   "angry": "生气",
+   "scared": "害怕",
+   "curious": "好奇"
+  },
+  "noCandidates": "没有找到",
+  "noOthers": "还没有"
+ },
+ "example": {
+  "rhythmCell": [
+   0.5,
+   0.5,
+   1
+  ],
+  "meter": 2,
+  "tempo": "same",
+  "mood": "lively",
+  "childLine": "像小鸟蹦蹦跳跳",
+  "teacherNote": "每小节先两下快的再一下长的，可以带孩子念“小鸟—叫”，前两下轻快拍手，最后一下拍得稳一点。"
+ }
+}

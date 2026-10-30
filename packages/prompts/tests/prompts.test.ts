@@ -11,7 +11,7 @@ const built:[string,BuiltPrompt][]=[
  ...BACKGROUND_BRIEFS.flatMap((brief,i)=>[[`background-audio#${i}`,buildBackgroundAudio(brief)],[`background-notes#${i}`,buildBackgroundNotes(brief)]] as [string,BuiltPrompt][]),
  ['work-talk',buildWorkTalk(workBrief)],['textbook-talk',buildTextbookTalk(textbookBrief)],
  ['sound-hint',buildSoundHint({dimension:'pattern',value:'repeat',kind:'texture'})],['mood-words',buildMoodWords({text:'有点想家'})],
- ['textbook-words',buildTextbookWords(calmLullaby.textbook!)],
+ ['textbook-words',buildTextbookWords({...calmLullaby.textbook!,title:'摇篮曲',others:[{title:'小火车',tempoBpm:116,rhythmCell:[.5,.5,1],childLine:'越跑越欢快'}]})],
 ];
 
 test('every prompt file loads; each task has a version and a fallback',()=>{

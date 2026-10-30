@@ -42,7 +42,7 @@ export async function bundle(){
  if(headers.length!==seen.size||headers.some(([,a,b])=>a!==b||!seen.has(safeRelative(a))))throw new Error('Patch paths differ from manifest');
  if(!Array.isArray(manifest.sharedFiles)||!manifest.sharedFiles.length)throw new Error('Missing shared package fingerprints');
  for(const entry of manifest.sharedFiles){
-  if(!/^packages\/(?:contracts|sound-rules|audio-engine)\//.test(entry.path)||entry.path.includes('..')||entry.path.includes('\\')
+  if(!/^packages\/(?:contracts|sound-rules|audio-engine|prompts|music-features)\//.test(entry.path)||entry.path.includes('..')||entry.path.includes('\\')
    ||await checkedFile(root,entry.path)!==entry.sha256)throw new Error('Shared package snapshot mismatch');
  }
  return {manifest,patchFile};

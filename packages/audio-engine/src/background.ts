@@ -35,7 +35,9 @@ function play(ctx:BaseAudioContext,out:AudioNode,voice:Voice,note:BackgroundNote
   case 'original':
    if(part==='rhythm')return false;
    osc.type='sine';osc.frequency.value=freq;
-   if(part==='chord')sustain(env,at,end,.05,.6);
+   // Chords struck on a textbook song's rhythm (accent > 0) are plucked so the pattern is heard; held chords stay soft.
+   if(part==='chord'&&note.accent>0)strike(env,at,end,accented(.07,note));
+   else if(part==='chord')sustain(env,at,end,.05,.6);
    else if(part==='bass')sustain(env,at,end,accented(.11,note),.05);
    else strike(env,at,end,accented(.11,note));
    break;
@@ -43,7 +45,8 @@ function play(ctx:BaseAudioContext,out:AudioNode,voice:Voice,note:BackgroundNote
    // 风琴: everything held, reedy.
    if(part==='rhythm')return false;
    osc.type='triangle';osc.frequency.value=freq;
-   sustain(env,at,end,part==='chord'?.07:part==='bass'?accented(.09,note):accented(.08,note),part==='chord'?.5:.04);
+   // A chord struck on a song's rhythm (accent > 0) speaks at once; a held chord swells in.
+   sustain(env,at,end,part==='chord'?.07:part==='bass'?accented(.09,note):accented(.08,note),part==='chord'&&!note.accent?.5:.03);
    break;
   case 'bells':
    // 木琴: every note struck and decaying; chords become a quick roll.

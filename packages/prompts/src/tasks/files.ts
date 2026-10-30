@@ -7,7 +7,7 @@ import {fill,unknownPlaceholders} from '../fill.ts';
 import {avoidList,neverSayList} from '../style.ts';
 
 export type PromptFile={
- version:string;task:string;model:'language'|'music';status:'open'|'closed';temperature:number;lines:string[];
+ version:string;task:string;model:'language'|'music'|'audio';status:'open'|'closed';temperature:number;lines:string[];
  words?:Record<string,unknown>;example?:unknown;[extra:string]:unknown;
 };
 export type PromptSpec={
@@ -57,15 +57,15 @@ export function loadPrompt<T extends PromptFile>(file:T,spec:PromptSpec):T{
 export const SYSTEM_SPEC:PromptSpec={task:'system',model:'language',placeholders:['childAvoid','neverSay']};
 export const SYSTEM_PROMPT=loadPrompt(systemFile as PromptFile,SYSTEM_SPEC);
 
-/** What is sent for one request: the shared system prompt (language tasks only), the task prompt, and its settings. */
+/** What is sent for one request: the shared system prompt (language and audio tasks), the task prompt, and its settings. */
 export type BuiltPrompt={task:string;version:string;system:string|null;prompt:string;temperature:number;model:PromptFile['model']};
 
 export function buildPrompt(file:PromptFile,values:Readonly<Record<string,string|number>>):BuiltPrompt{
  const lines=file.lines.map(line=>fill(line,values)).filter(line=>line.trim());
  return {
   task:file.task,version:file.version,model:file.model,temperature:file.temperature,
-  system:file.model==='language'?SYSTEM_PROMPT.lines.map(line=>fill(line,{childAvoid:avoidList(),neverSay:neverSayList()})).join('\n'):null,
-  prompt:lines.join(file.model==='language'?'\n':' '),
+  system:file.model!=='music'?SYSTEM_PROMPT.lines.map(line=>fill(line,{childAvoid:avoidList(),neverSay:neverSayList()})).join('\n'):null,
+  prompt:lines.join(file.model!=='music'?'\n':' '),
  };
 }
 /** A word from a table, by key (the tables are checked to cover every key when loaded). */
