@@ -46,7 +46,7 @@ function play(ctx:BaseAudioContext,out:AudioNode,voice:Voice,note:BackgroundNote
    if(part==='rhythm')return false;
    osc.type='triangle';osc.frequency.value=freq;
    // A chord struck on a song's rhythm (accent > 0) speaks at once; a held chord swells in.
-   sustain(env,at,end,part==='chord'?.07:part==='bass'?accented(.09,note):accented(.08,note),part==='chord'&&!note.accent?.5:.03);
+   sustain(env,at,end,part==='chord'?.07:part==='bass'?accented(.09,note):accented(.08,note),part==='chord'?(note.accent?.03:.5):.04);
    break;
   case 'bells':
    // 木琴: every note struck and decaying; chords become a quick roll.
