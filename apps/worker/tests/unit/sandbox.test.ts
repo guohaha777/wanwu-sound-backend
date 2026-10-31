@@ -17,11 +17,13 @@ test('sandbox inspection accepts the observed Chromium 156 labels and the earlie
  }
 });
 
-test('renderer seccomp adds only the sandbox chroot syscall, with no outer capability grant',()=>{
+test('renderer seccomp adds only the sandbox chroot and faccessat2 syscalls, with no outer capability grant',()=>{
  const upstream=readFileSync(new URL('../../../../deploy/media-prototype/seccomp-profile.json',import.meta.url));
  const base=JSON.parse(upstream.toString()),profile=JSON.parse(rendererSeccompProfile(upstream));
- const addition=profile.syscalls.pop();assert.deepEqual(profile,base);
+ const access=profile.syscalls.pop(),addition=profile.syscalls.pop();assert.deepEqual(profile,base);
  assert.deepEqual(addition.names,['chroot']);assert.equal(addition.action,'SCMP_ACT_ALLOW');
  assert.deepEqual(addition.includes,{});assert.deepEqual(addition.excludes,{});assert.deepEqual(addition.args,[]);
+ assert.deepEqual(access.names,['faccessat2']);assert.equal(access.action,'SCMP_ACT_ALLOW');
+ assert.deepEqual(access.includes,{});assert.deepEqual(access.excludes,{});assert.deepEqual(access.args,[]);
  const corrupted=Buffer.from(upstream);corrupted[0]=0;assert.throws(()=>rendererSeccompProfile(corrupted),/Unreviewed/);
 });
