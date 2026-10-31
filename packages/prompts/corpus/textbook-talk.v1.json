@@ -3,6 +3,8 @@
  "metres": {"2": "二拍子", "3": "三拍子", "4": "四拍子"},
  "rhythm": {"short": "嘀", "beat": "嗒", "long": "嗒—"},
  "teachingLine": {"2": "跟着音乐一二、一二地拍手", "3": "跟着音乐一二三、一二三地摇", "4": "跟着音乐一二三四地走"},
+ "pulses": {"even": "拍子均匀", "none": "自由节奏"},
+ "pulseLine": {"even": "跟着音乐一下一下地拍手", "none": "跟着音乐慢慢摇，听声音长长短短"},
  "feature": "「{title}」是{metre}，节奏是「{rhythm}」，{childLine}。",
  "meetings": {
   "together": {"line": "你的声音落在拍子上，和背景一起用力。", "named": "你的「{name}」正好落在拍子上，和背景一起用力。"},

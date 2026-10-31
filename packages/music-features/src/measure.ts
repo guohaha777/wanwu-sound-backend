@@ -7,12 +7,19 @@
 //   pickRhythm chooses one, nobody else sees them);
 // - key and mode from the pitch-class profile (major / minor / pentatonic), brightness from the spectral centroid,
 //   density from onsets per beat, a rough melody range, and how much bars repeat.
+// Before any of that a precheck asks whether it is music at all, and three sound features are measured, each on its own:
+// rhythm (steady / free), texture (one line / accompanied) and drums (yes / no); 人声 is only heard by the audio model.
+// Their combination picks the measuring path: which cue finds the beat, whether a tempo is claimed at all, and how the
+// key evidence (the whole recording, the bass, the last notes) is weighted. Thresholds and paths are in sound-rules
+// music-types.v1.json.
 // Rough by design: recordings carry accompaniment. Numbers the official docs say the audio model cannot judge (tempo,
 // key) come from here; the model listens for what is characteristic.
 import type {Brightness,Density,Level,Metre,TextbookMode} from '@wanwu-v2/contracts/textbook';
+import {MUSIC_TYPES_RULES} from '@wanwu-v2/sound-rules/rules';
+import type {MeasurePath,MusicTypesRules} from '@wanwu-v2/sound-rules/rules';
 import {magnitudes} from './fft.ts';
 
-export const MEASURE_VERSION='music-features-v1';
+export const MEASURE_VERSION='music-features-v2';
 const FRAME=2048,HOP=512,TARGET_RATE=22050;
 /** Below this the onsets count as bass (the accompaniment's strong-beat notes). */
 const BASS_HZ=250;
@@ -22,11 +29,31 @@ const BASS_GROUPING=.45;
 const CHORD_CHANGE=.15;
 /** The bass marks the beat when it is this many times stronger on one grid than half a beat away. */
 const BASS_ON_BEAT=2;
+/** Onset energy above this counts as percussive (cymbals, snare, hi-hat). */
+const DRUM_HZ=5000;
+/** The bass line's pitch classes are read from this band. */
+const BASS_LOW_HZ=50;
 
 /** A bar pattern found in the recording, in beats (sums to one bar), and how many bars had it. */
 export type RhythmCandidate={cell:number[];bars:number};
+/**
+ * What the precheck and the sound features are decided from, each 0–1: how clearly the onsets repeat at one beat (steady), how much of the sound is
+ * in a few pitch classes (tonal), how much one pitch class leads (solo: one line, no chords), and the share of onset
+ * energy above DRUM_HZ (drums).
+ */
+export type SoundTraits={steady:number;tonal:number;solo:number;drums:number};
+/** The sound features, each measured on its own (人声 is left to the audio model). */
+export type SoundFeatures={rhythm:'steady'|'free';texture:'solo'|'accompanied';drums:boolean};
 export type Measurement={
  version:typeof MEASURE_VERSION;seconds:number;
+ /** False when the precheck finds almost no steady pitch (noise, speech): no teaching card is to be made. */
+ musical:boolean;features:SoundFeatures;traits:SoundTraits;
+ /** The measuring path the features chose (music-types.v1.json `paths`). */
+ path:MeasurePath;
+ /** False for free-rhythm recordings and non-music: tempo, metre and the strong beat are then not to be used. */
+ steady:boolean;
+ /** Whether the strong beat is measured well enough on this path to be marked (else only an even beat). */
+ strongBeat:boolean;
  tempoBpm:number;meter:Metre;meterConfidence:number;
  /** When the first full bar starts in the recording (seconds): with tempoBpm and meter, where every strong beat falls. */
  downbeatSeconds:number;
@@ -49,7 +76,7 @@ function correlation(a:readonly number[],b:readonly number[]){
 }
 
 /** Mono samples at any rate (the page decodes with Web Audio; the server with FFmpeg). */
-export function measure(input:Float32Array,sampleRate:number):Measurement{
+export function measure(input:Float32Array,sampleRate:number,types:MusicTypesRules=MUSIC_TYPES_RULES):Measurement{
  // Down to about 22 kHz by block averaging: enough for onsets, pitch classes and brightness.
  const factor=Math.max(1,Math.floor(sampleRate/TARGET_RATE)),rate=sampleRate/factor;
  const samples=new Float32Array(Math.floor(input.length/factor));
@@ -63,23 +90,29 @@ export function measure(input:Float32Array,sampleRate:number):Measurement{
  const binHz=rate/FRAME,bins=FRAME/2+1;
  const pitchClass=new Int8Array(bins).fill(-1),melodyLow=Math.ceil(200/binHz),melodyHigh=Math.floor(1100/binHz);
  for(let k=1;k<bins;k++){const f=k*binHz;if(f>80&&f<2000)pitchClass[k]=((Math.round(12*Math.log2(f/440))+69)%12+12)%12;}
- const bassTop=Math.floor(BASS_HZ/binHz),bassFlux=new Float32Array(frames);
+ const bassTop=Math.floor(BASS_HZ/binHz),bassFlux=new Float32Array(frames),drumFrom=Math.ceil(DRUM_HZ/binHz);
+ const bassClass=new Int8Array(bins).fill(-1);
+ for(let k=Math.ceil(BASS_LOW_HZ/binHz);k<=bassTop;k++)bassClass[k]=((Math.round(12*Math.log2(k*binHz/440))+69)%12+12)%12;
+ const bassChroma=new Float32Array(frames*12),drumFlux=new Float32Array(frames),allFlux=new Float32Array(frames);
  const flux=new Float32Array(frames),energy=new Float32Array(frames),centroid=new Float32Array(frames),f0=new Float32Array(frames);
  const chroma=new Float32Array(frames*12),frame=new Float32Array(FRAME);
  let previous:Float32Array|null=null;
  for(let t=0;t<frames;t++){
   for(let i=0;i<FRAME;i++)frame[i]=samples[t*HOP+i]!*window[i]!;
   const spectrum=magnitudes(frame,FRAME),logs=new Float32Array(bins);
-  let sum=0,weighted=0,rise=0,bassRise=0,best=0,bestBin=melodyLow;
+  let sum=0,weighted=0,rise=0,bassRise=0,drumRise=0,allRise=0,best=0,bestBin=melodyLow;
   for(let k=0;k<bins;k++){
    const m=spectrum[k]!;logs[k]=Math.log1p(10*m);sum+=m;weighted+=m*k*binHz;
    if(previous){rise+=Math.max(0,logs[k]!-previous[k]!);
+    // Percussive share in plain magnitude, like the bass: on a log scale every high bin's faint rise would count.
+    const up=Math.max(0,m-Math.expm1(previous[k]!)/10);allRise+=up;if(k>=drumFrom)drumRise+=up;
     // The bass in plain magnitude: a log scale would count a high note's click, which leaks into every bin.
     if(k<=bassTop)bassRise+=Math.max(0,m-Math.expm1(previous[k]!)/10);}
    const pc=pitchClass[k]!;if(pc>=0)chroma[t*12+pc]=chroma[t*12+pc]!+m;
+   const bc=bassClass[k]!;if(bc>=0)bassChroma[t*12+bc]=bassChroma[t*12+bc]!+m;
    if(k>=melodyLow&&k<=melodyHigh&&m>best){best=m;bestBin=k;}
   }
-  flux[t]=rise;bassFlux[t]=bassRise;energy[t]=sum;centroid[t]=sum?weighted/sum:0;f0[t]=bestBin*binHz;previous=logs;
+  flux[t]=rise;bassFlux[t]=bassRise;drumFlux[t]=drumRise;allFlux[t]=allRise;energy[t]=sum;centroid[t]=sum?weighted/sum:0;f0[t]=bestBin*binHz;previous=logs;
  }
 
  // Onset envelope, smoothed; its autocorrelation gives the beat.
@@ -101,6 +134,26 @@ export function measure(input:Float32Array,sampleRate:number):Measurement{
  const scores={2:near(2),3:near(3),4:near(4)};
  const sortedScores=Object.values(scores).sort((x,y)=>y-x);
 
+
+ // The precheck and the sound features, from four traits over the louder frames; their combination picks the path that
+ // decides how the rest is measured (free rhythm first, then drums, then one line or accompanied).
+ const loudFloor=percentile(energy,50);
+ let tonalSum=0,soloSum=0,counted=0;
+ for(let t=0;t<frames;t++){
+  if(energy[t]!<=loudFloor)continue;
+  const v=Array.from(chroma.subarray(t*12,t*12+12)).sort((x,y)=>y-x),all=v.reduce((s,x)=>s+x,0);
+  if(!all)continue;tonalSum+=(v[0]!+v[1]!+v[2]!)/all;soloSum+=v[0]!/all;counted++;
+ }
+ const fluxTotal=allFlux.reduce((s,v)=>s+v,0)||1;
+ const traits:SoundTraits={steady:Math.max(0,ac[lag]!),tonal:counted?tonalSum/counted:0,solo:counted?soloSum/counted:0,
+  drums:drumFlux.reduce((s,v)=>s+v,0)/fluxTotal};
+ const d=types.detect,musical=traits.tonal>=types.precheck.tonalBelow;
+ const features:SoundFeatures={rhythm:traits.steady<d.steadyBelow?'free':'steady',texture:traits.solo>d.soloAbove?'solo':'accompanied',
+  drums:traits.drums>d.drumsAbove};
+ // Not music: nothing to count, so like free rhythm no tempo is claimed.
+ const pathName:MeasurePath=!musical||features.rhythm==='free'?'free':features.drums?'drums':features.texture;
+ const path=types.paths[pathName],useBass=path.beatCue==='bass'||path.beatCue==='drums';
+
  // Beat phase: where the onsets line up — but where the bass clearly keeps to one grid, on the bass (the melody's
  // eighths can be busier on the off-beat than on the beat; the bass and kick mark the beat).
  const bassEnv=new Float32Array(frames);for(let t=0;t<frames;t++){let s=0;for(let j=-2;j<=2;j++)s+=(bassFlux[t+j]??0)*kernel[j+2]!;bassEnv[t]=s/2.5;}
@@ -111,7 +164,8 @@ export function measure(input:Float32Array,sampleRate:number):Measurement{
   const s=onGrid(env,p);if(s>phaseScore){phaseScore=s;phase=p;}
   const b=onGrid(bassEnv,p);if(b>bassScore){bassScore=b;bassPhase=p;}
  }
- if(bassScore>BASS_ON_BEAT*onGrid(bassEnv,(bassPhase+beat/2)%beat))phase=bassPhase;
+ // Drums: the kick is the bass band's onset and always marks the beat; a solo voice has no bass to follow.
+ if(path.beatCue==='drums'||(useBass&&bassScore>BASS_ON_BEAT*onGrid(bassEnv,(bassPhase+beat/2)%beat)))phase=bassPhase;
 
  // The bass on each beat, folded into bars of 2, 3 and 4: in a bar it groups, one beat stands out (oom-pah-pah). A bar
  // of 4 also stands out for a 2-beat bass, so 4 has to beat 2 clearly.
@@ -124,7 +178,7 @@ export function measure(input:Float32Array,sampleRate:number):Measurement{
   return {contrast:top?(top-rest.reduce((s,v)=>s+v,0)/rest.length)/top:0,strong};
  };
  const bass={2:grouping(2),3:grouping(3),4:grouping(4)};
- const bassMeter:Metre|null=bass[3].contrast>=BASS_GROUPING&&bass[3].contrast>Math.max(bass[2].contrast,bass[4].contrast)?3
+ const bassMeter:Metre|null=!useBass?null:bass[3].contrast>=BASS_GROUPING&&bass[3].contrast>Math.max(bass[2].contrast,bass[4].contrast)?3
   :bass[2].contrast>=BASS_GROUPING?(bass[4].contrast>bass[2].contrast*1.3?4:2):null;
  const meter:Metre=bassMeter??(scores[3]>Math.max(scores[2],scores[4])*1.05?3:scores[4]>scores[2]*1.15?4:2);
  const meterConfidence=bassMeter?Math.min(1,bass[bassMeter].contrast)
@@ -171,18 +225,27 @@ export function measure(input:Float32Array,sampleRate:number):Measurement{
 
  // Brightness and key from the louder frames.
  const loudish=percentile(energy,30),loud=percentile(energy,60);
- const centroids:number[]=[],profile=new Array<number>(12).fill(0),pitches:number[]=[];
+ const centroids:number[]=[],profile=new Array<number>(12).fill(0),bassProfile=new Array<number>(12).fill(0),pitches:number[]=[];
  for(let t=0;t<frames;t++){
-  if(energy[t]!>loudish){centroids.push(centroid[t]!);for(let k=0;k<12;k++)profile[k]=profile[k]!+chroma[t*12+k]!;}
+  if(energy[t]!>loudish){centroids.push(centroid[t]!);for(let k=0;k<12;k++){profile[k]=profile[k]!+chroma[t*12+k]!;bassProfile[k]=bassProfile[k]!+bassChroma[t*12+k]!;}}
   if(energy[t]!>loud)pitches.push(69+12*Math.log2(f0[t]!/440));
  }
  const centroidHz=Math.round(percentile(centroids,50));
  const brightness:Brightness=centroidHz<1500?'dark':centroidHz>2500?'bright':'mid';
- const total=profile.reduce((s,v)=>s+v,0)||1,norm=profile.map(v=>v/total);
- let tonic=0,major=true,keyConfidence=-1;
+ // Key: each tonic and mode scored on the evidence the path weights — the whole recording's pitch classes, the
+ // bass line's (bass notes sit on the tonic most), and the last notes before the recording falls quiet (a children's
+ // song ends on its tonic).
+ const normal=(v:readonly number[])=>{const total=v.reduce((s,x)=>s+x,0)||1;return v.map(x=>x/total);};
+ const norm=normal(profile),bassNorm=normal(bassProfile);
+ let lastLoud=frames-1;while(lastLoud>0&&energy[lastLoud]!<=loudish)lastLoud--;
+ const ending=new Array<number>(12).fill(0);
+ for(let t=Math.max(0,lastLoud-Math.round(types.key.endingSeconds*fps));t<=lastLoud;t++)for(let k=0;k<12;k++)ending[k]=ending[k]!+chroma[t*12+k]!;
+ const endingTop=Math.max(...ending)||1,w=path.key,weights=w.whole+w.bass+w.ending||1;
+ let tonic=0,major=true,keyConfidence=-Infinity;
  for(let shift=0;shift<12;shift++)for(const [template,isMajor] of [[MAJOR,true],[MINOR,false]] as const){
-  const rotated=template.map((_,i)=>template[(i-shift+12)%12]!),r=correlation(norm,rotated);
-  if(r>keyConfidence){keyConfidence=r;tonic=shift;major=isMajor;}
+  const rotated=template.map((_,i)=>template[(i-shift+12)%12]!);
+  const score=(w.whole*correlation(norm,rotated)+w.bass*correlation(bassNorm,rotated)+w.ending*ending[shift]!/endingTop)/weights;
+  if(score>keyConfidence){keyConfidence=score;tonic=shift;major=isMajor;}
  }
  const mode:TextbookMode=!major?'minor':norm[(tonic+5)%12]!+norm[(tonic+11)%12]!<.09?'pentatonic':'major';
  const low=Math.max(21,Math.round(percentile(pitches,5))),high=Math.min(108,Math.max(low+1,Math.round(percentile(pitches,95))));
@@ -198,7 +261,10 @@ export function measure(input:Float32Array,sampleRate:number):Measurement{
  const alike=similarities.length?similarities.reduce((s,v)=>s+v,0)/similarities.length:0;
  const repetition:Level=alike>.92?'high':alike<.8?'low':'medium';
 
- return {version:MEASURE_VERSION,seconds:Math.round(seconds*10)/10,tempoBpm,meter,meterConfidence:Math.round(meterConfidence*100)/100,
+ const round=(v:number)=>Math.round(v*100)/100;
+ return {version:MEASURE_VERSION,seconds:Math.round(seconds*10)/10,musical,features,path:pathName,
+  traits:{steady:round(traits.steady),tonal:round(traits.tonal),solo:round(traits.solo),drums:round(traits.drums)},
+  steady:path.tempo,strongBeat:path.strongBeat,tempoBpm,meter,meterConfidence:Math.round(meterConfidence*100)/100,
   downbeatSeconds:Math.round((phase+downbeat*beat)*HOP/rate*1000)/1000,
   onsetsPerBeat:Math.round(onsetsPerBeat*100)/100,onsetDensity,centroidHz,brightness,mode,tonic,keyConfidence:Math.round(keyConfidence*100)/100,
   pitchRange:{low,high},repetition,candidates};

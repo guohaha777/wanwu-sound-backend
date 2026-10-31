@@ -502,7 +502,7 @@
     },
     {
       "path": "packages/contracts/src/textbook.ts",
-      "sha256": "24412dc5a108c5174b4d5f284ef8d114b6a041f7797d5b636aefb4cd0fdb5f99"
+      "sha256": "ca421377257762fb43be2f59d5171ad4716bdd9c0004da49c66c42969abdd9c0"
     },
     {
       "path": "packages/contracts/src/work.ts",
@@ -510,7 +510,7 @@
     },
     {
       "path": "packages/sound-rules/README.md",
-      "sha256": "6604fe96efa96f05ba4ef85fe05f30d851465f7d4218ee69c4cc2ea0517aec20"
+      "sha256": "132fbf26b799d8fe9f3c94d4b766047a3091ee9738233914ef877da1151d7dd3"
     },
     {
       "path": "packages/sound-rules/package.json",
@@ -522,11 +522,15 @@
     },
     {
       "path": "packages/sound-rules/rules/background.v1.json",
-      "sha256": "20a28c7d1c01a2cef23f61aa43fb64bb8b0a4b86ebbd2ba3da37c5baddd42840"
+      "sha256": "841e18a48d781a30a82392471e3776debf76744f19063bcf9fc05e7f4c5ff3ad"
     },
     {
       "path": "packages/sound-rules/rules/mix.v1.json",
       "sha256": "d2ae6458706038dd07cc5ea75762bfbf51375be3931157488e478d8406b2136f"
+    },
+    {
+      "path": "packages/sound-rules/rules/music-types.v1.json",
+      "sha256": "0784d67acb1a649c2b0365f1b038369e6383f5d06595ee141d88ddb0471c29c8"
     },
     {
       "path": "packages/sound-rules/rules/shaping.v3.json",
@@ -558,11 +562,11 @@
     },
     {
       "path": "packages/sound-rules/src/rules.ts",
-      "sha256": "bf2db1b3bc1761a38eacb673820e1deab47b95c0ff4b880d916bc22437df5fb0"
+      "sha256": "952b803bec6a5ce19168a5eca35ff984acf1c9fd72e8bc20467d8e1c61121719"
     },
     {
       "path": "packages/sound-rules/src/schema.ts",
-      "sha256": "f63dd28ece76d43c2e191e5b5b7872cf1d72adf946af9432dc9481696d22e25b"
+      "sha256": "e033145befcc8ed6a8196976b1fd3bbc62e8767425f6a8d805a795859b1edb95"
     },
     {
       "path": "packages/sound-rules/src/shaping.ts",
@@ -590,7 +594,7 @@
     },
     {
       "path": "packages/sound-rules/tests/rules.test.ts",
-      "sha256": "18965d2f01e43321ec6060628490ba43ec940c85d03e56a1884f783151ed8894"
+      "sha256": "6a6a260913aa4c0fee3afa0c4e8eefeef02d2416dfed11e9c10fdd0c0d7c1074"
     },
     {
       "path": "packages/sound-rules/tests/shaping.test.ts",
@@ -606,7 +610,7 @@
     },
     {
       "path": "packages/audio-engine/src/background.ts",
-      "sha256": "996a86cf9dfbc6b903d56b50b3176826fba3556dd8be2b38a5a35d78b5f42aff"
+      "sha256": "6a6d15c3ac07b382f61b0b616e30663e5ce1da5309a8ece7157c9e1e9bc3ebde"
     },
     {
       "path": "packages/audio-engine/src/grains.ts",
@@ -658,7 +662,7 @@
     },
     {
       "path": "packages/prompts/corpus/textbook-talk.v1.json",
-      "sha256": "6ef733753e8925c082ecba8d003834f6a753a104cd43bec2006a45a625bbecb5"
+      "sha256": "5e5b3b7bec3e6257112a8ca5dfa89ad2490d49ef59adbb0ac32ec823316d3790"
     },
     {
       "path": "packages/prompts/package.json",
@@ -706,7 +710,7 @@
     },
     {
       "path": "packages/prompts/src/corpus.ts",
-      "sha256": "a0dffc6f157926e6d4e0b99b6327c0a5e3eae28def1155be64a87a5f68516337"
+      "sha256": "9e03c929888f046df35da76ba1ebcab92e27dcd0ae80949aa4964ff5875ccf66"
     },
     {
       "path": "packages/prompts/src/fill.ts",
@@ -766,7 +770,11 @@
     },
     {
       "path": "packages/music-features/package.json",
-      "sha256": "38047a5bc9d89e8aa1b1326198a88309bbbea198953584d70dba630718ce0f0e"
+      "sha256": "d6b0f532a057e231a75db943a3b894d12aa2a9f88b4ffccf2ae4e8993915cd89"
+    },
+    {
+      "path": "packages/music-features/src/evaluate.ts",
+      "sha256": "38f25ab615be4516abbaa3eb746bdcd1c081b14f3548e377369d367be1c235e4"
     },
     {
       "path": "packages/music-features/src/fft.ts",
@@ -774,15 +782,19 @@
     },
     {
       "path": "packages/music-features/src/index.ts",
-      "sha256": "f3e0fd351de26fa7f88d4ffcd845f7e03988d782713677256f38d10eca13480f"
+      "sha256": "4e4edb228ad2e2b7c0a9f2177360a23559319ced4b37d7bc779100e4ffa44bb8"
     },
     {
       "path": "packages/music-features/src/measure.ts",
-      "sha256": "6f842a3b4152896d7497ab40d4d1813d05ef4397b65c4ac2d9fa941099c7fb99"
+      "sha256": "35f73ed465542401892371ac3385e126c73f9b73e15f9597488a67bd70bbf18a"
+    },
+    {
+      "path": "packages/music-features/tests/evaluate.test.ts",
+      "sha256": "1491202a4404790c10b592f9ded558ce5402e07d20ffae3bc0853b7b1daa2f67"
     },
     {
       "path": "packages/music-features/tests/measure.test.ts",
-      "sha256": "ebf102b44316b0a2504d48213a032d0a2b61a402a315ac62df5942457a62f5ac"
+      "sha256": "ed91fd8e67e3147c55f1650a862cb07d4d2f3644ebb4c3d3ac79347de06a8840"
     }
   ]
 }

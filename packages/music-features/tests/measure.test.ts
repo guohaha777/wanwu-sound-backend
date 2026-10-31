@@ -73,6 +73,37 @@ test('higher sample rates give the same answer; too short a recording is refused
  assert.throws(()=>measure(new Float32Array(RATE*3),RATE),/too-short/);
 });
 
+test('a precheck and three sound features (rhythm, texture, drums) pick how a recording is measured',()=>{
+ let seed=7;const noise=()=>{seed=(seed*16807)%2147483647;return seed/2147483647*2-1;};
+ const hz=(midi:number)=>440*2**((midi-69)/12);
+ // A sung note: soft attack and release, a little vibrato.
+ const sing=(out:Float32Array,at:number,midi:number,length:number)=>{const f=hz(midi);
+  for(let i=0;i<length*RATE&&at*RATE+i<out.length;i++){const t=i/RATE,env=Math.min(1,t*20,(length-t)*20),p=2*Math.PI*f*(t+.004*Math.sin(2*Math.PI*5.5*t)/(2*Math.PI*5.5));
+   out[Math.round(at*RATE)+i]=out[Math.round(at*RATE)+i]!+.5*env*(Math.sin(p)+.4*Math.sin(2*p)+.2*Math.sin(3*p));}};
+ // 清唱 in G major, 2/4: a steady children's tune ending on its tonic.
+ const solo=new Float32Array(RATE*40),tune=[67,69,71,67,67,69,71,67,71,72,74,71,72,74],beats=[1,1,1,1,1,1,1,1,1,1,2,1,1,2];
+ let at=.5;for(let r=0;r<3;r++)tune.forEach((midi,i)=>{sing(solo,at,midi,beats[i]!*.57);at+=beats[i]!*.6;});sing(solo,at,67,1.5);
+ const sung=measure(solo,RATE);
+ assert.deepEqual(sung.features,{rhythm:'steady',texture:'solo',drums:false},JSON.stringify(sung.traits));assert.equal(sung.path,'solo');assert.equal(sung.musical,true);assert.equal(sung.tonic,7);assert.equal(sung.strongBeat,false);
+ // 有鼓: kick on the beat, hi-hat on every eighth, snare on the backbeat, a held chord.
+ const drums=new Float32Array(RATE*40).map((_,i)=>.05*[55,59,62].reduce((sum,midi)=>sum+Math.sin(2*Math.PI*hz(midi)*i/RATE),0));
+ for(let b=0;b*.5<39;b++){const start=Math.round(b*.5*RATE);
+  for(let i=0;i<.15*RATE;i++){const t=i/RATE;
+   if(b%2===0)drums[start+i]!+=.9*Math.exp(-t*30)*Math.sin(2*Math.PI*(60+60*Math.exp(-t*40))*t);
+   if(b%2===1)drums[start+i]!+=.5*Math.exp(-t*25)*noise();
+   if(i<.08*RATE)drums[start+i]!+=.35*Math.exp(-t*50)*noise();}}
+ const kit=measure(drums,RATE);
+ assert.equal(kit.features.drums,true,JSON.stringify(kit.traits));assert.equal(kit.features.rhythm,'steady');assert.equal(kit.path,'drums');assert.equal(kit.steady,true);
+ // 自由节奏: a sung line whose notes have no common beat.
+ const free=new Float32Array(RATE*40);at=.3;
+ while(at<38){const length=.3+(noise()+1)*.8;sing(free,at,[62,64,67,69,72][Math.floor((noise()+1)*2.5)%5]!,length*.95);at+=length;}
+ const loose=measure(free,RATE);
+ assert.equal(loose.features.rhythm,'free',JSON.stringify(loose.traits));assert.equal(loose.path,'free');assert.equal(loose.musical,true);assert.equal(loose.steady,false);
+ // 不是音乐: noise.
+ const hiss=new Float32Array(RATE*40).map(()=>.3*noise()),none=measure(hiss,RATE);
+ assert.equal(none.musical,false,JSON.stringify(none.traits));assert.equal(none.steady,false);
+});
+
 test('the program prefers a varied recurring rhythm over an even pulse, and picks a 30 s excerpt',()=>{
  assert.deepEqual(pickRhythm([{cell:[.5,.5,.5,.5],bars:9},{cell:[.5,.5,1],bars:6}],2),[.5,.5,1]);
  assert.deepEqual(pickRhythm([{cell:[1,1],bars:9}],2),[1,1]);

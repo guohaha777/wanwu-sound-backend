@@ -1,7 +1,16 @@
 // @wanwu-v2/music-features: numbers for a textbook feature card, measured from a recording (measure.ts), and the
 // program's own choices for when no model answers in time (pickRhythm, pickMood, modelExcerpt).
 export {MEASURE_VERSION,measure} from './measure.ts';
-export type {Measurement,RhythmCandidate} from './measure.ts';
+/**
+ * The rate to decode a recording at before measuring it. measure steps through it in whole frames after an integer
+ * downsample (44.1 kHz → 22.05 kHz), and its thresholds were set there; a browser decoding at 48 kHz lands on another
+ * frame grid and real songs then measure differently (2026-10-31: 小鸟在唱歌 read as E minor, its first strong beat a
+ * bar off). Every caller decodes at this rate for analysis; playback may use any rate.
+ */
+export const MEASURE_RATE=44_100;
+export type {Measurement,RhythmCandidate,SoundFeatures,SoundTraits} from './measure.ts';
+export {ANSWER_FIELDS,DOWNBEAT_TOLERANCE_SECONDS,TEMPO_TOLERANCE,judge,report,summarise} from './evaluate.ts';
+export type {AnswerField,FieldCheck,FieldScore,JudgedRecording,MusicAnswers,Summary} from './evaluate.ts';
 import type {Measurement,RhythmCandidate} from './measure.ts';
 import type {MoodId} from '@wanwu-v2/contracts/arrangement';
 

@@ -1,0 +1,16 @@
+{
+ "version": "music-types-v1",
+ "precheck": {"tonalBelow": 0.42},
+ "detect": {
+  "steadyBelow": 0.3,
+  "drumsAbove": 0.33,
+  "soloAbove": 0.42
+ },
+ "paths": {
+  "free":        {"tempo": false, "beatCue": "none",  "strongBeat": false, "key": {"whole": 1,   "bass": 0,   "ending": 0.6}},
+  "drums":       {"tempo": true,  "beatCue": "drums", "strongBeat": true,  "key": {"whole": 0.6, "bass": 0.6, "ending": 0.3}},
+  "accompanied": {"tempo": true,  "beatCue": "bass",  "strongBeat": true,  "key": {"whole": 1,   "bass": 0.3, "ending": 0.3}},
+  "solo":        {"tempo": true,  "beatCue": "bass",  "strongBeat": false, "key": {"whole": 1,   "bass": 0,   "ending": 0.6}}
+ },
+ "key": {"endingSeconds": 4}
+}

@@ -11,6 +11,7 @@ import type {Discovery,MeetingKind,TextbookTalk} from '@wanwu-v2/contracts/talk'
 import type {Metre,TextbookTrack} from '@wanwu-v2/contracts/textbook';
 import {fill,unknownPlaceholders} from './fill.ts';
 import {wordProblems} from './style.ts';
+type Pulse=NonNullable<TextbookTrack['pulse']>;
 import type {Slot} from './style.ts';
 
 // ----- file shapes -----
@@ -23,6 +24,9 @@ export type TextbookTalkCorpus={
  version:string;metres:Record<`${Metre}`,string>;rhythm:{short:string;beat:string;long:string};feature:string;
  /** A teaching-music card's line for children when no model answered: what to do with the beat it has. */
  teachingLine:Record<`${Metre}`,string>;
+ /** What a card says instead of the metre when its strong beats are not sure (even) or it has no steady beat (none),
+  *  and the line for children then (TextbookTrack.pulse). */
+ pulses:Record<Pulse,string>;pulseLine:Record<Pulse,string>;
  meetings:Record<MeetingKind,{line:string;named?:string}>;tasks:Record<MeetingKind,string>;
 };
 
@@ -71,6 +75,10 @@ export function textbookTalkProblems(file:TextbookTalkCorpus){
  for(const metre of ['2','3','4'] as const){
   if(!file.metres[metre])problems.push(`textbook-talk.metres.${metre} 缺少`);
   problems.push(...check(`textbook-talk.teachingLine.${metre}`,file.teachingLine?.[metre],'childLine',[]));
+ }
+ for(const pulse of ['even','none'] as const){
+  if(!file.pulses?.[pulse])problems.push(`textbook-talk.pulses.${pulse} 缺少`);
+  problems.push(...check(`textbook-talk.pulseLine.${pulse}`,file.pulseLine?.[pulse],'childLine',[]));
  }
  for(const beat of ['short','beat','long'] as const)if(!file.rhythm[beat])problems.push(`textbook-talk.rhythm.${beat} 缺少`);
  for(const kind of MEETING_KINDS){
@@ -135,9 +143,13 @@ export function rhythmWords(cell:readonly number[],corpus:TextbookTalkCorpus=TEX
 }
 /** The line a teaching-music card carries when no model answered (by its metre). */
 export const teachingLine=(metre:Metre,corpus:TextbookTalkCorpus=TEXTBOOK_TALK)=>corpus.teachingLine[`${metre}`];
-type SongCard=Pick<TextbookTrack,'title'|'meter'|'rhythmCell'|'childLine'>;
+/** The line for children on a card whose beat is even or free (TextbookTrack.pulse). */
+export const pulseLine=(pulse:Pulse,corpus:TextbookTalkCorpus=TEXTBOOK_TALK)=>corpus.pulseLine[pulse];
+/** What a card shows for its beat: the metre (二拍子), or 拍子均匀 / 自由节奏 when its strong beats are not sure or it has none. */
+export const beatName=(track:Pick<TextbookTrack,'meter'|'pulse'>,corpus:TextbookTalkCorpus=TEXTBOOK_TALK)=>track.pulse?corpus.pulses[track.pulse]:corpus.metres[`${track.meter}`];
+type SongCard=Pick<TextbookTrack,'title'|'meter'|'rhythmCell'|'childLine'|'pulse'>;
 export function songFeature(track:SongCard,corpus:TextbookTalkCorpus=TEXTBOOK_TALK){
- return fill(corpus.feature,{title:track.title,metre:corpus.metres[`${track.meter}`],rhythm:rhythmWords(track.rhythmCell,corpus),childLine:track.childLine});
+ return fill(corpus.feature,{title:track.title,metre:beatName(track,corpus),rhythm:rhythmWords(track.rhythmCell,corpus),childLine:track.childLine});
 }
 /** Three short sentences: the song's feature, what happened, one thing to try. */
 export function textbookTalk(track:SongCard,meeting:MeetingKind,exampleName:string|null,corpus:TextbookTalkCorpus=TEXTBOOK_TALK):TextbookTalk{

@@ -5,8 +5,9 @@ import backgroundFile from '../rules/background.v1.json' with {type:'json'};
 import mixFile from '../rules/mix.v1.json' with {type:'json'};
 import shapingFile from '../rules/shaping.v3.json' with {type:'json'};
 import textbookMatchFile from '../rules/textbook-match.v1.json' with {type:'json'};
+import musicTypesFile from '../rules/music-types.v1.json' with {type:'json'};
 import {SPAN_CHOICES} from '@wanwu-v2/contracts/arrangement';
-import {analysisLimits,backgroundLimits,checkRules,mixLimits,shapingLimits,textbookMatchLimits} from './schema.ts';
+import {analysisLimits,backgroundLimits,checkRules,mixLimits,musicTypesLimits,shapingLimits,textbookMatchLimits} from './schema.ts';
 
 export type AnalysisRules=typeof analysisFile;
 export type ShapingRules=typeof shapingFile;
@@ -16,6 +17,11 @@ export type BackgroundMood=Omit<(typeof backgroundFile)['moods']['none'],'mode'|
 export type BackgroundRules=Omit<typeof backgroundFile,'moods'>&{moods:Record<keyof (typeof backgroundFile)['moods'],BackgroundMood>};
 export type MixRules=typeof mixFile;
 export type TextbookMatchRules=typeof textbookMatchFile;
+export type BeatCue='onsets'|'bass'|'drums'|'none';
+export type MeasurePathRules=Omit<(typeof musicTypesFile)['paths']['solo'],'beatCue'>&{beatCue:BeatCue};
+export type MusicTypesRules=Omit<typeof musicTypesFile,'paths'>&{paths:Record<keyof (typeof musicTypesFile)['paths'],MeasurePathRules>};
+/** How a recording is measured, chosen from its sound features (see ../README.md, 音乐类型). */
+export type MeasurePath=keyof MusicTypesRules['paths'];
 
 export function analysisProblems(rules:AnalysisRules){
  return checkRules('analysis',rules,analysisLimits,[
@@ -54,6 +60,15 @@ export function textbookMatchProblems(rules:TextbookMatchRules){
  ]);
 }
 
+export function musicTypesProblems(rules:MusicTypesRules){
+ const paths=Object.values(rules.paths);
+ return checkRules('musicTypes',rules,musicTypesLimits,[
+  [paths.every(path=>path.tempo||path.beatCue==='none'),'musicTypes.paths.*: 不测速度（tempo false）时 beatCue 只能是 none'],
+  [paths.every(path=>path.beatCue!=='none'||!path.strongBeat),'musicTypes.paths.*: 没有拍子（beatCue none）就不能显示强拍'],
+  [!rules.paths.free.tempo,'musicTypes.paths.free: 节奏自由的录音不能测速度'],
+ ]);
+}
+
 function load<T>(rules:T,problems:string[]):T{
  if(problems.length)throw new Error(`规则文件有误：\n${problems.join('\n')}`);
  return rules;
@@ -63,6 +78,7 @@ export const SHAPING_RULES:ShapingRules=load(shapingFile,shapingProblems(shaping
 export const BACKGROUND_RULES:BackgroundRules=load(backgroundFile as BackgroundRules,backgroundProblems(backgroundFile as BackgroundRules));
 export const MIX_RULES:MixRules=load(mixFile,mixProblems(mixFile));
 export const TEXTBOOK_MATCH_RULES:TextbookMatchRules=load(textbookMatchFile,textbookMatchProblems(textbookMatchFile));
+export const MUSIC_TYPES_RULES:MusicTypesRules=load(musicTypesFile as MusicTypesRules,musicTypesProblems(musicTypesFile as MusicTypesRules));
 
 /** Versions of every rule file, recorded with a saved piece and sent with an AI background request. */
 export const RULE_VERSIONS={analysis:ANALYSIS_RULES.version,shaping:SHAPING_RULES.version,background:BACKGROUND_RULES.version,mix:MIX_RULES.version};

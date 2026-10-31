@@ -1,10 +1,11 @@
 // Range checks for the rule files. Every number a music role can tune has a [min, max] here; a value outside it, a
 // missing or unknown key, or a broken relation (short longer than long…) is reported in plain words. `rules.ts` refuses
 // to load invalid rules, so a bad edit fails the tests and the build — it never reaches a child.
-// Limit forms: [min, max] a number; [min, max, fewest, most] a list of numbers; ['a', 'b', …] one of these words.
+// Limit forms: [min, max] a number; [min, max, fewest, most] a list of numbers; ['a', 'b', …] one of these words;
+// [true, false] a yes / no.
 type Range=readonly [number,number];
 type List=readonly [number,number,number,number];
-type Words=readonly string[];
+type Words=readonly string[]|readonly boolean[];
 type Limits={readonly [key:string]:Range|List|Words|Limits|'version'};
 export type RuleProblem=string;
 
@@ -16,8 +17,8 @@ function walk(value:unknown,limits:Limits,path:string,problems:RuleProblem[]){
   const at=`${path}.${key}`,item=record[key];
   if(item===undefined){problems.push(`${at} 缺少`);continue;}
   if(limit==='version'){if(typeof item!=='string'||!item)problems.push(`${at} 应该是版本名`);continue;}
-  if(Array.isArray(limit)&&typeof limit[0]==='string'){
-   if(!limit.includes(item as string))problems.push(`${at} = ${JSON.stringify(item)}，只能是 ${limit.join(' / ')}`);
+  if(Array.isArray(limit)&&typeof limit[0]!=='number'){
+   if(!(limit as readonly unknown[]).includes(item))problems.push(`${at} = ${JSON.stringify(item)}，只能是 ${limit.join(' / ')}`);
    continue;
   }
   if(Array.isArray(limit)&&limit.length===4){
@@ -95,8 +96,10 @@ export const backgroundLimits={
  ending:{minRingSeconds:[.5,6]},
  // A chosen textbook song: which layers play its characteristic rhythm (0 = no, 1 = yes) and whether the key follows it.
  song:{chordsFollow:[0,1],drumsFollow:[0,1],bassFollow:[0,1],keyFollow:[0,1],chordLengthPortion:[.2,1],offbeatAccent:[0,1]},
- // 万物声场 with a song: only its beat — how strong the first beat of a bar and the others are, and the beat's level.
- beat:{strong:[0,1],weak:[0,1],gain:[0,1]},
+ // 万物声场 with a song: only its beat — how strong the first beat of a bar and the others are, and the beat's level;
+ // withOriginal: the beat's level over the song's own recording (课本灵感 听原曲; above 1, as a recording is far louder
+ // than a tick — the limiter keeps the sum from clipping).
+ beat:{strong:[0,1],weak:[0,1],gain:[0,1],withOriginal:[0,3]},
  meeting:{toleranceSeconds:[0,.5],alignShare:[0,1],answerTurns:[1,8]},
  fade:{inSeconds:[0,5],outSeconds:[0,6]},
 } as const satisfies Limits;
@@ -113,4 +116,16 @@ export const textbookMatchLimits={
  version:'version',
  density:{sparseBelow:[0,10],busyAbove:[0,10]},
  repetition:{lowBelow:[0,1],highAbove:[0,1]},
+} as const satisfies Limits;
+
+// 音乐类型 (music-types-v1): a recording's sound features (rhythm steady / free, one line or accompanied, drums or not),
+// each measured on its own, and the measuring path their combination takes. precheck / detect are shares 0–1 (see
+// ../README.md); paths.*.key weights how much each piece of key evidence counts.
+const measurePath={tempo:[true,false],beatCue:['onsets','bass','drums','none'],strongBeat:[true,false],key:{whole:[0,2],bass:[0,2],ending:[0,2]}} as const;
+export const musicTypesLimits={
+ version:'version',
+ precheck:{tonalBelow:[0,1]},
+ detect:{steadyBelow:[0,1],drumsAbove:[0,1],soloAbove:[0,1]},
+ paths:{free:measurePath,drums:measurePath,accompanied:measurePath,solo:measurePath},
+ key:{endingSeconds:[1,15]},
 } as const satisfies Limits;

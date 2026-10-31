@@ -38,6 +38,12 @@ export type TextbookTrack={
  mood:MoodId;
  /** Key centre as a pitch class (0 = C … 11 = B), measured from the recording; missing = the background uses the mood's. */
  tonic?:number;
+ /**
+  * How the beat may be used, from how the recording was measured: missing = steady with strong beats; `even` = a steady
+  * beat whose strong beats are not sure (a single line, 清唱) — every tick the same, metre not named; `none` = free
+  * rhythm (散板, 山歌) — no tempo is claimed, no beat is played, the background does not follow it.
+  */
+ pulse?:'even'|'none';
  /** One line a child understands: “像走路，一步一步”. */
  childLine:string;
  /** What made which part: `example` marks the made-up examples; words by `code` = the corpus line used when no model
@@ -63,6 +69,7 @@ export function isTextbookTrack(value:unknown):value is TextbookTrack{
  if(!DENSITIES.includes(raw.onsetDensity as Density)||!BRIGHTNESSES.includes(raw.brightness as Brightness)||!TEXTBOOK_MODES.includes(raw.mode as TextbookMode))return false;
  if(!LEVELS.includes(raw.repetition as Level)||!MOODS.includes(raw.mood as MoodId))return false;
  if(raw.tonic!==undefined&&!(Number.isInteger(raw.tonic)&&(raw.tonic as number)>=0&&(raw.tonic as number)<=11))return false;
+ if(raw.pulse!==undefined&&raw.pulse!=='even'&&raw.pulse!=='none')return false;
  const extraction=raw.extraction as Record<string,unknown>|null;
  return !!extraction&&['code','score','example'].includes(extraction.numbers as string)&&['ai','teacher','code','example'].includes(extraction.words as string)
   &&typeof extraction.confidence==='number'&&extraction.confidence>=0&&extraction.confidence<=1&&typeof extraction.earChecked==='boolean';
