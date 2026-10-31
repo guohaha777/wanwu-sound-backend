@@ -2,7 +2,7 @@
 // in ../rules/*.json so the music role can tune them without touching code (see ../README.md).
 import analysisFile from '../rules/analysis.v2.json' with {type:'json'};
 import backgroundFile from '../rules/background.v1.json' with {type:'json'};
-import mixFile from '../rules/mix.v1.json' with {type:'json'};
+import mixFile from '../rules/mix.v2.json' with {type:'json'};
 import shapingFile from '../rules/shaping.v3.json' with {type:'json'};
 import textbookMatchFile from '../rules/textbook-match.v1.json' with {type:'json'};
 import musicTypesFile from '../rules/music-types.v1.json' with {type:'json'};

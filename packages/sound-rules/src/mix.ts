@@ -1,6 +1,6 @@
-// Mixing the child's sounds with the background (mix-v1): the levels of the two layers, how far the background makes
-// room while a child's sound plays, and the limiter on the sum. Pure; the web player and a later server mix read the
-// same numbers from ../rules/mix.v1.json.
+// Mixing the child's sounds with the background (mix-v2): the levels of the two layers, how far the background makes
+// room while a child's sound plays, the limiter on the sum, and where the piece ends (`ending`). Pure; the web player
+// and a later server mix read the same numbers from ../rules/mix.v2.json.
 import {MIX_RULES} from './rules.ts';
 import type {MixRules} from './rules.ts';
 

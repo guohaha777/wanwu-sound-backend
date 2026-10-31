@@ -91,6 +91,9 @@ export async function renderWork(input:RenderInput,load:SourceLoader,release:()=
  };
  for(const group of groups.values()){await accumulate(group);await release();}
  const master=ctx.createGain();master.gain.value=MIX_RULES.childGain;
+ // The piece stops where the timeline says (a sound still going is cut there): a short fade instead of a click.
+ const fade=Math.min(MIX_RULES.ending.fadeSeconds,seconds);
+ master.gain.setValueAtTime(MIX_RULES.childGain,seconds-fade);master.gain.linearRampToValueAtTime(0,seconds);
  const limiter=ctx.createDynamicsCompressor(),rules=MIX_RULES.limiter;
  limiter.threshold.value=rules.thresholdDb;limiter.knee.value=rules.kneeDb;limiter.ratio.value=rules.ratio;
  limiter.attack.value=rules.attackSeconds;limiter.release.value=rules.releaseSeconds;

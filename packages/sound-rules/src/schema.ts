@@ -110,6 +110,8 @@ export const mixLimits={
  backgroundMaxGain:[0,1],
  duck:{depthDb:[0,18],attackSeconds:[.005,1],releaseSeconds:[.01,3]},
  limiter:{thresholdDb:[-24,0],kneeDb:[0,40],ratio:[1,20],attackSeconds:[0,1],releaseSeconds:[0,1]},
+ // Where a piece stops: a last sound may run this far past the chosen length, then everything is cut with a short fade.
+ ending:{overrunSeconds:[0,15],fadeSeconds:[0,3]},
 } as const satisfies Limits;
 
 export const textbookMatchLimits={

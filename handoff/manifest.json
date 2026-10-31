@@ -510,7 +510,7 @@
     },
     {
       "path": "packages/sound-rules/README.md",
-      "sha256": "132fbf26b799d8fe9f3c94d4b766047a3091ee9738233914ef877da1151d7dd3"
+      "sha256": "3dcb19c503ffe70873cc230d583ddc97e7eaf4065f2c5d375544ddf1705ef7e6"
     },
     {
       "path": "packages/sound-rules/package.json",
@@ -525,8 +525,8 @@
       "sha256": "841e18a48d781a30a82392471e3776debf76744f19063bcf9fc05e7f4c5ff3ad"
     },
     {
-      "path": "packages/sound-rules/rules/mix.v1.json",
-      "sha256": "d2ae6458706038dd07cc5ea75762bfbf51375be3931157488e478d8406b2136f"
+      "path": "packages/sound-rules/rules/mix.v2.json",
+      "sha256": "86dc40321eb0f3f02e9969b195bcf77bc59ae80f42a90ab31f0ed5e1b6f569cd"
     },
     {
       "path": "packages/sound-rules/rules/music-types.v1.json",
@@ -554,7 +554,7 @@
     },
     {
       "path": "packages/sound-rules/src/mix.ts",
-      "sha256": "c511c0085c70051ebe324756080c05b86ebba2f57a4698890667ae33ab2923d1"
+      "sha256": "96443766d8dde9ec476c5d26f7d86f3be24f6551a498c872e151d42c440faeee"
     },
     {
       "path": "packages/sound-rules/src/random.ts",
@@ -562,11 +562,11 @@
     },
     {
       "path": "packages/sound-rules/src/rules.ts",
-      "sha256": "952b803bec6a5ce19168a5eca35ff984acf1c9fd72e8bc20467d8e1c61121719"
+      "sha256": "b6c48b5250a557d4d1f4fafc83eb6b6fda5ee6114768c46f4525d6ceabae18cc"
     },
     {
       "path": "packages/sound-rules/src/schema.ts",
-      "sha256": "e033145befcc8ed6a8196976b1fd3bbc62e8767425f6a8d805a795859b1edb95"
+      "sha256": "b31fbadbbf54f0541f4e136a1dfbeb23711f852805ef10148c8bbfd85b7c4a1a"
     },
     {
       "path": "packages/sound-rules/src/shaping.ts",
@@ -626,7 +626,7 @@
     },
     {
       "path": "packages/audio-engine/src/render.ts",
-      "sha256": "ba35f98d0aec35b45677ca69677ab963ee9562a642ec990a5b209412e9edbb4f"
+      "sha256": "68e36169fca6c3bbdaa5b58578b67b14fc32175c1b1646a552fa1dad629f72b4"
     },
     {
       "path": "packages/audio-engine/src/shaping.ts",
@@ -634,7 +634,7 @@
     },
     {
       "path": "packages/audio-engine/src/timeline.ts",
-      "sha256": "c3f4422ed3cc01c8efcb5c01c554dd6bde3a04d8177098b07be1dd7e86d13b98"
+      "sha256": "616562e446c37bd0701573fa74737ddb59cc5bc42d2b4e92e20cf5cd6b41ca08"
     },
     {
       "path": "packages/audio-engine/src/version.ts",
