@@ -11,6 +11,7 @@
   "./style": "./src/style.ts",
   "./corpus": "./src/corpus.ts",
   "./accept": "./src/accept.ts",
+  "./explain": "./src/explain/index.ts",
   "./tasks": "./src/tasks/index.ts"
  }
 }

@@ -16,10 +16,10 @@ const built:[string,BuiltPrompt][]=[
 
 test('every prompt file loads; each task has a version and a fallback',()=>{
  for(const id of TASK_IDS){
-  assert.ok(TASKS[id].file.version.endsWith('-v1'),id);
+  assert.match(TASKS[id].file.version,/-v\d+$/,id);
   assert.ok(TASKS[id].fallback,id);
  }
- assert.equal(new Set(Object.values(PROMPT_VERSIONS)).size,TASK_IDS.length+1,'versions are distinct');
+ assert.equal(new Set(Object.values(PROMPT_VERSIONS)).size,TASK_IDS.length+2,'versions are distinct');
  assert.equal(TASKS['sound-hint'].file.status,'closed','向导联想 answers from the corpus for now');
 });
 

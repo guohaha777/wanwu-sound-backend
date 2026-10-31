@@ -6,7 +6,7 @@ import {SYSTEM_PROMPT} from './files.ts';
 import type {PromptFile} from './files.ts';
 import {TEXTBOOK_TALK_PROMPT,WORK_TALK_PROMPT} from './talk.ts';
 import {MOOD_WORDS_PROMPT,SOUND_HINT_PROMPT,TEXTBOOK_WORDS_PROMPT} from './words.ts';
-import {TEXTBOOK_FEATURES_PROMPT} from './features.ts';
+import {EXPLAIN_SYSTEM_PROMPT,TEXTBOOK_FEATURES_PROMPT} from './features.ts';
 
 export * from './background.ts';
 export * from './talk.ts';
@@ -34,5 +34,5 @@ export const TASKS:Record<TaskId,TaskInfo>={
 };
 export const TASK_IDS=Object.keys(TASKS) as TaskId[];
 
-/** Versions of the shared system prompt and every task prompt; an AI result carries the one it was made with. */
-export const PROMPT_VERSIONS={system:SYSTEM_PROMPT.version,...Object.fromEntries(TASK_IDS.map(id=>[id,TASKS[id].file.version]))} as Readonly<Record<'system'|TaskId,string>>;
+/** Versions of the shared system prompt, the explanation card's, and every task prompt; an AI result carries the one it was made with. */
+export const PROMPT_VERSIONS={system:SYSTEM_PROMPT.version,explainSystem:EXPLAIN_SYSTEM_PROMPT.version,...Object.fromEntries(TASK_IDS.map(id=>[id,TASKS[id].file.version]))} as Readonly<Record<'system'|'explainSystem'|TaskId,string>>;

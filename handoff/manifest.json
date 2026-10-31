@@ -653,12 +653,16 @@
       "sha256": "69d30acfd93aebe1b5e94332d8754e088077f4350a19a33a0068be686b924baf"
     },
     {
+      "path": "packages/prompts/corpus/explain.v2.json",
+      "sha256": "5b9c0bdf6cbfdf1af335970dc6f0f75d40ffecf42ad2536a98db227deebc4b18"
+    },
+    {
       "path": "packages/prompts/corpus/sound-hints.v1.json",
       "sha256": "a412114911c0c1bff7cc69d63c5a46ac2d9299769d4fe5defaa37ed2f4f5fb6e"
     },
     {
       "path": "packages/prompts/corpus/style.v1.json",
-      "sha256": "073c19ea4eb920be55285f427aebe47141866485295768037531024daa24cd59"
+      "sha256": "e2087a0449baa266c385f033f0c23945d5b722e7e8a77519a667246b4ff81be9"
     },
     {
       "path": "packages/prompts/corpus/textbook-talk.v1.json",
@@ -666,7 +670,7 @@
     },
     {
       "path": "packages/prompts/package.json",
-      "sha256": "9dcf34ec7c2f9ee856f03fd5e0fb6bb0310f3b3ed2aa351e7978c513872a7356"
+      "sha256": "5049c77906133af11b146672eb0f1a9bd65eed5d4d3943c57fd03dfa8874624e"
     },
     {
       "path": "packages/prompts/prompts/background-audio.v1.json",
@@ -675,6 +679,10 @@
     {
       "path": "packages/prompts/prompts/background-notes.v1.json",
       "sha256": "966d86f8394f5db027e125a9d5bfa30876956200c5261b6221aaa2d730b11dd6"
+    },
+    {
+      "path": "packages/prompts/prompts/explain-system.v1.json",
+      "sha256": "509e5c94c697acd089845fc8877498e442a3ab44479a875a3c46736ed17475eb"
     },
     {
       "path": "packages/prompts/prompts/mood-words.v1.json",
@@ -690,7 +698,7 @@
     },
     {
       "path": "packages/prompts/prompts/textbook-features.v1.json",
-      "sha256": "a33575f58cf893ce6e83760ff32a65e308cddd3ef9582fafa97711067d23b9cd"
+      "sha256": "ee25aeb6a4bafb8f8e43b36a9fbff0d2df2d537051d32b1aad29d99e394fbf05"
     },
     {
       "path": "packages/prompts/prompts/textbook-talk.v1.json",
@@ -713,6 +721,30 @@
       "sha256": "9e03c929888f046df35da76ba1ebcab92e27dcd0ae80949aa4964ff5875ccf66"
     },
     {
+      "path": "packages/prompts/src/explain/accept.ts",
+      "sha256": "55b0076567752c08574733eab0ad569276112f2bc5f195a461ccd5a00f51b5dc"
+    },
+    {
+      "path": "packages/prompts/src/explain/card.ts",
+      "sha256": "d4fb08e9d53b3abb3ce9fa1ed4bdddc7df22abd7eff10d094115cb1c1aca99cc"
+    },
+    {
+      "path": "packages/prompts/src/explain/corpus.ts",
+      "sha256": "c71883e9932a006f28bc62e1ea8690ff38c595e0c4a93f39c4fea59a4e08ec94"
+    },
+    {
+      "path": "packages/prompts/src/explain/index.ts",
+      "sha256": "02da956c9764542ff22750eef575b7eda41aeb8f8d196594e098244ca3c2fd84"
+    },
+    {
+      "path": "packages/prompts/src/explain/points.ts",
+      "sha256": "b48799b93e6ee2c1ed4218dc0b3fcfc1070033eee3c58402c7a7e2cf545a11f4"
+    },
+    {
+      "path": "packages/prompts/src/explain/rhythm.ts",
+      "sha256": "ab31b29ba2cb28af63c05af92729192d7ff06ade1b545afe48ee553e246b7f9d"
+    },
+    {
       "path": "packages/prompts/src/fill.ts",
       "sha256": "44d2ab089ba1c27f9fd733af4dfc2273759cf781d2d02b0fcb29b35b4776a6e0"
     },
@@ -726,7 +758,7 @@
     },
     {
       "path": "packages/prompts/src/tasks/features.ts",
-      "sha256": "3d2c49379f34b089c99edfb1384491d44e0458fa84d5b13dd7f5bd5da56d75c0"
+      "sha256": "9caf4791ff72b0438aca882ba0ac874fb30a25527f07d33b2c895fcdde77cc9f"
     },
     {
       "path": "packages/prompts/src/tasks/files.ts",
@@ -734,7 +766,7 @@
     },
     {
       "path": "packages/prompts/src/tasks/index.ts",
-      "sha256": "59adae47d63feb00297fd74b8532dcce2cf2ced4408268e37b62b1ed94c44fbc"
+      "sha256": "96a0bf7e273983865e291f02a393f25bad95da0f5ca345cf6341ad8d356bd71b"
     },
     {
       "path": "packages/prompts/src/tasks/reply.ts",
@@ -753,8 +785,12 @@
       "sha256": "be50dae723140dadee1c6668c4a7abe05d8958f94d3899ada2c91114b42ac040"
     },
     {
+      "path": "packages/prompts/tests/explain.test.ts",
+      "sha256": "af110546dd80564a4cc3cfa083fe60b5685bf3cdfa27442d8e52efd53cf00701"
+    },
+    {
       "path": "packages/prompts/tests/features.test.ts",
-      "sha256": "39986ca1619979d0b1aebb2caa1066281c73876b135b72945e958e28b3eade67"
+      "sha256": "05584a1e98dcde72ebf6a814ec6822f34f7813f8cf6a23eea5c8341f81569499"
     },
     {
       "path": "packages/prompts/tests/fixtures/briefs.ts",
@@ -762,7 +798,7 @@
     },
     {
       "path": "packages/prompts/tests/prompts.test.ts",
-      "sha256": "a95ae9670aecc52a5c05739a3eb88637f6278899eb9fa44f227be56ff47e349e"
+      "sha256": "997935a6310bb073278a83fe2ccd41d15aa2ef6a0148d723f62a3ff97fb00603"
     },
     {
       "path": "packages/prompts/tests/replies.test.ts",

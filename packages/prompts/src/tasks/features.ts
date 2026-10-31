@@ -6,12 +6,16 @@
 import {MOODS} from '@wanwu-v2/contracts/arrangement';
 import type {MoodId} from '@wanwu-v2/contracts/arrangement';
 import {BRIGHTNESSES,DENSITIES,TEXTBOOK_MODES} from '@wanwu-v2/contracts/textbook';
-import type {Brightness,Density,Metre,TextbookMode} from '@wanwu-v2/contracts/textbook';
+import {LEVELS} from '@wanwu-v2/contracts/textbook';
+import type {Brightness,Density,Level,Metre,TextbookMode} from '@wanwu-v2/contracts/textbook';
 import featuresFile from '../../prompts/textbook-features.v1.json' with {type:'json'};
 import type {Acceptance} from '../accept.ts';
 import {lineProblems} from '../accept.ts';
 import {fill} from '../fill.ts';
 import {STYLE} from '../style.ts';
+import {EMPTY_EXPLAIN,EXPLAIN_LIMITS,acceptExplain,actionWords,explainPoints,pointKeywords,pointWord,soundsForPrompt} from '../explain/index.ts';
+import type {ExplainReply,PointFeatures} from '../explain/index.ts';
+import explainSystemFile from '../../prompts/explain-system.v1.json' with {type:'json'};
 import {buildPrompt,exampleJson,loadPrompt,word} from './files.ts';
 import type {PromptFile} from './files.ts';
 import {readReply} from './reply.ts';
@@ -24,11 +28,21 @@ export type TextbookFeaturesBrief={
  /** Recurring bar patterns the program found (beats), and the one it would choose itself. */
  candidates:readonly {cell:readonly number[];bars:number}[];fallbackCell:readonly number[];
  others:readonly {title:string;rhythmCell:readonly number[];childLine:string}[];
+ /** For the explanation card's points (optional for older pages: a middle register, medium repetition, a steady beat). */
+ pitchRange?:{low:number;high:number};repetition?:Level;pulse?:'even'|'none';
+ /** Card lines other songs already use: a new card may not copy them. */
+ otherLines?:readonly string[];
 };
-export type TextbookFeatures={rhythmCell:number[];meter:Metre;tempoBpm:number;mood:MoodId;childLine:string|null;teacherNote:string|null};
+/** `explain`: the explanation card's sentences (../explain.ts), each checked on its own; a failed one is null (the corpus line). */
+export type TextbookFeatures={rhythmCell:number[];meter:Metre;tempoBpm:number;mood:MoodId;childLine:string|null;teacherNote:string|null;explain:ExplainReply};
 /** From this metre confidence the program counts as sure: the prompt says so, and the model may not change the metre. */
 export const METRE_SURE=.3;
-type AcceptBrief=Pick<TextbookFeaturesBrief,'tempoBpm'|'meter'|'meterConfidence'|'listenSeconds'|'fallbackCell'|'candidates'>;
+type AcceptBrief=Pick<TextbookFeaturesBrief,'tempoBpm'|'meter'|'meterConfidence'|'listenSeconds'|'fallbackCell'|'candidates'>
+ &Partial<Pick<TextbookFeaturesBrief,'onsetDensity'|'brightness'|'mode'|'pitchRange'|'repetition'|'pulse'|'otherLines'>>;
+/** The explanation card's points from what the brief says (the same features the page's card is built from). */
+const briefPoints=(brief:AcceptBrief,bar:{rhythmCell:readonly number[];meter:Metre;tempoBpm:number})=>explainPoints({
+ tempoBpm:bar.tempoBpm,meter:bar.meter,rhythmCell:[...bar.rhythmCell],onsetDensity:brief.onsetDensity??'medium',pitchRange:brief.pitchRange??{low:60,high:74},
+ brightness:brief.brightness??'mid',mode:brief.mode??'major',repetition:brief.repetition??'medium',...(brief.pulse?{pulse:brief.pulse}:{})} satisfies PointFeatures);
 
 const finite=(value:unknown):value is number=>typeof value==='number'&&Number.isFinite(value);
 export function isTextbookFeaturesBrief(value:unknown):value is TextbookFeaturesBrief{
@@ -38,15 +52,25 @@ export function isTextbookFeaturesBrief(value:unknown):value is TextbookFeatures
   &&finite(raw.tempoBpm)&&raw.tempoBpm>=40&&raw.tempoBpm<=220&&[2,3,4].includes(raw.meter as number)&&finite(raw.meterConfidence)
   &&TEXTBOOK_MODES.includes(raw.mode as TextbookMode)&&DENSITIES.includes(raw.onsetDensity as Density)&&BRIGHTNESSES.includes(raw.brightness as Brightness)
   &&Array.isArray(raw.candidates)&&raw.candidates.length<=8&&raw.candidates.every(item=>item&&cell(item.cell)&&Number.isInteger(item.bars))&&cell(raw.fallbackCell)
-  &&Array.isArray(raw.others)&&raw.others.length<=50&&raw.others.every(item=>item&&typeof item.title==='string'&&cell(item.rhythmCell)&&typeof item.childLine==='string');
+  &&Array.isArray(raw.others)&&raw.others.length<=50&&raw.others.every(item=>item&&typeof item.title==='string'&&cell(item.rhythmCell)&&typeof item.childLine==='string')
+  &&(raw.pitchRange===undefined||(!!raw.pitchRange&&typeof raw.pitchRange==='object'&&finite((raw.pitchRange as Record<string,unknown>).low)&&finite((raw.pitchRange as Record<string,unknown>).high)))
+  &&(raw.repetition===undefined||LEVELS.includes(raw.repetition as Level))&&(raw.pulse===undefined||raw.pulse==='even'||raw.pulse==='none')
+  &&(raw.otherLines===undefined||(Array.isArray(raw.otherLines)&&raw.otherLines.length<=90&&raw.otherLines.every(line=>typeof line==='string'&&line.length<=60)));
 }
+
+/** The prompt's sample sentences: shown to the model for variety, never to be copied (a line too like one is dropped). */
+const SAMPLES:readonly string[]=(featuresFile.words as {samples?:string[]}).samples??[];
+/** The fixed principles of the explanation card (a music teacher's view), sent with the shared system prompt. */
+export const EXPLAIN_SYSTEM_PROMPT=loadPrompt(explainSystemFile as PromptFile,{task:'explain-system',model:'audio',placeholders:[]});
+const EXAMPLE_BRIEF:AcceptBrief={tempoBpm:96,meter:2,meterConfidence:.1,listenSeconds:30,fallbackCell:[1,1],candidates:[],onsetDensity:'medium',brightness:'mid',mode:'major',pitchRange:{low:60,high:76},repetition:'medium'};
 
 export const TEXTBOOK_FEATURES_PROMPT=loadPrompt(featuresFile as PromptFile,{
  task:'textbook-features',model:'audio',
- placeholders:['title','listen','tempo','metre','metreSure','mode','density','brightness','candidates','others','moods','childLineMax','noteMax','example'],
- templates:{candidateLine:['cell','say','bars'],otherLine:['title','rhythm','childLine'],'words.listen.audio':['seconds'],'words.listen.numbers':['fallback'],'words.noCandidates':[],'words.noOthers':[]},
+ placeholders:['title','listen','tempo','metre','metreSure','mode','density','brightness','candidates','others','moods','childLineMax','noteMax','sounds','cardTitleMax','cardLineMax','teacherLineMax',
+  'listenPoint','listenWords','movePoint','moveWords','moveBar','playPoint','playWords','samples','example'],
+ templates:{candidateLine:['cell','say','action','bars'],otherLine:['title','rhythm','childLine'],'words.listen.audio':['seconds'],'words.listen.numbers':['fallback'],'words.moveBar':['action'],'words.noCandidates':[],'words.noOthers':[]},
  tables:{'words.beats':['0.25','0.5','0.75','1','1.5','2','3','4'],'words.metre':['2','3','4'],'words.sure':['high','low'],'words.mode':TEXTBOOK_MODES,'words.density':DENSITIES,'words.brightness':BRIGHTNESSES,'words.mood':MOODS},
- example:value=>{const result=acceptTextbookFeatures(value,{tempoBpm:96,meter:2,meterConfidence:.1,listenSeconds:30,fallbackCell:[1,1],candidates:[]});return result.status==='accepted'?[]:result.notes;},
+ example:value=>{const result=acceptTextbookFeatures(value,EXAMPLE_BRIEF);return result.status==='accepted'&&!result.notes.length?[]:result.notes;},
 });
 
 export function buildTextbookFeatures(brief:TextbookFeaturesBrief){
@@ -54,18 +78,26 @@ export function buildTextbookFeatures(brief:TextbookFeaturesBrief){
  // Each candidate also in words (短 / 稍长 / 一拍 …), so the teacher's note can follow it without reading numbers.
  const beatWords=['0.25','0.5','0.75','1','1.5','2','3','4'] as const;
  const say=(beats:number)=>word(file,'words.beats',beatWords.reduce((best,key)=>Math.abs(Number(key)-beats)<Math.abs(Number(best)-beats)?key:best));
- const candidates=brief.candidates.map(item=>fill(file.candidateLine as string,{cell:item.cell.join(', '),say:item.cell.map(say).join(' '),bars:item.bars})).join('；')||word(file,'words','noCandidates');
+ const candidates=brief.candidates.map(item=>fill(file.candidateLine as string,{cell:item.cell.join(', '),say:item.cell.map(say).join(' '),action:actionWords(item.cell),bars:item.bars})).join('；')||word(file,'words','noCandidates');
  const others=brief.others.filter(other=>other.title!==brief.title)
   .map(other=>fill(file.otherLine as string,{title:other.title,rhythm:other.rhythmCell.join(', '),childLine:other.childLine})).join('；')||word(file,'words','noOthers');
- return buildPrompt(file,{
+ const points=briefPoints(brief,{rhythmCell:brief.fallbackCell,meter:brief.meter,tempoBpm:brief.tempoBpm});
+ const words=(row:'listen'|'move'|'play')=>pointKeywords(points[row]).join('、');
+ const built=buildPrompt(file,{
   title:brief.title.trim(),
   listen:brief.listenSeconds>0?fill(word(file,'words.listen','audio'),{seconds:Math.round(brief.listenSeconds)}):fill(word(file,'words.listen','numbers'),{fallback:brief.fallbackCell.join(', ')}),
   tempo:Math.round(brief.tempoBpm),metre:word(file,'words.metre',brief.meter),metreSure:word(file,'words.sure',brief.meterConfidence>=METRE_SURE?'high':'low'),
   mode:word(file,'words.mode',brief.mode),density:word(file,'words.density',brief.onsetDensity),brightness:word(file,'words.brightness',brief.brightness),
   candidates,others,moods:MOODS.map(mood=>`${mood}=${word(file,'words.mood',mood)}`).join('，'),
-  childLineMax:STYLE.slots.childLine.maxChars,noteMax:STYLE.slots.explain.maxChars,example:exampleJson(file),
+  childLineMax:STYLE.slots.childLine.maxChars,noteMax:STYLE.slots.explain.maxChars,
+  sounds:soundsForPrompt(),cardTitleMax:EXPLAIN_LIMITS.title,cardLineMax:EXPLAIN_LIMITS.child,teacherLineMax:EXPLAIN_LIMITS.teacher,
+  listenPoint:pointWord(points.listen),listenWords:words('listen'),movePoint:pointWord(points.move),moveWords:words('move'),
+  moveBar:points.move.feature==='rhythm'?fill(word(file,'words','moveBar'),{action:actionWords(brief.fallbackCell)}):'',
+  playPoint:pointWord(points.play),playWords:words('play'),samples:SAMPLES.join(' / '),example:exampleJson(file),
  });
+ return {...built,system:[built.system,...EXPLAIN_SYSTEM_PROMPT.lines].filter(Boolean).join('\n')};
 }
+
 
 /**
  * Checks a reply. Mood is required (else the reply is refused). Rhythm, metre and tempo are taken only from a model that
@@ -114,7 +146,11 @@ export function acceptTextbookFeatures(reply:unknown,brief:AcceptBrief):Acceptan
  const replaced=meter!==askedMeter||rhythmCell.length!==asked.length||rhythmCell.some((n,i)=>n!==asked[i]);
  if(replaced&&typeof raw.teacherNote==='string')notes.push('节奏或拍子换成了程序的，teacherNote 对不上，不用');
  const childLine=sentence(raw.childLine,'childLine','childLine'),teacherNote=replaced?null:sentence(raw.teacherNote,'explain','teacherNote');
- return {status:notes.length?'partly':'accepted',value:{rhythmCell,meter,tempoBpm,mood:raw.mood as MoodId,childLine,teacherNote},notes};
+ // The explanation card: its own checks; a failed field becomes the corpus line on the page and does not make the
+ // features 'partly' (those are about the numbers).
+ const explain=heard||raw.explain!==undefined?acceptExplain(raw.explain,{points:briefPoints(brief,{rhythmCell,meter,tempoBpm}),rhythmCell,
+  numbers:[...rhythmCell,meter,tempoBpm,1,2,3,4],own:!replaced,others:[...(brief.otherLines??[]),...SAMPLES]}):{value:EMPTY_EXPLAIN,notes:[]};
+ return {status:notes.length?'partly':'accepted',value:{rhythmCell,meter,tempoBpm,mood:raw.mood as MoodId,childLine,teacherNote,explain:explain.value},notes:[...notes,...explain.notes]};
 }
 
 export function readTextbookFeatures(text:string,brief:AcceptBrief){

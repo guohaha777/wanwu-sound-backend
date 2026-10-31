@@ -9,7 +9,10 @@
   "guide": {"reader": "child", "maxChars": 36},
   "idea": {"reader": "teacher", "maxChars": 12},
   "explain": {"reader": "teacher", "maxChars": 80},
-  "ask": {"reader": "teacher", "maxChars": 40}
+  "ask": {"reader": "teacher", "maxChars": 40},
+  "cardTitle": {"reader": "child", "maxChars": 12},
+  "cardLine": {"reader": "child", "maxChars": 30},
+  "teacherLine": {"reader": "teacher", "maxChars": 40}
  },
  "placeholderChars": 4,
  "childAvoid": ["音域", "声部", "织体", "密度", "动态", "层次", "动机", "和声"],

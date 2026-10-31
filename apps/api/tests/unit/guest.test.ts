@@ -194,7 +194,7 @@ test('textbook features: the audio model hears the excerpt; its checked answer c
  assert.equal(reply.statusCode,200);
  const body=reply.json() as {rhythmCell:number[];source:string;model:string;childLine:string;tempoBpm:number;promptVersion:string};
  assert.deepEqual(body.rhythmCell,[.5,.5,1]);assert.equal(body.source,'audio');assert.equal(body.model,'qwen3.8-omni-flash');assert.equal(body.tempoBpm,96);
- assert.equal(body.promptVersion,'textbook-features-prompt-v1');assert.equal(checkedOf(reply).checked,'accepted');
+ assert.equal(body.promptVersion,'textbook-features-prompt-v3');assert.equal(checkedOf(reply).checked,'accepted');
  assert.equal(calls.length,1);assert.ok(isAudio(calls[0]!));assert.equal((calls[0]!.body as unknown as {reasoning_effort:string}).reasoning_effort,'none');
  const sent=(call:Call)=>((call.body.messages.at(-1)!.content as unknown as {input_audio?:{format:string}}[])[0]!.input_audio!.format);
  assert.equal(sent(calls[0]!),'mp3');

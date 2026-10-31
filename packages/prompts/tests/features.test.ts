@@ -10,7 +10,7 @@ test('the prompt names the song, the numbers, the candidates and the other songs
  assert.ok(isTextbookFeaturesBrief(brief));
  const built=buildTextbookFeatures(brief);
  assert.equal(built.model,'audio');assert.ok(built.system,'the shared system prompt goes along');
- for(const part of ['「小鸟在唱歌」','96','二拍子','[0.5, 0.5, 1]（短 短 一拍）×4','「法国号」','30 秒','JSON'])assert.ok(built.prompt.includes(part),part);
+ for(const part of ['「小鸟在唱歌」','96','二拍子','[0.5, 0.5, 1]（短 短 一拍；动作：跑跑 走）×4','「法国号」','30 秒','JSON'])assert.ok(built.prompt.includes(part),part);
  const numbersOnly=buildTextbookFeatures({...brief,listenSeconds:0,others:[]});
  assert.ok(numbersOnly.prompt.includes('没有附音频'));assert.ok(numbersOnly.prompt.includes('程序选的 [0.5, 0.5, 0.25, 0.75]'));assert.ok(numbersOnly.prompt.includes('还没有'));
  assert.equal(isTextbookFeaturesBrief({...brief,meter:5}),false);assert.equal(isTextbookFeaturesBrief({...brief,title:''}),false);
