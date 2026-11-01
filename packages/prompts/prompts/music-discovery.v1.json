@@ -1,8 +1,8 @@
 {
- "version": "music-discovery-prompt-v3",
- "lines": [
-  "依据以下证据自由选题，输出1–3条完整条目。字段建议长度：knowledge 14、discovery 65、where 32、ask 32、try 48；teacher.concept 65、how 55、listen 45。",
-  "格式：{\"points\":[{\"point\":\"P1\",\"action\":\"操作编号\",\"evidence\":[\"E1\",\"O1\"],\"knowledge\":\"特征\",\"discovery\":\"本曲具体声音关系及作用\",\"where\":\"听哪里\",\"ask\":\"开放问题\",\"try\":\"一个操作\",\"teacher\":{\"concept\":\"知识与作用\",\"how\":\"怎么带\",\"listen\":\"比较听什么\"}}]}。不输出小结，不要求固定候选。",
-  "字段来源：arrangement编排事实、measure录音测量、choice孩子选择、background背景事实、listening程序能量测量；observations声音模型观察（带时间、层、依据和关键词）。"
- ]
+  "version": "music-discovery-prompt-v3",
+  "lines": [
+    "依据以下证据自由选题，输出1–3条完整条目。字段建议长度：knowledge 14、discovery 65、where 32、ask 32、try 48；teacher.concept 65、how 55、listen 45。",
+    "格式：{\"points\":[{\"point\":\"P1\",\"action\":\"操作编号\",\"evidence\":[\"E1\",\"O1\"],\"knowledge\":\"特征\",\"discovery\":\"本曲具体声音关系及作用\",\"where\":\"听哪里\",\"ask\":\"开放问题\",\"try\":\"一个操作\",\"teacher\":{\"concept\":\"知识与作用\",\"how\":\"怎么带\",\"listen\":\"比较听什么\"}}]}。不输出小结，不要求固定候选。",
+    "字段来源：arrangement编排事实、measure录音测量、choice孩子选择、background背景事实、listening程序能量测量；observations声音模型观察（带时间、层、依据和关键词）。"
+  ]
 }

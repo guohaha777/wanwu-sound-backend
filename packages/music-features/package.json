@@ -1,14 +1,14 @@
 {
- "name": "@wanwu-v2/music-features",
- "version": "0.1.0",
- "private": true,
- "type": "module",
- "description": "从一段歌曲录音里测出课本特征卡要的数字（速度、拍子、调式、音区、明暗、疏密、重复）和内部候选节奏型。纯函数，浏览器（老师上传）和后端命令（内置歌）共用，不联网",
- "dependencies": {
-  "@wanwu-v2/contracts": "0.1.0",
-  "@wanwu-v2/sound-rules": "0.1.0"
- },
- "exports": {
-  ".": "./src/index.ts"
- }
+  "name": "@wanwu-v2/music-features",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "从一段歌曲录音里测出课本特征卡要的数字（速度、拍子、调式、音区、明暗、疏密、重复）和内部候选节奏型。纯函数，浏览器（老师上传）和后端命令（内置歌）共用，不联网",
+  "dependencies": {
+    "@wanwu-v2/contracts": "0.1.0",
+    "@wanwu-v2/sound-rules": "0.1.0"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  }
 }

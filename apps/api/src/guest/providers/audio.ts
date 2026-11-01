@@ -1,47 +1,92 @@
 // Audio-understanding model (qwen3.8-omni-flash on 百炼, OpenAI-compatible): hears a short excerpt cut from a teacher's
 // recording — WAV from the page (a browser cannot encode mp3), mp3 from the local tools — plus the prompt. Thinking is off (reasoning_effort none) to keep it within seconds; the
 // reply is JSON, checked by @wanwu-v2/prompts like every other task. The excerpt is sent for this request only.
-import type {BuiltPrompt} from '@wanwu-v2/prompts/tasks';
-import type {Provider} from '../config.ts';
-import {GuestFailure} from '../net.ts';
-import type {Post} from '../net.ts';
+import type { BuiltPrompt } from '@wanwu-v2/prompts/tasks';
+import type { Provider } from '../config.ts';
+import { GuestFailure } from '../net.ts';
+import type { Post } from '../net.ts';
 
 /** The excerpt's format from its first bytes: a RIFF header (base64 `UklGR`) is WAV, anything else is taken as mp3. */
-export const excerptFormat=(base64:string):'wav'|'mp3'=>base64.startsWith('UklGR')?'wav':'mp3';
+export const excerptFormat = (base64: string): 'wav' | 'mp3' =>
+  base64.startsWith('UklGR') ? 'wav' : 'mp3';
 
 export async function chatWithAudio(
- post:Post,
- provider:Provider,
- built:BuiltPrompt,
- audioBase64:string,
- timeoutMs:number,
-):Promise<string>{
- const body={
-  model:provider.model,temperature:built.temperature,modalities:['text'],response_format:{type:'json_object'},reasoning_effort:'none',stream:false,
-  messages:[...(built.system?[{role:'system',content:built.system}]:[]),
-   {role:'user',content:[{type:'input_audio',input_audio:{data:`data:;base64,${audioBase64}`,format:excerptFormat(audioBase64)}},{type:'text',text:built.prompt}]}],
- };
- const reply=await post(`${provider.baseUrl}/chat/completions`,{authorization:`Bearer ${provider.apiKey}`},body,timeoutMs);
- if(reply.status===429)throw new GuestFailure('quota');
- if(reply.status<200||reply.status>=300)throw new GuestFailure('failed');
- const content=(reply.json as {choices?:{message?:{content?:unknown}}[]}|null)?.choices?.[0]?.message?.content;
- if(typeof content!=='string'||!content.trim())throw new GuestFailure('failed');
- return content;
+  post: Post,
+  provider: Provider,
+  built: BuiltPrompt,
+  audioBase64: string,
+  timeoutMs: number,
+): Promise<string> {
+  const body = {
+    model: provider.model,
+    temperature: built.temperature,
+    modalities: ['text'],
+    response_format: { type: 'json_object' },
+    reasoning_effort: 'none',
+    stream: false,
+    messages: [
+      ...(built.system ? [{ role: 'system', content: built.system }] : []),
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'input_audio',
+            input_audio: {
+              data: `data:;base64,${audioBase64}`,
+              format: excerptFormat(audioBase64),
+            },
+          },
+          { type: 'text', text: built.prompt },
+        ],
+      },
+    ],
+  };
+  const reply = await post(
+    `${provider.baseUrl}/chat/completions`,
+    { authorization: `Bearer ${provider.apiKey}` },
+    body,
+    timeoutMs,
+  );
+  if (reply.status === 429) throw new GuestFailure('quota');
+  if (reply.status < 200 || reply.status >= 300) throw new GuestFailure('failed');
+  const content = (reply.json as { choices?: { message?: { content?: unknown } }[] } | null)
+    ?.choices?.[0]?.message?.content;
+  if (typeof content !== 'string' || !content.trim()) throw new GuestFailure('failed');
+  return content;
 }
 
 /**
  * The same model asked with words only (AI 作曲, the voice step): no excerpt, the prompt alone; the reply is the
  * composer's JSON, checked like the text model's.
  */
-export async function chatVoice(post:Post,provider:Provider,built:BuiltPrompt,timeoutMs:number):Promise<string>{
- const body={
-  model:provider.model,temperature:built.temperature,modalities:['text'],response_format:{type:'json_object'},reasoning_effort:'none',stream:false,
-  messages:[...(built.system?[{role:'system',content:built.system}]:[]),{role:'user',content:built.prompt}],
- };
- const reply=await post(`${provider.baseUrl}/chat/completions`,{authorization:`Bearer ${provider.apiKey}`},body,timeoutMs);
- if(reply.status===429)throw new GuestFailure('quota');
- if(reply.status<200||reply.status>=300)throw new GuestFailure('failed');
- const content=(reply.json as {choices?:{message?:{content?:unknown}}[]}|null)?.choices?.[0]?.message?.content;
- if(typeof content!=='string'||!content.trim())throw new GuestFailure('failed');
- return content;
+export async function chatVoice(
+  post: Post,
+  provider: Provider,
+  built: BuiltPrompt,
+  timeoutMs: number,
+): Promise<string> {
+  const body = {
+    model: provider.model,
+    temperature: built.temperature,
+    modalities: ['text'],
+    response_format: { type: 'json_object' },
+    reasoning_effort: 'none',
+    stream: false,
+    messages: [
+      ...(built.system ? [{ role: 'system', content: built.system }] : []),
+      { role: 'user', content: built.prompt },
+    ],
+  };
+  const reply = await post(
+    `${provider.baseUrl}/chat/completions`,
+    { authorization: `Bearer ${provider.apiKey}` },
+    body,
+    timeoutMs,
+  );
+  if (reply.status === 429) throw new GuestFailure('quota');
+  if (reply.status < 200 || reply.status >= 300) throw new GuestFailure('failed');
+  const content = (reply.json as { choices?: { message?: { content?: unknown } }[] } | null)
+    ?.choices?.[0]?.message?.content;
+  if (typeof content !== 'string' || !content.trim()) throw new GuestFailure('failed');
+  return content;
 }

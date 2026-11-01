@@ -1,25 +1,25 @@
 {
- "name": "@wanwu-v2/sound-rules",
- "version": "0.1.0",
- "private": true,
- "type": "module",
- "description": "声音体检、五维度塑形、本地背景、混音与课本匹配规则：参数在 rules/*.json（音乐角色调这里），算法是纯函数，前端预览与后端渲染共用",
- "dependencies": {
-  "@wanwu-v2/contracts": "0.1.0"
- },
- "exports": {
-  "./orchestration": "./src/orchestration.ts",
-  "./rules": "./src/rules.ts",
-  "./analysis": "./src/analysis.ts",
-  "./shaping": "./src/shaping.ts",
-  "./background": "./src/background.ts",
-  "./mix": "./src/mix.ts",
-  "./ai-compose": "./src/aiCompose.ts",
-  "./composition-identity": "./src/compositionIdentity.ts",
-  "./kept-background": "./src/keptBackground.ts",
-  "./discovery": "./src/discovery.ts",
-  "./textbook-match": "./src/textbookMatch.ts",
-  "./schema": "./src/schema.ts",
-  "./textbook-compose": "./src/textbookCompose.ts"
- }
+  "name": "@wanwu-v2/sound-rules",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "声音体检、五维度塑形、本地背景、混音与课本匹配规则：参数在 rules/*.json（音乐角色调这里），算法是纯函数，前端预览与后端渲染共用",
+  "dependencies": {
+    "@wanwu-v2/contracts": "0.1.0"
+  },
+  "exports": {
+    "./orchestration": "./src/orchestration.ts",
+    "./rules": "./src/rules.ts",
+    "./analysis": "./src/analysis.ts",
+    "./shaping": "./src/shaping.ts",
+    "./background": "./src/background.ts",
+    "./mix": "./src/mix.ts",
+    "./ai-compose": "./src/aiCompose.ts",
+    "./composition-identity": "./src/compositionIdentity.ts",
+    "./kept-background": "./src/keptBackground.ts",
+    "./discovery": "./src/discovery.ts",
+    "./textbook-match": "./src/textbookMatch.ts",
+    "./schema": "./src/schema.ts",
+    "./textbook-compose": "./src/textbookCompose.ts"
+  }
 }

@@ -1,5 +1,5 @@
 {
- "version": "textbook-match-v1",
- "density": {"sparseBelow": 0.6, "busyAbove": 1.6},
- "repetition": {"lowBelow": 0.3, "highAbove": 0.6}
+  "version": "textbook-match-v1",
+  "density": { "sparseBelow": 0.6, "busyAbove": 1.6 },
+  "repetition": { "lowBelow": 0.3, "highAbove": 0.6 }
 }

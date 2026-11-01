@@ -1,10 +1,25 @@
 {
   "compilerOptions": {
-    "target": "ES2023", "lib": ["ES2023", "DOM", "DOM.Iterable"], "module": "ESNext",
-    "moduleResolution": "bundler", "strict": true, "noUncheckedIndexedAccess": true,
-    "noUnusedLocals": true, "noUnusedParameters": true, "skipLibCheck": true, "noEmit": true,
-    "resolveJsonModule": true, "verbatimModuleSyntax": true, "isolatedModules": true,
-    "allowImportingTsExtensions": true, "types": ["node"]
+    "target": "ES2023",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "resolveJsonModule": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "allowImportingTsExtensions": true,
+    "types": ["node"]
   },
-  "include": ["src", "tests", "../../packages/audio-engine/src", "../../packages/audio-engine/tests"]
+  "include": [
+    "src",
+    "tests",
+    "../../packages/audio-engine/src",
+    "../../packages/audio-engine/tests"
+  ]
 }

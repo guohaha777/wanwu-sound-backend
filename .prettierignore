@@ -1,0 +1,8 @@
+# Generated, vendored or fingerprinted data; formatting covers source code only.
+node_modules/
+package-lock.json
+handoff/
+data/catalogue/*.json
+docs/
+deploy/
+artifacts/

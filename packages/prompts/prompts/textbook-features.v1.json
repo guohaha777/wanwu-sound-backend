@@ -1,121 +1,114 @@
 {
- "version": "textbook-features-prompt-v4",
- "task": "textbook-features",
- "model": "audio",
- "status": "open",
- "temperature": 0.1,
- "lines": [
-  "【任务】为小学音乐课的课本歌曲做特征卡。用卡片的老师多数没有音乐基础；本任务只分析节拍、音乐特征和讲解。原曲旋律由独立的本地音符转录模块提取，不在本任务中猜测音符。节奏特点应有这段录音的依据。",
-  "【歌名】「{title}」",
-  "{listen}",
-  "【程序测出的数字】速度约 {tempo}（每分钟拍数；可能被测成真实速度的两倍或一半），{metre}（{metreSure}），{mode}，疏密：{density}，明暗：{brightness}。",
-  "【程序在录音里找到的反复出现的一小节节奏】（单位：拍；× 后面是出现的小节数）{candidates}",
-  "【已经写好的其他歌】{others}",
-  "【要做的事】",
-  "· rhythmCell：最能让人认出这首歌的一小节节奏，优先从上面的候选里选；每个音一样长的平均节奏哪首歌都有，除非这首歌真的就是这样，否则不要选。单位拍，每个数在 0.25–4 之间，加起来等于一小节的拍数。",
-  "· meter：一小节几拍（2、3 或 4）；只有程序说「不太确定」、而且你听到的明显不一样才改，改了 rhythmCell 就按新的拍数写。",
-  "· tempo：程序测的速度如果是真实速度的两倍写 \"half\"，是一半写 \"double\"，差不多写 \"same\"。",
-  "· mood：只能从这些里选一个：{moods}。",
-  "· childLine：给孩子的一句话，不超过 {childLineMax} 个字，说这首歌自己的节奏和感觉，可以借歌名里的形象；不写「哒」「嗒」「长短」这类节拍记号；节奏不同的歌说法要不同，不要和其他歌重复。",
-  "· teacherNote：给老师的一段话，不超过 {noteMax} 个字，用大白话说这首歌的节奏有什么特点、可以怎么带孩子拍出来，不用乐理术语。说节奏时照候选后面括号里的说法，按顺序一个一个说，个数要和 rhythmCell 一样。",
-  "· explain：这首歌的讲解卡，给 6–8 岁的孩子和老师看，每一栏一句话，排版由页面负责，你只填内容。程序已经按这首歌的特点给三栏各定了一个要点，每栏只讲它的要点：",
-  "  - title：一个具体的形象，不超过 {cardTitleMax} 个字。",
-  "  - sound：节奏条用哪一套拟声词，只能从这些里选一个 id：{sounds}。选和这首歌的形象最相配的，选不出就写 plain。",
-  "  - listen：听一听，要点是「{listenPoint}」，句子里要用到这些词中的一个：{listenWords}；不超过 {cardLineMax} 个字。",
-  "  - move：动一动，要点是「{movePoint}」，句子里要用到这些词中的一个：{moveWords}；必须有一个身体动作{moveBar}；不超过 {cardLineMax} 个字。",
-  "  - play：玩一玩，要点是「{playPoint}」，句子里要用到这些词中的一个：{playWords}；让孩子把自己的声音放进这首歌里一个具体的地方；不超过 {cardLineMax} 个字。",
-  "  - highlight：从 listen、move、play 里挑 1–2 个最重要的词（原样出现在句子里，每个不超过 6 个字）。",
-  "  - teacher：给老师的 listen、move、play，各讲同一栏的要点在歌里的哪里、怎么带，每句不超过 {teacherLineMax} 个字。",
-  "  - 句式示范（只看句式有多不一样，不要照抄）：{samples}",
-  "· 只描述，不评价；不写歌词。",
-  "【返回格式】只回复 JSON，例如：{example}"
- ],
- "candidateLine": "[{cell}]（{say}；动作：{action}）×{bars}",
- "otherLine": "「{title}」节奏型 [{rhythm}]：{childLine}",
- "words": {
-  "listen": {
-   "audio": "【音频】请先听附带的这段音频（约 {seconds} 秒的截取段），以你听到的为准。",
-   "numbers": "【音频】这次没有附音频，只根据歌名和数字判断。rhythmCell 就用程序选的 [{fallback}]，meter 和 tempo 照程序测的写（tempo 写 \"same\"）；childLine 和 teacherNote 按这个节奏型写。"
-  },
-  "metre": {
-   "2": "二拍子",
-   "3": "三拍子",
-   "4": "四拍子"
-  },
-  "sure": {
-   "high": "程序比较确定",
-   "low": "程序不太确定，请以听到的为准"
-  },
-  "mode": {
-   "major": "大调",
-   "minor": "小调",
-   "pentatonic": "五声调式",
-   "dorian": "多利亚调式"
-  },
-  "density": {
-   "sparse": "稀",
-   "medium": "不稀不密",
-   "busy": "密"
-  },
-  "brightness": {
-   "dark": "偏暗",
-   "mid": "中间",
-   "bright": "偏亮"
-  },
-  "mood": {
-   "happy": "开心",
-   "calm": "平静",
-   "lively": "活泼",
-   "sad": "悲伤",
-   "angry": "生气",
-   "scared": "害怕",
-   "curious": "好奇"
-  },
-  "beats": {
-   "0.25": "很短",
-   "0.5": "短",
-   "0.75": "稍长",
-   "1": "一拍",
-   "1.5": "长",
-   "2": "很长",
-   "3": "很长",
-   "4": "很长"
-  },
-  "noCandidates": "没有找到",
-  "noOthers": "还没有",
-  "moveBar": "，并原样用到动作说法「{action}」（你换了 rhythmCell 就用那个候选后面「动作：」的说法）",
-  "samples": [
-   "声音像雨点，一颗一颗落下来。",
-   "蹲下来，等低低的声音出现再站起。",
-   "在安静的地方，让你的声音说一句话。"
-  ]
- },
- "example": {
-  "rhythmCell": [
-   0.5,
-   0.5,
-   1
+  "version": "textbook-features-prompt-v4",
+  "task": "textbook-features",
+  "model": "audio",
+  "status": "open",
+  "temperature": 0.1,
+  "lines": [
+    "【任务】为小学音乐课的课本歌曲做特征卡。用卡片的老师多数没有音乐基础；本任务只分析节拍、音乐特征和讲解。原曲旋律由独立的本地音符转录模块提取，不在本任务中猜测音符。节奏特点应有这段录音的依据。",
+    "【歌名】「{title}」",
+    "{listen}",
+    "【程序测出的数字】速度约 {tempo}（每分钟拍数；可能被测成真实速度的两倍或一半），{metre}（{metreSure}），{mode}，疏密：{density}，明暗：{brightness}。",
+    "【程序在录音里找到的反复出现的一小节节奏】（单位：拍；× 后面是出现的小节数）{candidates}",
+    "【已经写好的其他歌】{others}",
+    "【要做的事】",
+    "· rhythmCell：最能让人认出这首歌的一小节节奏，优先从上面的候选里选；每个音一样长的平均节奏哪首歌都有，除非这首歌真的就是这样，否则不要选。单位拍，每个数在 0.25–4 之间，加起来等于一小节的拍数。",
+    "· meter：一小节几拍（2、3 或 4）；只有程序说「不太确定」、而且你听到的明显不一样才改，改了 rhythmCell 就按新的拍数写。",
+    "· tempo：程序测的速度如果是真实速度的两倍写 \"half\"，是一半写 \"double\"，差不多写 \"same\"。",
+    "· mood：只能从这些里选一个：{moods}。",
+    "· childLine：给孩子的一句话，不超过 {childLineMax} 个字，说这首歌自己的节奏和感觉，可以借歌名里的形象；不写「哒」「嗒」「长短」这类节拍记号；节奏不同的歌说法要不同，不要和其他歌重复。",
+    "· teacherNote：给老师的一段话，不超过 {noteMax} 个字，用大白话说这首歌的节奏有什么特点、可以怎么带孩子拍出来，不用乐理术语。说节奏时照候选后面括号里的说法，按顺序一个一个说，个数要和 rhythmCell 一样。",
+    "· explain：这首歌的讲解卡，给 6–8 岁的孩子和老师看，每一栏一句话，排版由页面负责，你只填内容。程序已经按这首歌的特点给三栏各定了一个要点，每栏只讲它的要点：",
+    "  - title：一个具体的形象，不超过 {cardTitleMax} 个字。",
+    "  - sound：节奏条用哪一套拟声词，只能从这些里选一个 id：{sounds}。选和这首歌的形象最相配的，选不出就写 plain。",
+    "  - listen：听一听，要点是「{listenPoint}」，句子里要用到这些词中的一个：{listenWords}；不超过 {cardLineMax} 个字。",
+    "  - move：动一动，要点是「{movePoint}」，句子里要用到这些词中的一个：{moveWords}；必须有一个身体动作{moveBar}；不超过 {cardLineMax} 个字。",
+    "  - play：玩一玩，要点是「{playPoint}」，句子里要用到这些词中的一个：{playWords}；让孩子把自己的声音放进这首歌里一个具体的地方；不超过 {cardLineMax} 个字。",
+    "  - highlight：从 listen、move、play 里挑 1–2 个最重要的词（原样出现在句子里，每个不超过 6 个字）。",
+    "  - teacher：给老师的 listen、move、play，各讲同一栏的要点在歌里的哪里、怎么带，每句不超过 {teacherLineMax} 个字。",
+    "  - 句式示范（只看句式有多不一样，不要照抄）：{samples}",
+    "· 只描述，不评价；不写歌词。",
+    "【返回格式】只回复 JSON，例如：{example}"
   ],
-  "meter": 2,
-  "tempo": "same",
-  "mood": "lively",
-  "childLine": "像小鸟蹦蹦跳跳",
-  "teacherNote": "每小节先两下快的再一下长的，可以带孩子念“小鸟—叫”，前两下轻快拍手，最后一下拍得稳一点。",
-  "explain": {
-   "title": "小鸟晒太阳",
-   "sound": "bird",
-   "listen": "钢琴弹得亮晶晶的，像小鸟在晒太阳。",
-   "move": "一二、一二，像小鸟扇翅膀一样拍手。",
-   "play": "最后那个长长的声音，换成你的声音。",
-   "highlight": [
-    "亮晶晶",
-    "拍手"
-   ],
-   "teacher": {
-    "listen": "先听大调的明亮色彩，请孩子说说像什么天气。",
-    "move": "二拍子强弱：第一拍拍手重一些，第二拍轻一些。",
-    "play": "请孩子把自己的声音摆在每小节最后的长音上。"
-   }
+  "candidateLine": "[{cell}]（{say}；动作：{action}）×{bars}",
+  "otherLine": "「{title}」节奏型 [{rhythm}]：{childLine}",
+  "words": {
+    "listen": {
+      "audio": "【音频】请先听附带的这段音频（约 {seconds} 秒的截取段），以你听到的为准。",
+      "numbers": "【音频】这次没有附音频，只根据歌名和数字判断。rhythmCell 就用程序选的 [{fallback}]，meter 和 tempo 照程序测的写（tempo 写 \"same\"）；childLine 和 teacherNote 按这个节奏型写。"
+    },
+    "metre": {
+      "2": "二拍子",
+      "3": "三拍子",
+      "4": "四拍子"
+    },
+    "sure": {
+      "high": "程序比较确定",
+      "low": "程序不太确定，请以听到的为准"
+    },
+    "mode": {
+      "major": "大调",
+      "minor": "小调",
+      "pentatonic": "五声调式",
+      "dorian": "多利亚调式"
+    },
+    "density": {
+      "sparse": "稀",
+      "medium": "不稀不密",
+      "busy": "密"
+    },
+    "brightness": {
+      "dark": "偏暗",
+      "mid": "中间",
+      "bright": "偏亮"
+    },
+    "mood": {
+      "happy": "开心",
+      "calm": "平静",
+      "lively": "活泼",
+      "sad": "悲伤",
+      "angry": "生气",
+      "scared": "害怕",
+      "curious": "好奇"
+    },
+    "beats": {
+      "0.25": "很短",
+      "0.5": "短",
+      "0.75": "稍长",
+      "1": "一拍",
+      "1.5": "长",
+      "2": "很长",
+      "3": "很长",
+      "4": "很长"
+    },
+    "noCandidates": "没有找到",
+    "noOthers": "还没有",
+    "moveBar": "，并原样用到动作说法「{action}」（你换了 rhythmCell 就用那个候选后面「动作：」的说法）",
+    "samples": [
+      "声音像雨点，一颗一颗落下来。",
+      "蹲下来，等低低的声音出现再站起。",
+      "在安静的地方，让你的声音说一句话。"
+    ]
+  },
+  "example": {
+    "rhythmCell": [0.5, 0.5, 1],
+    "meter": 2,
+    "tempo": "same",
+    "mood": "lively",
+    "childLine": "像小鸟蹦蹦跳跳",
+    "teacherNote": "每小节先两下快的再一下长的，可以带孩子念“小鸟—叫”，前两下轻快拍手，最后一下拍得稳一点。",
+    "explain": {
+      "title": "小鸟晒太阳",
+      "sound": "bird",
+      "listen": "钢琴弹得亮晶晶的，像小鸟在晒太阳。",
+      "move": "一二、一二，像小鸟扇翅膀一样拍手。",
+      "play": "最后那个长长的声音，换成你的声音。",
+      "highlight": ["亮晶晶", "拍手"],
+      "teacher": {
+        "listen": "先听大调的明亮色彩，请孩子说说像什么天气。",
+        "move": "二拍子强弱：第一拍拍手重一些，第二拍轻一些。",
+        "play": "请孩子把自己的声音摆在每小节最后的长音上。"
+      }
+    }
   }
- }
 }

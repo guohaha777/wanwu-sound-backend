@@ -1,384 +1,370 @@
 {
- "version": "discovery-cards-v3",
- "actions": {
-  "replay": "从头再听一遍",
-  "move": "挪一挪「{target}」",
-  "swap": "把「{target}」换成别的声音",
-  "remove": "拿走一次「{target}」",
-  "add": "再放一次「{target}」",
-  "gap": "在声音之间留一点空",
-  "instrument": "换一件乐器",
-  "volume": "调一调背景音量",
-  "background": "关掉背景听一听"
- },
- "backgroundWhat": {
-  "ai": "AI 作的曲子",
-  "program": "程序编的曲子",
-  "textbook": "课本歌的节奏",
-  "plain": "柔柔的背景"
- },
- "originalPlayers": "原来的声音",
- "halves": {
-  "first": "前半段",
-  "second": "后半段"
- },
- "measuredBy": {
-  "choice": "孩子选的",
-  "measure": "测出来的"
- },
- "directions": {
-  "softer": {
-   "word": "后面这组总体更轻",
-   "picture": "轻一些"
-  },
-  "louder": {
-   "word": "后面这组总体更响",
-   "picture": "响一些"
-  }
- },
- "moods": {
-  "happy": "开心",
-  "calm": "平静",
-  "lively": "活泼",
-  "sad": "悲伤",
-  "angry": "生气",
-  "scared": "害怕",
-  "curious": "好奇"
- },
- "summary": {
-  "child": "这首小曲{phrases}～",
-  "teacher": "可以围绕{topics}带孩子听，每个听点只改一处再听。",
-  "phraseJoin": "，",
-  "topicJoin": "、"
- },
- "childAvoid": [
-  "听感",
-  "结构",
-  "再现",
-  "曲式",
-  "测出来",
-  "测量",
-  "程序",
-  "数据"
- ],
- "hearingClaims": [
-  "我听到",
-  "我听见",
-  "我听了",
-  "我刚才听"
- ],
- "kinds": {
-  "opening": {
-   "knowledge": "最先出场的是谁呀？",
-   "discovery": "一开始是「{first}」先出场，整首曲子的样子就从它开始啦～",
-   "ask": "换一个声音先出场，曲子会变成什么样？",
-   "tries": {
-    "swap": "把开头的「{target}」换成别的声音",
-    "move": "把「{target}」往后挪一点",
-    "replay": "从头再听，只听最开头"
-   },
-   "teacher": {
-    "concept": "开头（引子）：第一个声音决定了听的人对整首的第一印象。",
-    "how": "先请孩子说出第一个声音，再猜猜换掉它会怎样。",
-    "listen": "换了开头，第一印象变了吗"
-   },
-   "basis": "编排：「{first}」最先响起",
-   "summaryPhrase": "由「{first}」开场",
-   "topic": "开头",
-   "where": "听最先响起的「{first}」。"
-  },
-  "repeat": {
-   "knowledge": "熟悉的声音又来啦～",
-   "discovery": "「{sound}」来了 {times} 次，一次又一次，像在说同一句悄悄话～",
-   "ask": "它每次回来，你心里的感觉一样吗？",
-   "tries": {
-    "remove": "拿走一次「{target}」，听听少了一次",
-    "add": "再放一次「{target}」，听听多了一次",
-    "replay": "从头再听，它每来一次就拍一下手"
-   },
-   "teacher": {
-    "concept": "重复：同一个声音多次出现，能加深印象，也能让心情更浓。",
-    "how": "请孩子边听边数次数，再说说重复带来的感觉。",
-    "listen": "多一次、少一次，感觉有什么不同"
-   },
-   "basis": "编排：「{sound}」放了 {times} 次",
-   "summaryPhrase": "「{sound}」反复出现",
-   "topic": "重复",
-   "where": "找找「{sound}」再次响起的地方。"
-  },
-  "return": {
-   "knowledge": "听，刚才的声音回来啦",
-   "discovery": "「{a}」先唱，「{b}」接着来，然后「{a}」又回来啦，像出去玩了一圈又回到家～",
-   "ask": "「{a}」回来的时候，你觉得故事讲完了吗？",
-   "tries": {
-    "swap": "把后面那次「{target}」换成别的声音",
-    "move": "把「{target}」挪得离「{b}」远一点",
-    "replay": "从头再听，「{a}」回来时举起手"
-   },
-   "teacher": {
-    "concept": "再现：声音离开再回来，带来熟悉和完整的感觉。只说“回来”，不急着讲曲式。",
-    "how": "先请孩子说两次之间多了什么，再听换掉以后的感觉。",
-    "listen": "“回家”的感觉还在不在"
-   },
-   "basis": "编排：「{a}」→「{b}」→「{a}」",
-   "summaryPhrase": "「{a}」离开后又回来",
-   "topic": "回来",
-   "where": "先听「{a}」，再找「{b}」之后的「{a}」。"
-  },
-  "overlap": {
-   "knowledge": "听，两个声音碰到一起啦",
-   "discovery": "「{a}」和「{b}」有一会儿一起响，两个声音叠成了厚厚的一层～",
-   "ask": "它们一起响的时候，像在聊天、比赛，还是在拥抱？",
-   "tries": {
-    "move": "把「{target}」挪开一点，不再碰到",
-    "replay": "从头再听，两个一起响时举手"
-   },
-   "teacher": {
-    "concept": "叠加：声音同时出现会让音响变厚，也可能互相分不清。",
-    "how": "比较叠在一起和分开两种听法，不预设哪种更好。",
-    "listen": "分开以后，哪个更清楚"
-   },
-   "basis": "编排：「{a}」和「{b}」有一段同时响",
-   "summaryPhrase": "「{a}」和「{b}」叠在一起",
-   "topic": "叠加",
-   "where": "听「{a}」和「{b}」一起响的那一段。"
-  },
-  "long-short": {
-   "knowledge": "一个长，一个短呀～",
-   "discovery": "「{long}」拉得长长的，「{short}」一下就停了，一个像慢慢走，一个像轻轻跳～",
-   "ask": "长长的声音和短短的声音，各像什么动作？",
-   "tries": {
-    "swap": "把「{target}」换成一个更长的声音",
-    "replay": "从头再听，跟着长短比划手势"
-   },
-   "teacher": {
-    "concept": "长短（时值）对比是节奏变化的来源。",
-    "how": "请孩子用手比划：长声慢慢拉开，短声轻轻点一下。",
-    "listen": "长短差别变小，节奏还活泼吗"
-   },
-   "basis": "编排：「{long}」约 {longSeconds} 秒，「{short}」约 {shortSeconds} 秒",
-   "summaryPhrase": "有长有短",
-   "topic": "长短",
-   "where": "分别听「{short}」和「{long}」持续多久。"
-  },
-  "rest": {
-   "knowledge": "声音歇一歇，听听还有什么",
-   "discovery": "中间有一会儿，放进去的声音都停下来休息，像大家一起屏住了呼吸～",
-   "ask": "安静的时候，你在等谁出来？",
-   "tries": {
-    "add": "在安静的地方再放一次「{target}」",
-    "replay": "从头再听，安静时闭上眼睛"
-   },
-   "teacher": {
-    "concept": "休止：安静也是音乐的一部分，能让后面的声音更显眼。",
-    "how": "请孩子说说安静前后有什么不同。",
-    "listen": "填满以后，下一个声音还那么亮吗"
-   },
-   "basis": "编排：约 {seconds} 秒没有孩子放的声音",
-   "summaryPhrase": "中间留了一段安静",
-   "topic": "留白",
-   "where": "找孩子的声音都停下、下一声还没来的那一段。"
-  },
-  "density": {
-   "knowledge": "哪一段声音来得更勤呀？",
-   "discovery": "{busier}放的声音多一些，听起来像小路上热闹起来了～",
-   "ask": "声音多的地方、声音少的地方，像在做什么？",
-   "tries": {
-    "move": "把一个「{target}」挪到另一半去",
-    "replay": "从头再听，声音多时轻轻踏步"
-   },
-   "teacher": {
-    "concept": "疏密：声音的多少会改变音乐的松紧。",
-    "how": "比较两段，请孩子说哪段像走路、哪段像跑步，答案没有对错。",
-    "listen": "两半听起来更像了吗"
-   },
-   "basis": "编排：前半段 {early} 个、后半段 {late} 个声音",
-   "summaryPhrase": "{busier}更热闹",
-   "topic": "疏密",
-   "where": "对比前半段和后半段，有多少声音加入。"
-  },
-  "ending": {
-   "knowledge": "最后是谁轻轻停下来？",
-   "discovery": "最后是「{last}」把曲子送到终点，像说了一句“再见啦”～",
-   "ask": "这样结束，像说完了，还是还想再听？",
-   "tries": {
-    "swap": "把最后的「{target}」换成别的声音",
-    "move": "把「{target}」往前挪一点",
-    "replay": "从头再听，到最后时挥手再见"
-   },
-   "teacher": {
-    "concept": "结尾：最后的声音会影响听完以后的感觉。",
-    "how": "请孩子说它像“说完了”还是“没说完”。",
-    "listen": "换了收尾，感觉变了吗"
-   },
-   "basis": "编排：「{last}」最后结束",
-   "summaryPhrase": "由「{last}」收尾",
-   "topic": "结尾",
-   "where": "听「{last}」最后停下的地方。"
-  },
-  "cut-ending": {
-   "knowledge": "咦，这个声音还没唱完呢",
-   "discovery": "「{sound}」还没唱完，曲子就停啦，像故事讲到一半被打断了～",
-   "ask": "你想让它唱完，还是喜欢这样停下？",
-   "tries": {
-    "move": "把「{target}」往前挪一点",
-    "replay": "从头再听，注意最后一下"
-   },
-   "teacher": {
-    "concept": "突然的结束会留下悬念，和慢慢结束的感觉不同。",
-    "how": "比较被打断和唱完两种结尾。",
-    "listen": "唱完以后，结尾更安心了吗"
-   },
-   "basis": "编排：「{sound}」超出作品长度，被剪断",
-   "summaryPhrase": "结尾停得很突然",
-   "topic": "结尾",
-   "where": "听作品结束时的「{sound}」。"
-  },
-  "single": {
-   "knowledge": "一个声音，也能玩一玩",
-   "discovery": "整首只有「{sound}」一个声音，它就是今天唯一的小主角～",
-   "ask": "如果再请一个声音来，你想请谁？",
-   "tries": {
+  "version": "discovery-cards-v3",
+  "actions": {
+    "replay": "从头再听一遍",
+    "move": "挪一挪「{target}」",
+    "swap": "把「{target}」换成别的声音",
+    "remove": "拿走一次「{target}」",
     "add": "再放一次「{target}」",
-    "replay": "从头再听，跟着它轻轻点头"
-   },
-   "teacher": {
-    "concept": "单一音色：先听清一个声音本身，再加入重复或对比。",
-    "how": "引导孩子描述这个声音怎么开始、怎么结束。",
-    "listen": "多放一次以后，像在说话吗"
-   },
-   "basis": "编排：只有「{sound}」一个声音",
-   "summaryPhrase": "只有一个声音在唱",
-   "topic": "音色",
-   "where": "听「{sound}」从响起到停下。"
+    "gap": "在声音之间留一点空",
+    "instrument": "换一件乐器",
+    "volume": "调一调背景音量",
+    "background": "关掉背景听一听"
   },
-  "high-low": {
-   "knowledge": "高高低低，听听有什么不同",
-   "discovery": "「{high}」高高的像在树梢，「{low}」低低的像在地面～",
-   "ask": "高的声音和低的声音，像哪两种小动物？",
-   "tries": {
-    "swap": "把「{target}」换成一个低一点的声音",
-    "replay": "从头再听，高的举手、低的蹲下"
-   },
-   "teacher": {
-    "concept": "高低（音高）对比是孩子最容易听出的差别。",
-    "how": "请孩子跟着声音把手举高、放低，不必说出音名。",
-    "listen": "高低差别变小后，还有远近吗"
-   },
-   "basis": "{by}：「{high}」偏高，「{low}」偏低",
-   "summaryPhrase": "有高有低",
-   "topic": "高低",
-   "where": "对比「{high}」与「{low}」。"
+  "backgroundWhat": {
+    "ai": "AI 作的曲子",
+    "program": "程序编的曲子",
+    "textbook": "课本歌的节奏",
+    "plain": "柔柔的背景"
   },
-  "background": {
-   "knowledge": "听听，背景怎样陪着声音",
-   "discovery": "下面是{what}，由{players}陪着一起唱，给你的声音铺了一层底色～",
-   "ask": "背景是在带着大家走，还是在旁边陪着？",
-   "tries": {
-    "instrument": "换一件乐器来演背景",
-    "volume": "把背景调轻一点",
-    "background": "关掉背景听一遍",
-    "replay": "从头再听，只跟着背景轻轻晃"
-   },
-   "teacher": {
-    "concept": "伴奏与配器：同样的曲子换一件乐器，色彩就变了。",
-    "how": "请孩子说说喜欢哪件乐器、为什么。",
-    "listen": "换了乐器，背景像变了个人吗"
-   },
-   "basis": "背景：{what}，{players}演奏",
-   "summaryPhrase": "背景一直在旁边陪着",
-   "topic": "配器",
-   "where": "先留意孩子的声音，再找下面的背景。"
+  "originalPlayers": "原来的声音",
+  "halves": {
+    "first": "前半段",
+    "second": "后半段"
   },
-  "masked": {
-   "knowledge": "找找这个声音藏在哪儿",
-   "discovery": "「{sound}」出现时，背景比较响。听听两层声音，哪一个更容易引起你的注意呀？",
-   "ask": "这段你先注意到哪个声音？",
-   "tries": {
-    "volume": "把背景调轻一点",
-    "background": "关掉背景听一遍",
-    "replay": "从头再听，听到「{sound}」就举手"
-   },
-   "teacher": {
-    "concept": "背景能量较高不等于声音一定被遮住，需要通过复听比较。",
-    "how": "比较背景轻、背景响两种听法，体会谁是主角。",
-    "listen": "「{sound}」更清楚了吗"
-   },
-   "basis": "程序测量：「{sound}」响时背景高出约 {backgroundLouderDb} 分贝",
-   "summaryPhrase": "「{sound}」出现时背景较响",
-   "topic": "主次",
-   "where": "听「{sound}」和背景同时响的地方。"
+  "measuredBy": {
+    "choice": "孩子选的",
+    "measure": "测出来的"
   },
-  "gap-filled": {
-   "knowledge": "声音歇着，背景还在唱呀",
-   "discovery": "你的声音停下时，背景还在轻轻唱，像一座小桥把两边连了起来～",
-   "ask": "背景接上的时候，像有人在等你，还是在陪你？",
-   "tries": {
-    "background": "关掉背景再听这一段",
-    "volume": "把背景调响一点",
-    "replay": "从头再听，安静时跟着背景晃"
-   },
-   "teacher": {
-    "concept": "伴奏连接：旋律停下时，伴奏能让音乐不断开。",
-    "how": "开、关背景各听一遍，比较这段安静。",
-    "listen": "没有背景接着，感觉一样吗"
-   },
-   "basis": "程序测量：约 {seconds} 秒的空档里背景仍在响",
-   "summaryPhrase": "背景把安静接了起来",
-   "topic": "连接",
-   "where": "找孩子声音停下、背景还在的那一段。"
+  "directions": {
+    "softer": {
+      "word": "后面这组总体更轻",
+      "picture": "轻一些"
+    },
+    "louder": {
+      "word": "后面这组总体更响",
+      "picture": "响一些"
+    }
   },
-  "dynamics": {
-   "knowledge": "前后比一比，谁轻谁响呀",
-   "discovery": "前后比较，{direction}，可以听听哪一组更容易引起注意。",
-   "ask": "前后这些声音，哪些更容易引起你的注意？",
-   "tries": {
-    "replay": "从头再听，声音轻时手放低、响时手抬高"
-   },
-   "teacher": {
-    "concept": "这是前后两组声音的平均响度比较，不表示声音持续渐强或渐弱。",
-    "how": "请孩子用手势跟着声音的轻重变化。",
-    "listen": "手势跟上轻重的变化了吗"
-   },
-   "basis": "程序测量：{direction}，前后两组平均相差约 {differenceDb} 分贝",
-   "summaryPhrase": "{direction}",
-   "topic": "力度",
-   "where": "先听前面这组声音，再对比后面这组。"
+  "moods": {
+    "happy": "开心",
+    "calm": "平静",
+    "lively": "活泼",
+    "sad": "悲伤",
+    "angry": "生气",
+    "scared": "害怕",
+    "curious": "好奇"
   },
-  "mood": {
-   "knowledge": "这首曲子让你想到什么呀？",
-   "discovery": "你给这首选了“{mood}”的心情～",
-   "ask": "哪一段最像“{mood}”的感觉？",
-   "tries": {
-    "replay": "从头再听，找找最像“{mood}”的地方"
-   },
-   "teacher": {
-    "concept": "心情选项是孩子的选择，不代表孩子当下的真实情绪。",
-    "how": "请孩子指出哪一段最像这个心情。",
-    "listen": "找到的地方和同学一样吗"
-   },
-   "basis": "孩子选择：心情“{mood}”",
-   "summaryPhrase": "带着“{mood}”的心情",
-   "topic": "心情",
-   "where": "从开头听到结尾，留意自己的感受。"
-  }
- },
- "sources": {
-  "choice": "孩子选择",
-  "measure": "录音测量",
-  "listening": "程序测量",
-  "arrangement": "编排事实",
-  "background": "背景事实"
- },
- "observationBasis": "声音模型观察（{range}秒）：{observation}；依据：{basis}",
- "teacherAvoid": [
-  "宏观静默",
-  "听觉焦点密度",
-  "节奏锚点",
-  "信噪比",
-  "高频瞬态信号",
-  "轨道增益",
-  "图底关系",
-  "功能性作用"
- ]
+  "summary": {
+    "child": "这首小曲{phrases}～",
+    "teacher": "可以围绕{topics}带孩子听，每个听点只改一处再听。",
+    "phraseJoin": "，",
+    "topicJoin": "、"
+  },
+  "childAvoid": ["听感", "结构", "再现", "曲式", "测出来", "测量", "程序", "数据"],
+  "hearingClaims": ["我听到", "我听见", "我听了", "我刚才听"],
+  "kinds": {
+    "opening": {
+      "knowledge": "最先出场的是谁呀？",
+      "discovery": "一开始是「{first}」先出场，整首曲子的样子就从它开始啦～",
+      "ask": "换一个声音先出场，曲子会变成什么样？",
+      "tries": {
+        "swap": "把开头的「{target}」换成别的声音",
+        "move": "把「{target}」往后挪一点",
+        "replay": "从头再听，只听最开头"
+      },
+      "teacher": {
+        "concept": "开头（引子）：第一个声音决定了听的人对整首的第一印象。",
+        "how": "先请孩子说出第一个声音，再猜猜换掉它会怎样。",
+        "listen": "换了开头，第一印象变了吗"
+      },
+      "basis": "编排：「{first}」最先响起",
+      "summaryPhrase": "由「{first}」开场",
+      "topic": "开头",
+      "where": "听最先响起的「{first}」。"
+    },
+    "repeat": {
+      "knowledge": "熟悉的声音又来啦～",
+      "discovery": "「{sound}」来了 {times} 次，一次又一次，像在说同一句悄悄话～",
+      "ask": "它每次回来，你心里的感觉一样吗？",
+      "tries": {
+        "remove": "拿走一次「{target}」，听听少了一次",
+        "add": "再放一次「{target}」，听听多了一次",
+        "replay": "从头再听，它每来一次就拍一下手"
+      },
+      "teacher": {
+        "concept": "重复：同一个声音多次出现，能加深印象，也能让心情更浓。",
+        "how": "请孩子边听边数次数，再说说重复带来的感觉。",
+        "listen": "多一次、少一次，感觉有什么不同"
+      },
+      "basis": "编排：「{sound}」放了 {times} 次",
+      "summaryPhrase": "「{sound}」反复出现",
+      "topic": "重复",
+      "where": "找找「{sound}」再次响起的地方。"
+    },
+    "return": {
+      "knowledge": "听，刚才的声音回来啦",
+      "discovery": "「{a}」先唱，「{b}」接着来，然后「{a}」又回来啦，像出去玩了一圈又回到家～",
+      "ask": "「{a}」回来的时候，你觉得故事讲完了吗？",
+      "tries": {
+        "swap": "把后面那次「{target}」换成别的声音",
+        "move": "把「{target}」挪得离「{b}」远一点",
+        "replay": "从头再听，「{a}」回来时举起手"
+      },
+      "teacher": {
+        "concept": "再现：声音离开再回来，带来熟悉和完整的感觉。只说“回来”，不急着讲曲式。",
+        "how": "先请孩子说两次之间多了什么，再听换掉以后的感觉。",
+        "listen": "“回家”的感觉还在不在"
+      },
+      "basis": "编排：「{a}」→「{b}」→「{a}」",
+      "summaryPhrase": "「{a}」离开后又回来",
+      "topic": "回来",
+      "where": "先听「{a}」，再找「{b}」之后的「{a}」。"
+    },
+    "overlap": {
+      "knowledge": "听，两个声音碰到一起啦",
+      "discovery": "「{a}」和「{b}」有一会儿一起响，两个声音叠成了厚厚的一层～",
+      "ask": "它们一起响的时候，像在聊天、比赛，还是在拥抱？",
+      "tries": {
+        "move": "把「{target}」挪开一点，不再碰到",
+        "replay": "从头再听，两个一起响时举手"
+      },
+      "teacher": {
+        "concept": "叠加：声音同时出现会让音响变厚，也可能互相分不清。",
+        "how": "比较叠在一起和分开两种听法，不预设哪种更好。",
+        "listen": "分开以后，哪个更清楚"
+      },
+      "basis": "编排：「{a}」和「{b}」有一段同时响",
+      "summaryPhrase": "「{a}」和「{b}」叠在一起",
+      "topic": "叠加",
+      "where": "听「{a}」和「{b}」一起响的那一段。"
+    },
+    "long-short": {
+      "knowledge": "一个长，一个短呀～",
+      "discovery": "「{long}」拉得长长的，「{short}」一下就停了，一个像慢慢走，一个像轻轻跳～",
+      "ask": "长长的声音和短短的声音，各像什么动作？",
+      "tries": {
+        "swap": "把「{target}」换成一个更长的声音",
+        "replay": "从头再听，跟着长短比划手势"
+      },
+      "teacher": {
+        "concept": "长短（时值）对比是节奏变化的来源。",
+        "how": "请孩子用手比划：长声慢慢拉开，短声轻轻点一下。",
+        "listen": "长短差别变小，节奏还活泼吗"
+      },
+      "basis": "编排：「{long}」约 {longSeconds} 秒，「{short}」约 {shortSeconds} 秒",
+      "summaryPhrase": "有长有短",
+      "topic": "长短",
+      "where": "分别听「{short}」和「{long}」持续多久。"
+    },
+    "rest": {
+      "knowledge": "声音歇一歇，听听还有什么",
+      "discovery": "中间有一会儿，放进去的声音都停下来休息，像大家一起屏住了呼吸～",
+      "ask": "安静的时候，你在等谁出来？",
+      "tries": {
+        "add": "在安静的地方再放一次「{target}」",
+        "replay": "从头再听，安静时闭上眼睛"
+      },
+      "teacher": {
+        "concept": "休止：安静也是音乐的一部分，能让后面的声音更显眼。",
+        "how": "请孩子说说安静前后有什么不同。",
+        "listen": "填满以后，下一个声音还那么亮吗"
+      },
+      "basis": "编排：约 {seconds} 秒没有孩子放的声音",
+      "summaryPhrase": "中间留了一段安静",
+      "topic": "留白",
+      "where": "找孩子的声音都停下、下一声还没来的那一段。"
+    },
+    "density": {
+      "knowledge": "哪一段声音来得更勤呀？",
+      "discovery": "{busier}放的声音多一些，听起来像小路上热闹起来了～",
+      "ask": "声音多的地方、声音少的地方，像在做什么？",
+      "tries": {
+        "move": "把一个「{target}」挪到另一半去",
+        "replay": "从头再听，声音多时轻轻踏步"
+      },
+      "teacher": {
+        "concept": "疏密：声音的多少会改变音乐的松紧。",
+        "how": "比较两段，请孩子说哪段像走路、哪段像跑步，答案没有对错。",
+        "listen": "两半听起来更像了吗"
+      },
+      "basis": "编排：前半段 {early} 个、后半段 {late} 个声音",
+      "summaryPhrase": "{busier}更热闹",
+      "topic": "疏密",
+      "where": "对比前半段和后半段，有多少声音加入。"
+    },
+    "ending": {
+      "knowledge": "最后是谁轻轻停下来？",
+      "discovery": "最后是「{last}」把曲子送到终点，像说了一句“再见啦”～",
+      "ask": "这样结束，像说完了，还是还想再听？",
+      "tries": {
+        "swap": "把最后的「{target}」换成别的声音",
+        "move": "把「{target}」往前挪一点",
+        "replay": "从头再听，到最后时挥手再见"
+      },
+      "teacher": {
+        "concept": "结尾：最后的声音会影响听完以后的感觉。",
+        "how": "请孩子说它像“说完了”还是“没说完”。",
+        "listen": "换了收尾，感觉变了吗"
+      },
+      "basis": "编排：「{last}」最后结束",
+      "summaryPhrase": "由「{last}」收尾",
+      "topic": "结尾",
+      "where": "听「{last}」最后停下的地方。"
+    },
+    "cut-ending": {
+      "knowledge": "咦，这个声音还没唱完呢",
+      "discovery": "「{sound}」还没唱完，曲子就停啦，像故事讲到一半被打断了～",
+      "ask": "你想让它唱完，还是喜欢这样停下？",
+      "tries": {
+        "move": "把「{target}」往前挪一点",
+        "replay": "从头再听，注意最后一下"
+      },
+      "teacher": {
+        "concept": "突然的结束会留下悬念，和慢慢结束的感觉不同。",
+        "how": "比较被打断和唱完两种结尾。",
+        "listen": "唱完以后，结尾更安心了吗"
+      },
+      "basis": "编排：「{sound}」超出作品长度，被剪断",
+      "summaryPhrase": "结尾停得很突然",
+      "topic": "结尾",
+      "where": "听作品结束时的「{sound}」。"
+    },
+    "single": {
+      "knowledge": "一个声音，也能玩一玩",
+      "discovery": "整首只有「{sound}」一个声音，它就是今天唯一的小主角～",
+      "ask": "如果再请一个声音来，你想请谁？",
+      "tries": {
+        "add": "再放一次「{target}」",
+        "replay": "从头再听，跟着它轻轻点头"
+      },
+      "teacher": {
+        "concept": "单一音色：先听清一个声音本身，再加入重复或对比。",
+        "how": "引导孩子描述这个声音怎么开始、怎么结束。",
+        "listen": "多放一次以后，像在说话吗"
+      },
+      "basis": "编排：只有「{sound}」一个声音",
+      "summaryPhrase": "只有一个声音在唱",
+      "topic": "音色",
+      "where": "听「{sound}」从响起到停下。"
+    },
+    "high-low": {
+      "knowledge": "高高低低，听听有什么不同",
+      "discovery": "「{high}」高高的像在树梢，「{low}」低低的像在地面～",
+      "ask": "高的声音和低的声音，像哪两种小动物？",
+      "tries": {
+        "swap": "把「{target}」换成一个低一点的声音",
+        "replay": "从头再听，高的举手、低的蹲下"
+      },
+      "teacher": {
+        "concept": "高低（音高）对比是孩子最容易听出的差别。",
+        "how": "请孩子跟着声音把手举高、放低，不必说出音名。",
+        "listen": "高低差别变小后，还有远近吗"
+      },
+      "basis": "{by}：「{high}」偏高，「{low}」偏低",
+      "summaryPhrase": "有高有低",
+      "topic": "高低",
+      "where": "对比「{high}」与「{low}」。"
+    },
+    "background": {
+      "knowledge": "听听，背景怎样陪着声音",
+      "discovery": "下面是{what}，由{players}陪着一起唱，给你的声音铺了一层底色～",
+      "ask": "背景是在带着大家走，还是在旁边陪着？",
+      "tries": {
+        "instrument": "换一件乐器来演背景",
+        "volume": "把背景调轻一点",
+        "background": "关掉背景听一遍",
+        "replay": "从头再听，只跟着背景轻轻晃"
+      },
+      "teacher": {
+        "concept": "伴奏与配器：同样的曲子换一件乐器，色彩就变了。",
+        "how": "请孩子说说喜欢哪件乐器、为什么。",
+        "listen": "换了乐器，背景像变了个人吗"
+      },
+      "basis": "背景：{what}，{players}演奏",
+      "summaryPhrase": "背景一直在旁边陪着",
+      "topic": "配器",
+      "where": "先留意孩子的声音，再找下面的背景。"
+    },
+    "masked": {
+      "knowledge": "找找这个声音藏在哪儿",
+      "discovery": "「{sound}」出现时，背景比较响。听听两层声音，哪一个更容易引起你的注意呀？",
+      "ask": "这段你先注意到哪个声音？",
+      "tries": {
+        "volume": "把背景调轻一点",
+        "background": "关掉背景听一遍",
+        "replay": "从头再听，听到「{sound}」就举手"
+      },
+      "teacher": {
+        "concept": "背景能量较高不等于声音一定被遮住，需要通过复听比较。",
+        "how": "比较背景轻、背景响两种听法，体会谁是主角。",
+        "listen": "「{sound}」更清楚了吗"
+      },
+      "basis": "程序测量：「{sound}」响时背景高出约 {backgroundLouderDb} 分贝",
+      "summaryPhrase": "「{sound}」出现时背景较响",
+      "topic": "主次",
+      "where": "听「{sound}」和背景同时响的地方。"
+    },
+    "gap-filled": {
+      "knowledge": "声音歇着，背景还在唱呀",
+      "discovery": "你的声音停下时，背景还在轻轻唱，像一座小桥把两边连了起来～",
+      "ask": "背景接上的时候，像有人在等你，还是在陪你？",
+      "tries": {
+        "background": "关掉背景再听这一段",
+        "volume": "把背景调响一点",
+        "replay": "从头再听，安静时跟着背景晃"
+      },
+      "teacher": {
+        "concept": "伴奏连接：旋律停下时，伴奏能让音乐不断开。",
+        "how": "开、关背景各听一遍，比较这段安静。",
+        "listen": "没有背景接着，感觉一样吗"
+      },
+      "basis": "程序测量：约 {seconds} 秒的空档里背景仍在响",
+      "summaryPhrase": "背景把安静接了起来",
+      "topic": "连接",
+      "where": "找孩子声音停下、背景还在的那一段。"
+    },
+    "dynamics": {
+      "knowledge": "前后比一比，谁轻谁响呀",
+      "discovery": "前后比较，{direction}，可以听听哪一组更容易引起注意。",
+      "ask": "前后这些声音，哪些更容易引起你的注意？",
+      "tries": {
+        "replay": "从头再听，声音轻时手放低、响时手抬高"
+      },
+      "teacher": {
+        "concept": "这是前后两组声音的平均响度比较，不表示声音持续渐强或渐弱。",
+        "how": "请孩子用手势跟着声音的轻重变化。",
+        "listen": "手势跟上轻重的变化了吗"
+      },
+      "basis": "程序测量：{direction}，前后两组平均相差约 {differenceDb} 分贝",
+      "summaryPhrase": "{direction}",
+      "topic": "力度",
+      "where": "先听前面这组声音，再对比后面这组。"
+    },
+    "mood": {
+      "knowledge": "这首曲子让你想到什么呀？",
+      "discovery": "你给这首选了“{mood}”的心情～",
+      "ask": "哪一段最像“{mood}”的感觉？",
+      "tries": {
+        "replay": "从头再听，找找最像“{mood}”的地方"
+      },
+      "teacher": {
+        "concept": "心情选项是孩子的选择，不代表孩子当下的真实情绪。",
+        "how": "请孩子指出哪一段最像这个心情。",
+        "listen": "找到的地方和同学一样吗"
+      },
+      "basis": "孩子选择：心情“{mood}”",
+      "summaryPhrase": "带着“{mood}”的心情",
+      "topic": "心情",
+      "where": "从开头听到结尾，留意自己的感受。"
+    }
+  },
+  "sources": {
+    "choice": "孩子选择",
+    "measure": "录音测量",
+    "listening": "程序测量",
+    "arrangement": "编排事实",
+    "background": "背景事实"
+  },
+  "observationBasis": "声音模型观察（{range}秒）：{observation}；依据：{basis}",
+  "teacherAvoid": [
+    "宏观静默",
+    "听觉焦点密度",
+    "节奏锚点",
+    "信噪比",
+    "高频瞬态信号",
+    "轨道增益",
+    "图底关系",
+    "功能性作用"
+  ]
 }
