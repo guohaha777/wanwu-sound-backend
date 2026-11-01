@@ -1,0 +1,138 @@
+{
+  "version": "textbook-compose-v1",
+  "sectionBars": 2,
+  "density": {
+    "busyCoverage": 0.6,
+    "busyOnsets": 2,
+    "busyOverlap": 0.25,
+    "sparseCoverage": 0.3,
+    "sparseMaxOnsets": 1
+  },
+  "answer": {
+    "minGapBeats": 1,
+    "marginSeconds": 0.15,
+    "restBeats": 1,
+    "motifNotes": 4,
+    "shortBeats": 0.5,
+    "mediumBeats": 1,
+    "longBeats": 2,
+    "notePortion": 0.85,
+    "registerShift": 7
+  },
+  "register": {
+    "minMidi": 36,
+    "maxMidi": 88,
+    "melodyLift": 12,
+    "maxSongRange": 19,
+    "minSongRange": 7
+  },
+  "rhythm": {
+    "gate": 0.55,
+    "bassGate": 0.65,
+    "strong": 0.85,
+    "weak": 0.4,
+    "even": 0.55,
+    "softAccent": 0.15,
+    "mediumAccent": 0.55
+  },
+  "ending": {
+    "minRingSeconds": 1.5
+  },
+  "limits": {
+    "maxNotes": 4000
+  },
+  "modeByMood": {
+    "happy": [
+      "major",
+      "pentatonic"
+    ],
+    "calm": [
+      "major",
+      "pentatonic",
+      "dorian"
+    ],
+    "lively": [
+      "major",
+      "pentatonic"
+    ],
+    "sad": [
+      "minor"
+    ],
+    "angry": [
+      "minor",
+      "dorian"
+    ],
+    "scared": [
+      "minor"
+    ],
+    "curious": [
+      "dorian",
+      "pentatonic",
+      "major"
+    ]
+  },
+  "progressions": {
+    "happy": [
+      1,
+      5,
+      6,
+      4
+    ],
+    "calm": [
+      1,
+      4,
+      1,
+      5
+    ],
+    "lively": [
+      1,
+      4,
+      5,
+      1
+    ],
+    "sad": [
+      1,
+      6,
+      4,
+      5
+    ],
+    "angry": [
+      1,
+      6,
+      7,
+      1
+    ],
+    "scared": [
+      1,
+      4,
+      1,
+      5
+    ],
+    "curious": [
+      1,
+      2,
+      4,
+      1
+    ],
+    "none": [
+      1,
+      6,
+      4,
+      5
+    ]
+  },
+  "confidence": {
+    "minimumTempo": 0.25,
+    "strongBeat": 0.5
+  },
+  "fade": {
+    "inSeconds": 0.03,
+    "outSeconds": 0.8
+  },
+  "quote": {
+    "busyNotes": 3,
+    "minNotes": 2,
+    "highRegister": 69,
+    "overlapRetreat": 0.4
+  }
+}

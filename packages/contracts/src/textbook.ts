@@ -1,8 +1,10 @@
 // 课本音乐特征模板 (textbook-v1): one card per textbook song. Extracted once at development time — numbers by code
 // (tempo, metre, rhythm cell, density, range, brightness, mode), words by AI (mood, the line for children) — then
 // checked by ear and shipped with the page as JSON, so matching and the local background work without a network.
-// Only features and provenance are kept, never the song itself. The background borrows rhythm and feel from it,
-// never its melody, and never changes the child's sounds or placement.
+// Features and optional automatically transcribed note phrases are kept; raw audio is not part of the card.
+// Composition can quote those phrases, while never changing the child's sounds or placement.
+import {isTextbookMelody} from './textbookMelody.ts';
+import type {TextbookMelody} from './textbookMelody.ts';
 import {MOODS} from './arrangement.ts';
 import type {MoodId} from './arrangement.ts';
 
@@ -23,6 +25,8 @@ export type TextbookTrack={
  id:string;
  /** Name shown to children. */
  title:string;
+ /** Optional automatic note transcription; confidence is not a score verification. */
+ melody?:TextbookMelody;
  /** Where it comes from in the textbook; null for the made-up examples shown before the catalogue is connected. */
  source:{edition:string;grade:number;unit:number;title:string}|null;
  tempoBpm:number;
@@ -63,6 +67,7 @@ const midi=(value:unknown)=>Number.isInteger(value)&&(value as number)>=21&&(val
 export function isTextbookTrack(value:unknown):value is TextbookTrack{
  if(!value||typeof value!=='object')return false;
  const raw=value as Record<string,unknown>;
+ if(raw.melody!==undefined&&!isTextbookMelody(raw.melody))return false;
  if(raw.version!==TEXTBOOK_CONTRACT_VERSION
   ||!nonEmpty(raw.id)
   ||!nonEmpty(raw.title)

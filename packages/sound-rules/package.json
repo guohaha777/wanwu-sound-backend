@@ -19,6 +19,7 @@
   "./kept-background": "./src/keptBackground.ts",
   "./discovery": "./src/discovery.ts",
   "./textbook-match": "./src/textbookMatch.ts",
-  "./schema": "./src/schema.ts"
+  "./schema": "./src/schema.ts",
+  "./textbook-compose": "./src/textbookCompose.ts"
  }
 }

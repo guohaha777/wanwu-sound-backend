@@ -64,7 +64,7 @@ export function cloudRoutes(
   reply.header('ETag',workEtag(work.id,work.revision));
   return work;
  });
- app.put<{Params:Params}>('/api/v1/works/:id',limited,async(request,reply)=>{
+ app.put<{Params:Params}>('/api/v1/works/:id',{...limited,bodyLimit:1024*1024},async(request,reply)=>{
   const result=await works.save(await actor(request),workId(request.params.id),request.body,request.headers['if-match']);
   reply.header('ETag',workEtag(result.work.id,result.work.revision));
   return reply.code(202).send(result);

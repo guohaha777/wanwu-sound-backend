@@ -3,7 +3,7 @@ import {readFile,writeFile,stat} from 'node:fs/promises';
 import {join} from 'node:path';
 import type {CloudContext} from '../../../api/src/cloud/context.ts';
 import {transaction} from '../../../api/src/db/transaction.ts';
-import {textbookTrack} from '../../../api/src/catalogue.ts';
+import {workRenderInput} from './renderInput.ts';
 import type {TrustedSource} from '../../../api/src/catalogue.ts';
 import type {RenderInput} from '@wanwu-v2/audio-engine/render';
 import {RENDERER_VERSION,TIMBRE_VERSION} from '@wanwu-v2/audio-engine/version';
@@ -53,8 +53,7 @@ export async function renderJob(context:CloudContext,renderId:string,jobId:strin
   sources.set(ref.id,{path:file,sourceChecksum:ref.checksum,normalizedChecksum:ref.playbackChecksum,bytes,durationMs:ref.durationMs,channels:2,dispose:async()=>{}});
  }
  phase('derivatives-verified');
- const input:RenderInput={arrangement:snapshot.content.arrangement,settings:snapshot.content.settings,rules:snapshot.rules,sourceLimits,sourceFacts,
-  textbook:snapshot.content.settings.inspiration.kind==='textbook'?textbookTrack(snapshot.content.settings.inspiration.entryId):null};
+ const input=workRenderInput(snapshot.content,snapshot.rules,{sourceLimits,sourceFacts});
  global.gc?.(); // Download/hash buffers are no longer needed while Chromium owns the heavy audio work.
  const {browser,identity}=await openRenderer(),abort=()=>void browser.close();
  tools.signal?.addEventListener('abort',abort,{once:true});

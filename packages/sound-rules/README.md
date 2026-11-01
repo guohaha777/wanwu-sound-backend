@@ -9,6 +9,7 @@
 | `rules/background.v1.json` | 本地背景（心情、课本节奏、旋律空档、结尾） | `src/background.ts` |
 | `rules/mix.v3.json` | 混音（两层音量、背景让一让、限幅、作品在哪结束） | `src/mix.ts` |
 | `rules/ai-compose.v1.json` | AI 背景作曲：孩子的声音特征 + 疏密 + 心情 → 每个音乐参数的可选范围（速度、拍子、调式、调、和弦进行库、伴奏音型、低音、鼓的节奏型库、动机长短）、风格卡、换一首至少换几项；程序自编（降级）用同一套 | `src/aiCompose.ts` |
+| `rules/textbook-compose.v1.json` | 新课本本地作曲核心（阶段 A，尚未接页面）：歌曲节拍锁定、孩子局部疏密/特征、短动机回答与休止 | `src/textbookPortrait.ts`、`src/textbookCompose.ts` |
 | `rules/textbook-match.v1.json` | 作品概况（疏密、重复；讲解用） | `src/textbookMatch.ts` |
 | `rules/music-types.v1.json` | 音乐类型（上传的教学音乐先预检、测三项声音特征，再按特征组合选测法测拍子和调） | `@wanwu-v2/music-features` 的 `measure` |
 

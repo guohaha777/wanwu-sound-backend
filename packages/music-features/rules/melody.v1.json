@@ -1,0 +1,20 @@
+{
+ "version": "basic-pitch-1.0.1-selection-v2",
+ "excerptSeconds": 30,
+ "minConfidence": 0.35,
+ "minNotes": 6,
+ "minPhraseNotes": 3,
+ "minDuration": 0.12,
+ "maxLeap": 12,
+ "transitionPenalty": 0.018,
+ "minMidi": 55,
+ "maxMidi": 88,
+ "phraseBars": 2,
+ "maxPhrases": 24,
+ "sampleRate": 22050,
+ "onsetThreshold": 0.3,
+ "frameThreshold": 0.25,
+ "minimumFrames": 8,
+ "timeoutMs": 90000,
+ "fetchTimeoutMs": 15000
+}

@@ -14,3 +14,10 @@ export const exampleTracks:readonly TextbookTrack[]=[
  example({id:'tb:mock:moon',title:'月亮慢慢走',tempoBpm:63,meter:3,rhythmCell:[2,1],onsetDensity:'sparse',pitchRange:{low:55,high:67},brightness:'dark',mode:'pentatonic',repetition:'low',mood:'calm',childLine:'像月亮在天上慢慢走'}),
  example({id:'tb:mock:wind',title:'风儿吹过山坡',tempoBpm:72,meter:4,rhythmCell:[1,1,2],onsetDensity:'medium',pitchRange:{low:57,high:69},brightness:'mid',mode:'minor',repetition:'medium',mood:'sad',childLine:'像冷风一阵一阵吹过来'}),
 ];
+
+// Real feature cards already shipped by the frontend, kept independently here for cloud draft/render compatibility.
+// These are measured estimates, not checked scores; actual melody and finished notes arrive in the work snapshot.
+export const measuredTextbookTracks:readonly TextbookTrack[]=[
+ {version:TEXTBOOK_CONTRACT_VERSION,id:'tb:ry1:u2:birds-singing',title:'小鸟在唱歌',source:{edition:'人音版',grade:1,unit:2,title:'小鸟在唱歌'},tempoBpm:96,meter:2,rhythmCell:[.5,.5,.5,.25,.25],onsetDensity:'medium',pitchRange:{low:59,high:84},brightness:'mid',mode:'major',tonic:0,repetition:'medium',mood:'lively',childLine:'小鸟拍拍翅膀飞起来',extraction:{numbers:'code',words:'ai',confidence:.7,earChecked:false}},
+ {version:TEXTBOOK_CONTRACT_VERSION,id:'tb:ry1:u7:french-horn',title:'法国号',source:{edition:'人音版',grade:1,unit:7,title:'法国号'},tempoBpm:136,meter:3,rhythmCell:[.75,.25,1,1],onsetDensity:'medium',pitchRange:{low:58,high:82},brightness:'bright',mode:'major',tonic:5,repetition:'low',mood:'lively',childLine:'像号角吹出长长的音',extraction:{numbers:'code',words:'ai',confidence:.7,earChecked:false}},
+];

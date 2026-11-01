@@ -1,11 +1,11 @@
 {
- "version": "textbook-features-prompt-v3",
+ "version": "textbook-features-prompt-v4",
  "task": "textbook-features",
  "model": "audio",
  "status": "open",
  "temperature": 0.1,
  "lines": [
-  "【任务】为小学音乐课的课本歌曲做特征卡。用卡片的老师多数没有音乐基础；孩子会借这首歌的节奏给自己的声音配背景，所以要让人一听就认得出这首歌的节奏特点（不抄旋律）。",
+  "【任务】为小学音乐课的课本歌曲做特征卡。用卡片的老师多数没有音乐基础；本任务只分析节拍、音乐特征和讲解。原曲旋律由独立的本地音符转录模块提取，不在本任务中猜测音符。节奏特点应有这段录音的依据。",
   "【歌名】「{title}」",
   "{listen}",
   "【程序测出的数字】速度约 {tempo}（每分钟拍数；可能被测成真实速度的两倍或一半），{metre}（{metreSure}），{mode}，疏密：{density}，明暗：{brightness}。",

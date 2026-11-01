@@ -229,7 +229,7 @@ test('textbook features: the audio model hears the excerpt; its checked answer c
  assert.equal(body.source,'audio');
  assert.equal(body.model,'qwen3.8-omni-flash');
  assert.equal(body.tempoBpm,96);
- assert.equal(body.promptVersion,'textbook-features-prompt-v3');
+ assert.equal(body.promptVersion,'textbook-features-prompt-v4');
  assert.equal(checkedOf(reply).checked,'accepted');
  assert.equal(calls.length,1);
  assert.ok(isAudio(calls[0]!));

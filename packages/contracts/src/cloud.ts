@@ -2,6 +2,8 @@
 // parser is strict (exact keys, bounded sizes, known values) and returns null for anything else.
 import {exactObject} from './account.ts';
 import {parseArrangement} from './arrangement.ts';
+import {isRendering} from './work.ts';
+import type {Rendering} from './work.ts';
 import type {Arrangement} from './arrangement.ts';
 import {parseComposeSettings,cleanWorkTitle} from './work.ts';
 import type {ComposeSettings} from './work.ts';
@@ -30,7 +32,7 @@ const keys=(value:unknown,required:string[],optional:string[]=[])=>!!value
  &&Object.keys(value).every(key=>[...required,...optional].includes(key));
 
 // ----- Types -----
-export type WorkContent={id:string;title:string;arrangement:Arrangement;settings:ComposeSettings};
+export type WorkContent={id:string;title:string;arrangement:Arrangement;settings:ComposeSettings;rendering?:Rendering};
 export type WorkRecord=WorkContent&{
  revision:number;
  state:'draft'|'saved';
@@ -130,22 +132,26 @@ export function cloudSettings(value:unknown):ComposeSettings|null{
  if(!exactObject(value,['background','inspiration'])
   ||!exactObject(value.background,['enabled','instruments','volume']))return null;
  const inspiration=value.inspiration as Record<string,unknown>|null;
- if(!inspiration||inspiration.kind==='teaching-music')return null;
+ if(!inspiration)return null;
+ if(inspiration.kind==='teaching-music')return exactObject(inspiration,['kind','musicId','name','durationMs'])?parseComposeSettings(value):null;
  if(inspiration.kind==='none'
   ?!exactObject(inspiration,['kind'])
   :!keys(inspiration,['kind','entryId'],['variation'/* older versions; ignored */]))return null;
  return parseComposeSettings(value);
 }
 export function workContent(value:unknown):WorkContent|null{
- if(!exactObject(value,['id','title','arrangement','settings'])
-  ||!cloudId(value.id,'work')
-  ||typeof value.title!=='string'
-  ||cleanWorkTitle(value.title)!==value.title)return null;
- const arrangement=cloudArrangement(value.arrangement);
- const settings=cloudSettings(value.settings);
- return arrangement&&settings&&arrangement.id===value.id
-  ?{id:value.id,title:value.title,arrangement,settings}
-  :null;
+ if(!keys(value,['id','title','arrangement','settings'],['rendering']))return null;
+ const raw=value as Record<string,unknown>;
+ if(!cloudId(raw.id,'work')||typeof raw.title!=='string'||cleanWorkTitle(raw.title)!==raw.title)return null;
+ const arrangement=cloudArrangement(raw.arrangement),settings=cloudSettings(raw.settings);
+ if(!arrangement||!settings||arrangement.id!==raw.id)return null;
+ if(raw.rendering!==undefined&&!isRendering(raw.rendering))return null;
+ const rendering=raw.rendering as Rendering|undefined;
+ if(rendering?.textbook){
+  const id=settings.inspiration.kind==='textbook'?settings.inspiration.entryId:settings.inspiration.kind==='teaching-music'?settings.inspiration.musicId:null;
+  if(rendering.textbook.track.id!==id||rendering.background!=='local-rules')return null;
+ }
+ return {id:raw.id,title:raw.title,arrangement,settings,...(rendering?{rendering}:{})};
 }
 
 // ----- Uploads -----
@@ -203,9 +209,9 @@ export function confirmed(value:unknown):value is Confirmation{
 // ----- Server replies -----
 export const workEtag=(id:string,revision:number)=>`"${id}:r${revision}"`;
 export function parseWorkRecord(value:unknown):WorkRecord|null{
- if(!keys(value,['id','title','arrangement','settings','revision','state','savedRevision','updatedAt']))return null;
+ if(!keys(value,['id','title','arrangement','settings','revision','state','savedRevision','updatedAt'],['rendering']))return null;
  const raw=value as WorkRecord;
- return workContent({id:raw.id,title:raw.title,arrangement:raw.arrangement,settings:raw.settings})
+ return workContent({id:raw.id,title:raw.title,arrangement:raw.arrangement,settings:raw.settings,...(raw.rendering!==undefined?{rendering:raw.rendering}:{})})
   &&Number.isSafeInteger(raw.revision)
   &&raw.revision>0
   &&['draft','saved'].includes(raw.state)

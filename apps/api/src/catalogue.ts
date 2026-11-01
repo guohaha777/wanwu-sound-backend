@@ -2,7 +2,7 @@ import {readFile,stat} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {resolve,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {exampleTracks} from '../../../data/catalogue/textbook-examples.ts';
+import {exampleTracks,measuredTextbookTracks} from '../../../data/catalogue/textbook-examples.ts';
 import type {SoundSource} from '@wanwu-v2/contracts/sound';
 import type {Pool} from 'pg';
 import type {CloudContext} from './cloud/context.ts';
@@ -10,7 +10,7 @@ import {transaction} from './db/transaction.ts';
 import {enqueueMedia} from './jobs/mediaQueue.ts';
 
 const root=resolve(fileURLToPath(new URL('../../../',import.meta.url)));
-export const textbookTrack=(id:string)=>exampleTracks.find(track=>track.id===id)??null;
+export const textbookTrack=(id:string)=>[...exampleTracks,...measuredTextbookTracks].find(track=>track.id===id)??null;
 export type TrustedSource={id:string;checksum:string;bytes:number;durationMs:number;original:string;source:SoundSource};
 export async function trustedCatalogue(verifyFiles=false):Promise<Map<string,TrustedSource>>{
  const manifest=JSON.parse(await readFile(resolve(root,'data/catalogue/library-manifest.json'),'utf8')) as {id:string;path:string;bytes:number;sha256:string;original:string;originalBytes:number;originalSha256:string}[];

@@ -4,6 +4,8 @@
 //
 // The background is its own layer: switching it, changing its volume or borrowing a textbook rhythm never touches the
 // child's sounds, their excerpts or their placement.
+import {isTextbookSnapshot} from './textbookCompose.ts';
+import type {TextbookSnapshot} from './textbookCompose.ts';
 import {parseArrangement} from './arrangement.ts';
 import type {Arrangement} from './arrangement.ts';
 import {BACKGROUND_SOURCES,PROGRAM_SOURCES,isKeptBackground} from './background.ts';
@@ -21,7 +23,7 @@ export type BackgroundLayer={enabled:boolean;instruments:string[];volume:number}
 export const MAX_INSTRUMENTS=6;
 /**
  * Optional textbook inspiration, chosen before or during 万物成曲. It lends rhythm and feel to the background only —
- * never a melody, never the child's sounds or placement.
+ * optionally with extracted melody phrases; it never changes the child's sounds or placement.
  * - `textbook`: an entry from the textbook catalogue.
  * - `teaching-music`: teaching music a teacher picked on this device. The server will analyse its features together
  *   with the child's arrangement and generate a matching background; `musicId` refers to that upload.
@@ -56,6 +58,7 @@ export type Rendering={
  rules:RuleVersions;
  /** The composed notes the child heard (AI 作曲 / 程序自编); absent = the background is rebuilt from the rules. */
  composed?:KeptBackground;
+ textbook?:TextbookSnapshot;
 };
 
 /**
@@ -129,7 +132,8 @@ export function isRendering(value:unknown):value is Rendering{
   &&!!rules
   &&typeof rules==='object'
   &&['analysis','shaping','background','mix'].every(key=>nonEmpty(rules[key]))
-  &&(raw.composed===undefined||isKeptBackground(raw.composed));
+  &&(raw.composed===undefined||isKeptBackground(raw.composed))
+  &&(raw.textbook===undefined||(raw.background==='local-rules'&&raw.prompt===null&&raw.composed===undefined&&isTextbookSnapshot(raw.textbook)));
 }
 
 export function isWorkShare(value:unknown):value is WorkShare{
@@ -149,5 +153,10 @@ export function parseSavedWork(value:unknown):SavedWork|null{
  if(raw.share!==null&&!isWorkShare(raw.share))return null;
  const arrangement=parseArrangement(raw.arrangement);
  if(!arrangement||arrangement.id!==raw.id||!parseComposeSettings(raw.settings)||!isRendering(raw.rendering))return null;
+ const settings=raw.settings as ComposeSettings,rendering=raw.rendering as Rendering;
+ if(rendering.textbook){
+  const id=settings.inspiration.kind==='textbook'?settings.inspiration.entryId:settings.inspiration.kind==='teaching-music'?settings.inspiration.musicId:null;
+  if(id!==rendering.textbook.track.id||rendering.background!=='local-rules')return null;
+ }
  return raw as SavedWork;
 }

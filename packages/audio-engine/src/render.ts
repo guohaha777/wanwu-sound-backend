@@ -1,3 +1,5 @@
+import {isTextbookSnapshot} from '@wanwu-v2/contracts/textbook-compose';
+import type {TextbookSnapshot} from '@wanwu-v2/contracts/textbook-compose';
 import {parseArrangement} from '@wanwu-v2/contracts/arrangement';
 import type {Arrangement} from '@wanwu-v2/contracts/arrangement';
 import {isKeptBackground} from '@wanwu-v2/contracts/background';
@@ -27,6 +29,7 @@ export type RenderInput={
  rules:typeof RULE_VERSIONS;
  /** The composed notes the piece kept (AI 作曲 / 程序自编); absent = the background is rebuilt from the rules. */
  composed?:KeptBackground|null;
+ textbookBackground?:TextbookSnapshot|null;
  /** Internal worker-only bounds, derived from a hash-verified bundled catalogue; never accepted in work JSON. */
  sourceLimits?:Record<string,number>;
  /** Worker-only facts from an immutable server snapshot, after verifying each derivative's exact SHA-256. */
@@ -43,10 +46,14 @@ function validate(input:RenderInput){
   throw new Error('renderer-incompatible');
  if(input.composed!=null&&!isKeptBackground(input.composed))throw new Error('invalid-background');
  const {inspiration,background}=input.settings;
- if(inspiration.kind==='teaching-music')throw new Error('not-open');
+ const saved=input.textbookBackground;
+ if(saved!=null&&!isTextbookSnapshot(saved))throw new Error('invalid-textbook-background');
+ const selected=inspiration.kind==='textbook'?inspiration.entryId:inspiration.kind==='teaching-music'?inspiration.musicId:null;
+ if(saved&&saved.track.id!==selected)throw new Error('textbook-background-mismatch');
+ if(inspiration.kind==='teaching-music'&&!saved)throw new Error('not-open');
  if(input.textbook
   &&(!isTextbookTrack(input.textbook)||!Number.isFinite(input.textbook.tempoBpm)))throw new Error('invalid-textbook');
- if(inspiration.kind==='textbook'&&input.textbook?.id!==inspiration.entryId)throw new Error('missing-textbook');
+ if(inspiration.kind==='textbook'&&!saved&&input.textbook?.id!==inspiration.entryId)throw new Error('missing-textbook');
  if(background.instruments.some(id=>!LOCAL_INSTRUMENTS.some(instrument=>instrument.id===id)))
   throw new Error('unknown-instrument');
  if(!input.arrangement.events.length)throw new Error('empty-work');
@@ -178,7 +185,8 @@ export async function renderWork(
    textbook:inspiration.kind==='textbook'&&input.textbook?input.textbook:null,
   });
   const chosen=background.instruments.map(id=>LOCAL_INSTRUMENTS.find(instrument=>instrument.id===id)!);
-  const under=await renderArrangedBackground(input.composed?keptPlan(plan,input.composed):plan,chosen,timedEvents(arrangement).map(({start,end})=>({start,end})));
+  if(input.textbookBackground&&Math.abs(input.textbookBackground.music.seconds-seconds)>.001)throw new Error('textbook-timing-mismatch');
+  const under=await renderArrangedBackground(input.textbookBackground?input.textbookBackground.music:input.composed?keptPlan(plan,input.composed):plan,chosen,timedEvents(arrangement).map(({start,end})=>({start,end})));
   const node=ctx.createBufferSource();
   const gain=ctx.createGain();
   node.buffer=under;

@@ -49,3 +49,5 @@ export function modelExcerpt(seconds:number,length=30){
  const start=seconds>length+12?10:Math.max(0,seconds-length)/2;
  return {start:Math.round(start*10)/10,end:Math.round(Math.min(seconds,start+length)*10)/10};
 }
+export {selectMelody,MELODY_ANALYSIS} from './melody.ts';
+export type {TranscribedNote} from './melody.ts';
