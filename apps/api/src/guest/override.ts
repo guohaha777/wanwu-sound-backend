@@ -2,6 +2,7 @@
 // Each kind (language / music) replaces the built-in one; a kind left out keeps the built-in. Never stored, logged or
 // echoed. Addresses must be public https (net.ts checks every resolved address again when connecting).
 import {isIP} from 'node:net';
+import {exactObject} from '@wanwu-v2/contracts/account';
 import {publicAddress} from './net.ts';
 import {validProvider} from './config.ts';
 import type {Provider} from './config.ts';
@@ -9,11 +10,9 @@ import type {Provider} from './config.ts';
 export const OVERRIDE_HEADER='x-wanwu-model-config';
 export type Override={language?:Provider;music?:Provider};
 
-const entry=(value:unknown):Provider|null=>{
- if(!value||typeof value!=='object'||Array.isArray(value))return null;
- const raw=value as Record<string,unknown>;
- if(Object.keys(raw).sort().join()!=='apiKey,baseUrl,model'
-  ||!validProvider(raw.baseUrl,raw.model,raw.apiKey))return null;
+const entry=(raw:unknown):Provider|null=>{
+ if(!exactObject(raw,['apiKey','baseUrl','model']))return null;
+ if(!validProvider(raw.baseUrl,raw.model,raw.apiKey))return null;
  const host=new URL(raw.baseUrl as string).hostname.replace(/^\[|\]$/g,'');
  if(host==='localhost'||host.endsWith('.localhost')||(isIP(host)&&!publicAddress(host)))return null;
  return {baseUrl:(raw.baseUrl as string).replace(/\/+$/,''),model:raw.model as string,apiKey:raw.apiKey as string,builtIn:false};

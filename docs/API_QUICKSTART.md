@@ -1,6 +1,6 @@
-# 接口速查：优先复用交接适配器
+# 接口速查：优先复用前端已有的客户端
 
-前端只请求同源 `/api/v1`。业务范围参考 [v0.6 协议](development/api-contract-v0.6.md)；字段、校验与实际路由一起查 `packages/contracts/src`、`apps/api/src/app.ts`、`apps/api/src/cloud/routes.ts`。发现文档／实现冲突就报告，不擅自另做一套协议。
+前端只请求同源 `/api/v1`。业务范围参考 [v0.6 协议](development/api-contract-v0.6.md)；字段、校验与实际路由一起查 `packages/contracts/src`、`apps/api/src/app.ts`（公共钩子与错误体）、`apps/api/src/auth/routes.ts`、`apps/api/src/admin/routes.ts`、`apps/api/src/cloud/routes.ts`、`apps/api/src/guest/routes.ts`。发现文档／实现冲突就报告，不擅自另做一套协议。
 
 ## 会话
 
@@ -28,7 +28,7 @@
 | `POST/GET/DELETE /works/:id/share` | 确认发布、读取或撤销指定快照分享 |
 | `GET /shares/:token` | 匿名公开作品视图，不含账号／原件／完整编辑数据 |
 
-完整字段已在补丁里的 account／cloud 客户端和契约实现，不要求前端重新猜 JSON。
+完整字段已在前端 `shared/account`、`shared/cloud` 的客户端（由接入补丁合入）和契约里实现，不要求前端重新猜 JSON。
 
 ## 错误和状态不能混用
 

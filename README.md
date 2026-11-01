@@ -1,4 +1,4 @@
-# 万物声谱 · 后端与前端接入交接
+# 万物声谱 · 后端
 
 这是后端维护仓库，不是新的前端站点。前端由原作者维护，后端由 wudaizii 维护。
 
@@ -10,12 +10,12 @@
 ## 明天接手先看这里
 
 1. 人先读 [交接总览](handoff/START_HERE.md)，分清谁负责哪些配置。
-2. 负责前端的 Claude Code 使用 [这份启动提示词](handoff/CLAUDE_CODE_PROMPT.md)，按 [前端接入步骤](handoff/FRONTEND.md) 执行。
+2. 前端接入包已在前端提交 `2823401`（分支 `integrate/wanwu-backend-v1`）合入；前端的验证、Netlify 发布与联调见 [前端接入](handoff/FRONTEND.md)。
 3. 负责后端的开发者读 [配置表](docs/CONFIGURATION.md)、[运维边界](docs/OPERATIONS.md)、[验收状态](docs/STATUS.md)。
 
 需要查接口时先读 [接口速查](docs/API_QUICKSTART.md)，再按链接查完整协议与实际契约。
 
-根目录 `CLAUDE.md` 是 AI 入口，`AGENTS.md` 是项目边界。补丁、指纹、命令和验收标准都在仓库内；不依赖聊天记录或这台 Mac 的私密配置。
+根目录 `CLAUDE.md` 是 AI 入口，`AGENTS.md` 是项目边界。共享包指纹、命令和验收标准都在仓库内；不依赖聊天记录或这台 Mac 的私密配置。
 
 ## 现在做到哪了
 
@@ -29,12 +29,12 @@
 | --- | --- |
 | `apps/api` | Fastify 业务接口、账号／会话、数据库迁移、私有 OSS、管理与备份命令 |
 | `apps/worker` | 音源校验、FFmpeg、Chromium 沙箱离线混音与队列 |
-| `packages` | 前后端共用契约、声音规则、Web Audio 算法；交接版本有指纹 |
+| `packages` | 前后端共用契约、声音规则、Web Audio 算法；从前端同步，逐文件指纹在 `handoff/manifest.json` |
 | `data/catalogue` | 后端自己的内置示例目录、试听衍生件和来源记录；不再读取前端目录 |
 | `assets-source/audio` | 8 份已有公开使用记录的示例原件，不是用户上传的录音 |
 | `deploy` | 隔离容器、Compose、Nginx 与最小权限配置示例，不含真实密钥 |
-| `handoff` | 前端补丁、版本清单、人读步骤和 Claude Code 提示词 |
-| `scripts` | 检查补丁、探测入口、构建镜像、独立本机测试等工具 |
+| `handoff` | 交接总览、共享包指纹清单、前端发布与联调步骤、验收清单 |
+| `scripts` | 同步与核对共享包、探测入口、构建镜像、独立本机测试等工具 |
 
 ## 后端本机检查
 
@@ -46,19 +46,21 @@ npm test
 npm run build
 ```
 
-`build` 检查类型、内置素材和交接完整性；Node 24 直接执行 TypeScript，不生成前端页面。运行 API 还需要独立 PostgreSQL、私密环境配置；不能直接拿生产库跑测试。新环境准备步骤见 [配置表](docs/CONFIGURATION.md)。
+`build` 检查类型、内置素材和共享包指纹（`check:shared`）；Node 24 直接执行 TypeScript，不生成前端页面。运行 API 还需要独立 PostgreSQL、私密环境配置；不能直接拿生产库跑测试。新环境准备步骤见 [配置表](docs/CONFIGURATION.md)。
 
 可选检查：`npm run test:media`、`npm run test:api`、`npm run test:worker:runtime`、`npm run test:operations`。后几项需要本机 Linux Docker；缺环境时记录未验证，不去共享 ECS 压测。
 
 ## 前端对接不需要云密钥
 
-在本仓库根目录，检查一份独立的前端工作区：
+前端接入补丁已在前端提交 `2823401` 原样合入（2026-10-31 核对：91 个文件逐一与补丁预期相同），补丁和应用工具已从本仓库删除，原文见提交 `4c6a996`。
+
+之后共用包只在前端改，再同步到本仓库（先 `--dry-run` 看差异），然后 `npm run build` 核对指纹：
 
 ```sh
-node scripts/frontend-handoff.mjs check /absolute/path/to/voice_atalas_v2
+node scripts/sync-shared.mjs /absolute/path/to/voice_atalas_v2
 ```
 
-工具只核对文件和补丁，不提交、不推送、不发布。实际应用必须在新的前端集成分支上；完整步骤、冲突处理和发布门槛见 [前端接入步骤](handoff/FRONTEND.md)。
+同步只复制 `packages/` 下五个共用包并更新指纹，不提交、不推送、不发布。Netlify 发布与联调见 [前端接入](handoff/FRONTEND.md)。
 
 发布前端以后，可运行只读探测：
 

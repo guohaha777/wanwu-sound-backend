@@ -2,7 +2,7 @@
 
 - 本仓库只运行后端、音频任务和共用契约／算法；前端在 `guohaha777/voice_atalas_v2`，不能重新引入对 `apps/web` 的运行依赖。
 - 人先读 `README.md`、`handoff/START_HERE.md`；前端代理再读 `handoff/FRONTEND.md`，后端代理读 `docs/OPERATIONS.md`。
-- `handoff/manifest.json` 是交接补丁和共享源码的完整性依据。补丁基于前端 `35000af3005609b6b02356023dba680233d69cd8`；不覆盖对方的新改动，不使用强制应用或自动三方合并。
+- `handoff/manifest.json` 是五个共享包的逐文件指纹。共享代码只在前端改，用 `scripts/sync-shared.mjs` 同步，`npm run check:shared`（随 build）核对。前端接入补丁已在前端 `2823401f8dce359d502fa141e5cb67d68da3d8b2` 合入，补丁与应用工具已删除。
 - 保留既定页面视觉和音乐规则。共享代码只按明确版本同步；修改算法或五维声音参数必须通知前后端两边并重跑音频对照。
 - 不生成假登录、假保存、假上传或假分享成功；角色、归属和入库确认只信任服务端会话。
 - 私钥、AccessKey、密码、Cookie、签名播放 URL、真实用户录音不进入源码、日志、Issue、前端或交接包。测试只能使用合成音频或已记录来源的内置示例。

@@ -5,7 +5,7 @@
 // Left → right is the only thing that changes what is heard (先响起 → 后响起). Rows exist only so sounds placed
 // close in time don't cover each other; moving a sound to another row never changes its sound.
 import {SOUND_SOURCE_MAX_MS,parseSoundUnitDraft} from './sound.ts';
-import type {SoundUnitDraft} from './sound';
+import type {SoundUnitDraft} from './sound.ts';
 
 export const ARRANGEMENT_CONTRACT_VERSION='arrangement-v1' as const;
 

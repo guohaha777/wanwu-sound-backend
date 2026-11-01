@@ -35,7 +35,7 @@ Argon2 是本地原生依赖；如果 npm 安装时跳过脚本，在部分平�
 
 ## Netlify 与 OSS
 
-Netlify：工作区根、Node 24.21、`npm run build`、`apps/web/dist`；使用交接补丁中的根 `netlify.toml`。前端不配置任何持久云密钥。
+Netlify：工作区根、Node 24.21、`npm run build`、`apps/web/dist`；使用前端仓库根的 `netlify.toml`（由接入补丁合入）。前端不配置任何持久云密钥。
 
 OSS：保持私有、阻止公共访问；精确允许目标 H5 的 GET／HEAD／PUT 和实际签名上传头。已有当前 Origin 的规则与权限验证记录，不要因为尚未启用登录就重买资源或放开全桶权限。后续新增 Origin 必须前后端共同确认，不能用 `*` 解决带凭据请求。
 

@@ -7,9 +7,9 @@
 // by the id of its upload, never its file name, audio or melody (the server has its features). The child's sounds and
 // placement are never changed by any step; a background is a separate layer the child may switch back from.
 import {MOODS} from './arrangement.ts';
-import type {MoodId} from './arrangement';
+import type {MoodId} from './arrangement.ts';
 import {DENSITIES,LEVELS,TEXTBOOK_MODES} from './textbook.ts';
-import type {Density,Level,Metre,TextbookTrack} from './textbook';
+import type {Density,Level,Metre,TextbookTrack} from './textbook.ts';
 
 export const BACKGROUND_REQUEST_VERSION='background-request-v1' as const;
 

@@ -2,7 +2,7 @@
 
 先完整阅读 `AGENTS.md`、`README.md`、`handoff/START_HERE.md`。
 
-如果你负责原前端仓库：再读 `handoff/FRONTEND.md` 和 `handoff/CLAUDE_CODE_PROMPT.md`。不要在本仓库重新实现页面。用 `scripts/frontend-handoff.mjs` 检查／应用交接补丁，先确认目标仓库和分支，遇到指纹不符就停。
+如果你负责原前端仓库：再读 `handoff/FRONTEND.md`（验证、Netlify 发布与联调）。不要在本仓库重新实现页面。前端接入补丁已合入前端，不再需要应用；共用包在前端改，再用 `scripts/sync-shared.mjs` 同步，`npm run check:shared` 指纹不符就停。
 
 如果你负责后端：读 `docs/ARCHITECTURE.md`、`docs/CONFIGURATION.md`、`docs/OPERATIONS.md`、`docs/STATUS.md`，接口以 `docs/development/api-contract-v0.6.md` 和 `packages/contracts` 为准。
 

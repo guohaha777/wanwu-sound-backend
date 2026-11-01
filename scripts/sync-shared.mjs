@@ -1,7 +1,7 @@
 // Copies the shared packages from the frontend checkout and refreshes their fingerprints in handoff/manifest.json.
 // Usage: node scripts/sync-shared.mjs /absolute/path/to/frontend   (check first with --dry-run)
-// Shared code is changed in one place and copied here, never edited separately (docs/development/guest-ai.md); the
-// frontend patch entries (`files`, `patchSha256`) are left as they are.
+// Shared code is changed in one place and copied here, never edited separately (docs/development/guest-ai.md);
+// `npm run check:shared` (part of build) then confirms the copy matches the fingerprints.
 import {createHash} from 'node:crypto';
 import {cp,readFile,readdir,rm,stat,writeFile} from 'node:fs/promises';
 import path from 'node:path';
@@ -9,8 +9,9 @@ import {fileURLToPath} from 'node:url';
 
 export const SHARED=['contracts','sound-rules','audio-engine','prompts','music-features'];
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
-const skip=name=>name==='node_modules'||name==='.DS_Store';
-async function files(dir,base=dir){
+export const skip=name=>name==='node_modules'||name==='.DS_Store';
+/** Every file under `dir`, relative and sorted, without node_modules or .DS_Store. */
+export async function files(dir,base=dir){
  const out=[];
  for(const entry of await readdir(dir,{withFileTypes:true})){
   if(skip(entry.name))continue;
@@ -20,7 +21,7 @@ async function files(dir,base=dir){
  }
  return out.sort();
 }
-const sha=async file=>createHash('sha256').update(await readFile(file)).digest('hex');
+export const sha=async file=>createHash('sha256').update(await readFile(file)).digest('hex');
 
 export async function main(args=process.argv.slice(2)){
  const dry=args.includes('--dry-run'),frontend=args.find(arg=>!arg.startsWith('--'));

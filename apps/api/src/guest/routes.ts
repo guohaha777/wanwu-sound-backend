@@ -3,6 +3,7 @@
 // sites cannot spend this budget through a visitor's browser. Facts and numbers come from the page's anonymous briefs;
 // the model only rewords, chooses or writes a motif, and @wanwu-v2/prompts checks every reply as the page would.
 import type {FastifyInstance,FastifyRequest} from 'fastify';
+import {exactObject} from '@wanwu-v2/contracts/account';
 import {MOODS} from '@wanwu-v2/contracts/arrangement';
 import {AI_BACKGROUND_STEPS,isBackgroundBrief,parseBackgroundResult} from '@wanwu-v2/contracts/background';
 import type {AiBackgroundStep,BackgroundBrief,BackgroundResult,BackgroundUnavailable} from '@wanwu-v2/contracts/background';
@@ -30,8 +31,6 @@ export const GUEST_TIMEOUT_MS={mood:5_500,talk:9_500,notes:7_000,audio:55_000,li
 const EXCERPT_MAX_CHARS=1_200_000;
 export type GuestContext={config:GuestConfig;post:Post;budget:DailyBudget;jobs:BackgroundJobs};
 export const guestContext=(config:GuestConfig,post:Post=postJson):GuestContext=>({config,post,budget:new DailyBudget(config.dailyLimit),jobs:new BackgroundJobs()});
-
-const exact=(value:unknown,keys:string[])=>!!value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).sort().join()===[...keys].sort().join();
 
 export function guestRoutes(app:FastifyInstance,context:GuestContext){
  const providers=(request:FastifyRequest)=>{
@@ -76,7 +75,7 @@ export function guestRoutes(app:FastifyInstance,context:GuestContext){
 
  app.post('/api/v1/moods/interpret',GUEST_RATE_LIMIT,async request=>{
   const body=request.body as {text?:unknown};
-  if(!exact(body,['text'])||typeof body.text!=='string')throw new ApiError(400,'invalid-request');
+  if(!exactObject(body,['text'])||typeof body.text!=='string')throw new ApiError(400,'invalid-request');
   const clean=body.text.trim(),length=[...clean].length;
   if(length<1||length>12)throw new ApiError(400,'invalid-request');
   const {reply,model,promptVersion}=await text(request,'mood-words',()=>buildMoodWords({text:clean}),GUEST_TIMEOUT_MS.mood);
@@ -168,7 +167,7 @@ export function guestRoutes(app:FastifyInstance,context:GuestContext){
 
  app.post('/api/v1/backgrounds',GUEST_RATE_LIMIT,async(request,reply)=>{
   const body=request.body as {step?:unknown;brief?:unknown};
-  if(!exact(body,['brief','step'])
+  if(!exactObject(body,['brief','step'])
    ||!AI_BACKGROUND_STEPS.includes(body.step as AiBackgroundStep)
    ||!isBackgroundBrief(body.brief))throw new ApiError(400,'invalid-request');
   const step=body.step as AiBackgroundStep,brief=body.brief,started=Date.now(),{language,music}=providers(request);

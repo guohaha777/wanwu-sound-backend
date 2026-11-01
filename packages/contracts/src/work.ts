@@ -5,9 +5,9 @@
 // The background is its own layer: switching it, changing its volume or borrowing a textbook rhythm never touches the
 // child's sounds, their excerpts or their placement.
 import {parseArrangement} from './arrangement.ts';
-import type {Arrangement} from './arrangement';
+import type {Arrangement} from './arrangement.ts';
 import {BACKGROUND_SOURCES} from './background.ts';
-import type {BackgroundSource,RuleVersions} from './background';
+import type {BackgroundSource,RuleVersions} from './background.ts';
 
 export const WORK_CONTRACT_VERSION='work-v1' as const;
 

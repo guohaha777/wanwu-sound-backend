@@ -4,7 +4,7 @@
 // Only features and provenance are kept, never the song itself. The background borrows rhythm and feel from it,
 // never its melody, and never changes the child's sounds or placement.
 import {MOODS} from './arrangement.ts';
-import type {MoodId} from './arrangement';
+import type {MoodId} from './arrangement.ts';
 
 export const TEXTBOOK_CONTRACT_VERSION='textbook-v1' as const;
 

@@ -5,8 +5,8 @@
 // may only reword them later. A brief never carries recordings, people, places or the sound names a child typed: sounds
 // are written as numbered tokens (「声音1」) and the page puts the names back after checking the reply.
 import {MOODS} from './arrangement.ts';
-import type {MoodId} from './arrangement';
-import type {Metre} from './textbook';
+import type {MoodId} from './arrangement.ts';
+import type {Metre} from './textbook.ts';
 
 export const TALK_CONTRACT_VERSION='talk-v1' as const;
 

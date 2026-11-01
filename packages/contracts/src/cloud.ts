@@ -2,11 +2,11 @@
 // parser is strict (exact keys, bounded sizes, known values) and returns null for anything else.
 import {exactObject} from './account.ts';
 import {parseArrangement} from './arrangement.ts';
-import type {Arrangement} from './arrangement';
+import type {Arrangement} from './arrangement.ts';
 import {parseComposeSettings,cleanWorkTitle} from './work.ts';
-import type {ComposeSettings} from './work';
+import type {ComposeSettings} from './work.ts';
 import {isSoundSource,isSoundAnalysis,missingProvenance,isChosenShape,parseSoundUnitDraft} from './sound.ts';
-import type {SoundSource,SoundAnalysis,SoundUnitDraft} from './sound';
+import type {SoundSource,SoundAnalysis,SoundUnitDraft} from './sound.ts';
 
 export const CONFIRMATION_VERSION='teacher-confirmation-v1';
 export const MAX_UPLOAD_BYTES=20*1024*1024;
