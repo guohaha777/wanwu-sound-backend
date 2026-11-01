@@ -1,5 +1,5 @@
 {
- "version": "ai-compose-v1",
+ "version": "ai-compose-v2",
  "features": {
   "loudness": {"softBelowDb": -32, "loudAboveDb": -20},
   "brightness": {"darkBelowHz": 1500, "brightAboveHz": 3500}

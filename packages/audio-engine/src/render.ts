@@ -5,11 +5,11 @@ import type {ComposeSettings} from '@wanwu-v2/contracts/work';
 import type {TextbookTrack} from '@wanwu-v2/contracts/textbook';
 import {isTextbookTrack} from '@wanwu-v2/contracts/textbook';
 import {analyseSamples} from '@wanwu-v2/sound-rules/analysis';
-import {assignParts,backgroundPlan} from '@wanwu-v2/sound-rules/background';
+import {backgroundPlan} from '@wanwu-v2/sound-rules/background';
 import {MIX_RULES,RULE_VERSIONS} from '@wanwu-v2/sound-rules/rules';
 import {planClip,shapeKey} from '@wanwu-v2/sound-rules/shaping';
 import {renderShaped} from './shaping.ts';
-import {renderBackground} from './background.ts';
+import {renderArrangedBackground} from './orchestration.ts';
 import {LOCAL_INSTRUMENTS} from './instruments.ts';
 import {pieceSeconds,planPlayback,timedEvents} from './timeline.ts';
 import {RENDER_SAMPLE_RATE} from './pcm.ts';
@@ -172,10 +172,7 @@ export async function renderWork(
    textbook:inspiration.kind==='textbook'&&input.textbook?input.textbook:null,
   });
   const chosen=background.instruments.map(id=>LOCAL_INSTRUMENTS.find(instrument=>instrument.id===id)!);
-  const under=await renderBackground(
-   plan,
-   assignParts(chosen),
-   Object.fromEntries(chosen.map(instrument=>[instrument.id,instrument.recipe])));
+  const under=await renderArrangedBackground(plan,chosen,timedEvents(arrangement).map(({start,end})=>({start,end})));
   const node=ctx.createBufferSource();
   const gain=ctx.createGain();
   node.buffer=under;

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import Fastify from 'fastify';
 import rateLimit from '@fastify/rate-limit';
+import {BACKGROUND_COMPOSE_PROMPT} from '@wanwu-v2/prompts/tasks';
 import {parseBackgroundResult} from '@wanwu-v2/contracts/background';
 import type {BackgroundBrief} from '@wanwu-v2/contracts/background';
 import {ApiError} from '../../src/errors.ts';
@@ -190,7 +191,7 @@ test('background jobs: the voice model, then the text model compose a plan the p
   assert.equal(ready.status,'ready',step);
   assert.equal(ready.source,step);
   assert.ok(parseBackgroundResult(ready,calmLullaby.seconds),`${step} result is valid`);
-  assert.equal(ready.promptVersion,'background-compose-prompt-v1');
+  assert.equal(ready.promptVersion,BACKGROUND_COMPOSE_PROMPT.version);
   assert.ok(new Set(ready.notes.map(note=>note.part)).size>=3,'all parts written, not only a melody');
   const call=calls.at(-1)!;
   assert.equal(call.body.model,model);

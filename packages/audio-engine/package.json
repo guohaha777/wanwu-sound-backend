@@ -3,6 +3,7 @@
   "description": "Shared Web Audio rendering; no network, credentials, UI or separate musical rules",
   "dependencies": {"@wanwu-v2/contracts": "0.1.0", "@wanwu-v2/sound-rules": "0.1.0"},
   "exports": {
+  "./orchestration": "./src/orchestration.ts",
   "./version": "./src/version.ts",
     "./shaping": "./src/shaping.ts", "./grains": "./src/grains.ts", "./background": "./src/background.ts",
     "./instruments": "./src/instruments.ts", "./timeline": "./src/timeline.ts",

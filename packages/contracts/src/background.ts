@@ -60,6 +60,8 @@ export type BackgroundBrief={
  version:typeof BACKGROUND_REQUEST_VERSION;
  /** Lets the server cache per work; carries nothing about the child. */
  workId:string;
+ /** Optional content token for the placed sources and their excerpts; no raw source ids or recordings. */
+ identity?:string;
  /** The piece's real length; the background must not be longer. */
  seconds:number;
  mood:MoodId|null;
@@ -171,6 +173,7 @@ export function isBackgroundBrief(value:unknown):value is BackgroundBrief{
   ||!nonEmpty(raw.workId)
   ||!finite(raw.seconds)
   ||raw.seconds<=0)return false;
+ if(raw.identity!==undefined&&(typeof raw.identity!=='string'||!/^ai:[a-f0-9]{16}$/.test(raw.identity)))return false;
  if(!Array.isArray(raw.sounds)||!raw.sounds.length||raw.sounds.length>64||!raw.sounds.every(isBriefSound))return false;
  if(raw.mood!==null&&!MOODS.includes(raw.mood as MoodId))return false;
  if(!Number.isInteger(raw.attempt)||(raw.attempt as number)<0||(raw.attempt as number)>99)return false;

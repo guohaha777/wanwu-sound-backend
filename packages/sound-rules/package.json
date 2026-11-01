@@ -8,12 +8,14 @@
   "@wanwu-v2/contracts": "0.1.0"
  },
  "exports": {
+  "./orchestration": "./src/orchestration.ts",
   "./rules": "./src/rules.ts",
   "./analysis": "./src/analysis.ts",
   "./shaping": "./src/shaping.ts",
   "./background": "./src/background.ts",
   "./mix": "./src/mix.ts",
   "./ai-compose": "./src/aiCompose.ts",
+  "./composition-identity": "./src/compositionIdentity.ts",
   "./textbook-match": "./src/textbookMatch.ts",
   "./schema": "./src/schema.ts"
  }

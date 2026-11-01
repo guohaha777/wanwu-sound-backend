@@ -30,6 +30,8 @@ import type {Density,Metre,TextbookMode} from '@wanwu-v2/contracts/textbook';
 import composeFile from '../rules/ai-compose.v1.json' with {type:'json'};
 import {mergeSpans} from './mix.ts';
 import {seeded} from './random.ts';
+import {compositionSeed} from './compositionIdentity.ts';
+import type {CompositionInput} from './compositionIdentity.ts';
 import {BACKGROUND_RULES} from './rules.ts';
 import type {BackgroundRules} from './rules.ts';
 
@@ -356,12 +358,12 @@ function differFrom(plan:ComposePlan,previous:ComposePlan|null,range:Ranges,view
 
 /** The program's own plan for this piece and try: a reference for the model, and the background when no AI gives one. */
 export function programPlan(
- brief:Pick<BackgroundBrief,'workId'|'seconds'|'mood'|'sounds'|'attempt'|'previous'>,
+ brief:CompositionInput,
  rules:AiComposeRules=AI_COMPOSE_RULES,
 ):ComposePlan{
  const view=portrait(brief,rules);
  const range=ranges(view,rules);
- const random=seeded(`${brief.workId}|plan|${brief.attempt}`);
+ const random=seeded(`${compositionSeed(brief)}|plan`);
  const metre=pick(random,range.metres);
  const drums=range.drums.filter(item=>drumFits(item,metre,rules));
  const plan:ComposePlan={
@@ -377,7 +379,7 @@ export function programPlan(
   motif:programMotif(random,view,range),
   answer:view.register!=='mid'?'mirror':pick(random,COMPOSE_ANSWERS),
   sections:programSections(random,view),
-  style:styleCard(view,brief.workId,brief.attempt,brief.previous?.style??null,rules).id,
+  style:styleCard(view,compositionSeed(brief),brief.attempt,brief.previous?.style??null,rules).id,
  };
  return differFrom(plan,brief.previous,range,view,random,rules).plan;
 }
@@ -392,7 +394,7 @@ export type FittedPlan={plan:ComposePlan;repairs:string[]};
  */
 export function fitPlan(
  value:unknown,
- brief:Pick<BackgroundBrief,'workId'|'seconds'|'mood'|'sounds'|'attempt'|'previous'>,
+ brief:CompositionInput,
  rules:AiComposeRules=AI_COMPOSE_RULES,
 ):FittedPlan|null{
  if(!value||typeof value!=='object'||Array.isArray(value))return null;
@@ -464,7 +466,7 @@ export function fitPlan(
   sections,
   style:typeof raw.style==='string'&&rules.styles.some(style=>style.id===raw.style)?raw.style:reference.style,
  };
- const random=seeded(`${brief.workId}|differ|${brief.attempt}`);
+ const random=seeded(`${compositionSeed(brief)}|differ`);
  const differed=differFrom(plan,brief.previous,range,view,random,rules);
  if(differed.changed.length)repairs.push(`和上一首太像，程序又换了：${differed.changed.join('、')}`);
  return {plan:differed.plan,repairs};
@@ -487,7 +489,9 @@ export function composeNotes(
 ):ComposedNotes{
  const {seconds}=brief;
  const view=portrait(brief,rules);
- const {scale,melody:steps}=background.modes[plan.mode];
+ const {scale}=background.modes[plan.mode];
+ // AI degrees refer to the selected mode, not the old plain-background melody palette.
+ const steps=plan.mode==='pentatonic'?background.modes.pentatonic.melody:scale;
  const tonic=background.moods[view.mood].tonic+plan.tonicShift;
  const beat=60/plan.tempo;
  const bar=beat*plan.metre;
@@ -617,7 +621,7 @@ export function composeNotes(
 
 /** 降级：程序自编 — the program's plan and its notes, when no AI step gave a background. */
 export function programBackground(
- brief:Pick<BackgroundBrief,'workId'|'seconds'|'mood'|'sounds'|'attempt'|'previous'>,
+ brief:CompositionInput,
  rules:AiComposeRules=AI_COMPOSE_RULES,
 ){
  const plan=programPlan(brief,rules);
@@ -626,7 +630,7 @@ export function programBackground(
 
 /** What the model is told: the portrait, the ranges, the style card and the program's reference plan. */
 export function composeView(
- brief:Pick<BackgroundBrief,'workId'|'seconds'|'mood'|'sounds'|'attempt'|'previous'>,
+ brief:CompositionInput,
  rules:AiComposeRules=AI_COMPOSE_RULES,
 ){
  const view=portrait(brief,rules);

@@ -143,3 +143,32 @@ test('降级：程序自编 gives a complete background with no model',()=>{
  assert.ok(isComposePlan(made.plan));
  assert.ok(made.notes.length>20);
 });
+
+test('first references follow ordered sound data, not the work id or coarse portrait alone',()=>{
+ const piece=brief();
+ const base=programPlan(piece);
+ assert.deepEqual(programPlan({...piece,workId:'work:another-id'}),base,'new work id alone changes no music');
+ const shifted={...piece,sounds:piece.sounds.map(sound=>({...sound,start:sound.start+.2,end:sound.end+.2}))};
+ assert.deepEqual(portrait(shifted),portrait(piece),'the coarse portrait is unchanged');
+ assert.notDeepEqual(programPlan(shifted),base,'exact timing changes the reference');
+ const ordered={...piece,sounds:piece.sounds.map((sound,i)=>({...sound,pitch:i===0?'high' as const:'low' as const}))};
+ // Swap two unlike sounds while preserving all start/end times and feature totals.
+ const reversed={...ordered,sounds:[{...ordered.sounds[0]!,pitch:'low' as const},ordered.sounds[1]!,{...ordered.sounds[2]!,pitch:'high' as const}]};
+ assert.deepEqual(portrait(ordered),portrait(reversed));
+ assert.notDeepEqual(programPlan(ordered),programPlan(reversed));
+ assert.notDeepEqual(programPlan({...piece,identity:'ai:0000000000000001'}),programPlan({...piece,identity:'ai:0000000000000002'}));
+});
+
+test('AI motif degrees use the chosen seven-note mode or five-note pentatonic, including negative degrees',()=>{
+ const piece=brief({seconds:30,sounds:[sound(1,25,26)]});
+ const scales={major:[0,2,4,5,7,9,11],minor:[0,2,3,5,7,8,10],dorian:[0,2,3,5,7,9,10],pentatonic:[0,2,4,7,9]};
+ for(const [mode,scale] of Object.entries(scales)){
+  const degrees=[-1,0,1,3,5,7];
+  const plan:ComposePlan={...programPlan(piece),mode:mode as ComposePlan['mode'],tempo:120,tonicShift:0,
+   motif:{degrees,beats:degrees.map(()=>.5)},answer:'imitate',
+   sections:Array.from({length:4},()=>({density:'busy',register:'mid',dynamics:'medium'}))};
+  const melody=composeNotes(piece,plan).notes.filter(note=>note.part==='melody').slice(0,degrees.length);
+  const tonic=BACKGROUND_RULES.moods.none.tonic+BACKGROUND_RULES.melody.liftSemitones;
+  assert.deepEqual(melody.map(note=>note.midi),degrees.map(degree=>tonic+scale[((degree%scale.length)+scale.length)%scale.length]!+12*Math.floor(degree/scale.length)),mode);
+ }
+});

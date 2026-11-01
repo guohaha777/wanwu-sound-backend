@@ -166,6 +166,7 @@ export async function renderBackground(
  plan:Pick<BackgroundPlan,'seconds'|'fadeInSeconds'|'fadeOutSeconds'|'duck'|'notes'>,
  parts:Record<BackgroundPart,string[]>,
  voices:Readonly<Record<string,Voice>>,
+ partGains:Partial<Record<BackgroundPart,number>>={},
 ):Promise<AudioBuffer>{
  const {seconds}=plan;
  const Offline=window.OfflineAudioContext
@@ -197,7 +198,7 @@ export async function renderBackground(
   if(!players.length)continue;
   // Several players on one part: keep the part about as loud as one.
   const level=ctx.createGain();
-  level.gain.value=1/Math.sqrt(players.length);
+  level.gain.value=(partGains[part]??1)/Math.sqrt(players.length);
   level.connect(fade);
   for(const player of players)for(const note of plan.notes)
    if(note.part===part)play(ctx,level,voiceOf(player),note);

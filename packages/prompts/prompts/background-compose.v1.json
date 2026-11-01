@@ -1,5 +1,5 @@
 {
- "version": "background-compose-prompt-v1",
+ "version": "background-compose-prompt-v2",
  "task": "background-compose",
  "model": "language",
  "status": "open",
@@ -33,7 +33,7 @@
   "伴奏音型：{patterns}",
   "低音：{bass}",
   "鼓：{drums}",
-  "动机：{notesMin}–{notesMax} 个音，每个音 {beatsMin}–{beatsMax} 拍（取 0.25 的倍数）；degrees 写调式音阶里的级数，0 是主音，1 往上一个音，-1 往下一个音，范围 -7 到 7。",
+  "动机：{notesMin}–{notesMax} 个音，每个音 {beatsMin}–{beatsMax} 拍（取 0.25 的倍数）；degrees 写调式音阶里的级数，0 是主音，1 往上一个音，-1 往下一个音，范围 -7 到 7。major / minor / dorian 按各自七声音阶计数；pentatonic 按五声音阶（宫商角徵羽）计数。",
   "回应方式：imitate（模仿）或 mirror（对答）。",
   "四段：density 取 sparse / medium / busy，register 取 low / mid / high，dynamics 取 soft / medium / loud；四段的 register 至少换一次。",
   "【风格卡】{style}",
