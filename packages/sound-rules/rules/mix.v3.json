@@ -1,5 +1,5 @@
 {
- "version": "mix-v2",
+ "version": "mix-v3",
  "childGain": 0.8,
  "backgroundMaxGain": 0.35,
  "composeBackgroundMaxGain": 1.5,

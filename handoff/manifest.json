@@ -25,7 +25,7 @@
     },
     {
       "path": "packages/contracts/src/background.ts",
-      "sha256": "28a1bfce8671ac920ac820b006fb9808f51537fdc16126e17b0fa49919fb2610"
+      "sha256": "d76e3a2ec21ba12a20469670be5abc9b624905aa3f575ab36cb8261b4eb7762b"
     },
     {
       "path": "packages/contracts/src/cloud.ts",
@@ -49,7 +49,7 @@
     },
     {
       "path": "packages/sound-rules/README.md",
-      "sha256": "8e3dcced540cb20e1109be2d2d2b331f6af4391d18ec453483b18f52a1d3bebe"
+      "sha256": "b7a4fc1050c61b02ce0a087b29680462c71fa9913207c4608ef6e66e91e2da54"
     },
     {
       "path": "packages/sound-rules/package.json",
@@ -68,8 +68,8 @@
       "sha256": "841e18a48d781a30a82392471e3776debf76744f19063bcf9fc05e7f4c5ff3ad"
     },
     {
-      "path": "packages/sound-rules/rules/mix.v2.json",
-      "sha256": "d4bb86cbd57168b343eb3c80b5df0003844a730bd0a3e68f0f606bc588aaf530"
+      "path": "packages/sound-rules/rules/mix.v3.json",
+      "sha256": "32912d461d5fdc8f263a9714ff1ee5bf62d7934ed929aea4e0d61150026e7ba0"
     },
     {
       "path": "packages/sound-rules/rules/music-types.v1.json",
@@ -109,7 +109,7 @@
     },
     {
       "path": "packages/sound-rules/src/mix.ts",
-      "sha256": "f0ae0ffb2c94406c0dbe5d8ac631d71519f7f3d4b8fdd660575992ad8530a12d"
+      "sha256": "e50a60c44cf628d3a3e0524195fd83ac77d1b8ecf05433cd836719e2fd3717c6"
     },
     {
       "path": "packages/sound-rules/src/orchestration.ts",
@@ -121,7 +121,7 @@
     },
     {
       "path": "packages/sound-rules/src/rules.ts",
-      "sha256": "89572858910de965a1f683bf3c2acf19db665163476f4ec00a3f6214083a8df1"
+      "sha256": "e5db415ffbc204dd7a10b8bf4fdee1c8bfa9359727c9fdf06bfb7944216ec198"
     },
     {
       "path": "packages/sound-rules/src/schema.ts",
@@ -209,7 +209,7 @@
     },
     {
       "path": "packages/audio-engine/src/version.ts",
-      "sha256": "890de4bc9b8974ba88778b0a2a940e057ad7449add15111bd72363ace21012f0"
+      "sha256": "95621859a9cc267181d06585f42a65bb312edcdf3f5f4a3586387582e74392d7"
     },
     {
       "path": "packages/audio-engine/tests/pcm.test.ts",

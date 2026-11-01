@@ -2,10 +2,11 @@
 // in ../rules/*.json so the music role can tune them without touching code (see ../README.md).
 import analysisFile from '../rules/analysis.v2.json' with {type:'json'};
 import backgroundFile from '../rules/background.v1.json' with {type:'json'};
-import mixFile from '../rules/mix.v2.json' with {type:'json'};
+import mixFile from '../rules/mix.v3.json' with {type:'json'};
 import shapingFile from '../rules/shaping.v3.json' with {type:'json'};
 import textbookMatchFile from '../rules/textbook-match.v1.json' with {type:'json'};
 import musicTypesFile from '../rules/music-types.v1.json' with {type:'json'};
+import orchestrationFile from '../rules/orchestration.v1.json' with {type:'json'};
 import {SPAN_CHOICES} from '@wanwu-v2/contracts/arrangement';
 import {
  analysisLimits,backgroundLimits,checkRules,mixLimits,musicTypesLimits,shapingLimits,textbookMatchLimits,
@@ -104,4 +105,5 @@ export const RULE_VERSIONS={
  shaping:SHAPING_RULES.version,
  background:BACKGROUND_RULES.version,
  mix:MIX_RULES.version,
+ orchestration:orchestrationFile.version,
 };

@@ -96,13 +96,16 @@ export class Works{
    const checked=await canonicalSources(tx,actor,input.arrangement);
    const content:WorkContent={...input,arrangement:checked.arrangement};
    const same=digest(content)===digest({id:row.id,title:row.title,arrangement:row.arrangement,settings:row.settings});
+   const inputDigest=digest({content,refs:checked.refs,rules:RULE_VERSIONS,renderer:RENDERER_VERSION,timbre:TIMBRE_VERSION});
+   // An unchanged piece keeps its render only while the rules and renderer that made it are still current.
+   const current=same&&(await tx.query('SELECT 1 FROM work_snapshots WHERE work_id=$1 AND revision=$2 AND input_digest=$3',
+    [id,row.revision,inputDigest])).rowCount===1;
    if(row.state==='saved'
     &&row.saved_revision===row.revision
-    &&same)return {work:record(row),render:await this.renderRow(tx,id,row.revision)};
+    &&current)return {work:record(row),render:await this.renderRow(tx,id,row.revision)};
    const revision=row.revision+1;
    const updated=(await tx.query<WorkRow>(`UPDATE works SET title=$2,arrangement=$3,settings=$4,revision=$5,state='saved',saved_revision=$5,updated_at=now() WHERE id=$1 RETURNING *`,
     [id,content.title,JSON.stringify(content.arrangement),JSON.stringify(content.settings),revision])).rows[0]!;
-   const inputDigest=digest({content,refs:checked.refs,rules:RULE_VERSIONS,renderer:RENDERER_VERSION,timbre:TIMBRE_VERSION});
    await tx.query('INSERT INTO work_snapshots(work_id,revision,content,source_refs,rules,renderer_version,timbre_version,input_digest) VALUES($1,$2,$3,$4,$5,$6,$7,$8)',
     [id,revision,JSON.stringify(content),JSON.stringify(checked.refs),JSON.stringify(RULE_VERSIONS),RENDERER_VERSION,TIMBRE_VERSION,inputDigest]);
    const renderId=randomUUID();

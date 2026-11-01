@@ -30,7 +30,8 @@ export const AI_BACKGROUND_STEPS:readonly AiBackgroundStep[]=['audio-ai','voice-
 export const PROGRAM_SOURCES:readonly BackgroundSource[]=['program','local-rules'];
 
 /** Versions of every rule file a piece was made with, so the server can mix it again the same way. */
-export type RuleVersions={analysis:string;shaping:string;background:string;mix:string};
+/** `orchestration` is absent on pieces saved before instrument arrangement had its own rules. */
+export type RuleVersions={analysis:string;shaping:string;background:string;mix:string;orchestration?:string};
 
 /** Only the textbook song's features — never its audio, score or melody (textbook talk and the plain background). */
 export type TextbookFeatures=Pick<TextbookTrack,
