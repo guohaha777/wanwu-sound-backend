@@ -6,7 +6,8 @@ import {
 import type { TextbookComposeInput, TextbookSound } from '@wanwu-v2/contracts/textbook-compose';
 import type { TextbookMode } from '@wanwu-v2/contracts/textbook';
 import type { BackgroundNote, BackgroundPlan } from './background.ts';
-import { arrangeTextbookMelody } from './textbookMelodyArrange.ts';
+import { arrangeTextbookMelody, retreatUnderSounds } from './textbookMelodyArrange.ts';
+import { quotedBarChords, songProgression } from './textbookHarmony.ts';
 import type { TextbookQuote } from './textbookMelodyArrange.ts';
 import { BACKGROUND_RULES, MIX_RULES } from './rules.ts';
 import { duckPoints, mergeSpans } from './mix.ts';
@@ -147,6 +148,23 @@ export function textbookRuleProblems(r: TextbookRules): string[] {
   );
   for (const [k, v] of Object.entries(r.rhythm))
     check(Number.isFinite(v) && v > 0 && v <= 1, `rhythm.${k}`);
+  check(
+    Number.isInteger(r.register.chordMax) &&
+      r.register.chordMax >= r.register.minMidi + 12 &&
+      r.register.chordMax <= r.register.maxMidi,
+    'register.chordMax',
+  );
+  check(
+    r.quote.accent > 0 &&
+      r.quote.accent <= 1 &&
+      r.quote.busyAccent > 0 &&
+      r.quote.busyAccent <= r.quote.accent,
+    'quote.accent',
+  );
+  check(
+    Number.isInteger(r.quote.chordVoices) && r.quote.chordVoices >= 1 && r.quote.chordVoices <= 3,
+    'quote.chordVoices',
+  );
   check(r.ending.minRingSeconds > 0 && r.ending.minRingSeconds <= 4, 'ending');
   check(
     Number.isInteger(r.limits.maxNotes) && r.limits.maxNotes >= 100 && r.limits.maxNotes <= 4000,
@@ -161,6 +179,11 @@ export function textbookRuleProblems(r: TextbookRules): string[] {
     );
   return out;
 }
+/**
+ * 换一换 cycles through this many versions (take 0 … 3): each starts the chord walk one chord later (the mood's four, or the
+ * song's own), odd takes trade struck and broken chords, and the quoted phrases advance.
+ */
+export const TEXTBOOK_TAKES = 4;
 /** The musical input, not display strings, determines the cache token. */
 export function textbookIdentity(
   input: TextbookComposeInput,
@@ -212,6 +235,8 @@ export function textbookIdentity(
         ]),
       rules,
       mix: MIX_RULES.version,
+      // Only 换一换 sets a take; the first version keeps the token it always had.
+      ...(input.take ? { take: input.take } : {}),
     }),
   )}`;
 }
@@ -240,7 +265,14 @@ export function composeTextbook(
     song.tonic === undefined
       ? feel.tonic
       : feel.tonic + ((((song.tonic - feel.tonic + 18) % 12) + 12) % 12) - 6;
-  const progression = [...rules.progressions[colour]];
+  const phrases = song.melody?.status === 'extracted' ? song.melody.phrases : [];
+  // The song's own chords where its melody was extracted; otherwise the mood's.
+  const progression = (phrases.length &&
+    songProgression(phrases, song.meter, BACKGROUND_RULES.modes[mode].scale, tonic)) || [
+    ...rules.progressions[colour],
+  ];
+  /** 换一换: another version from the same song and sounds. Take 0 is the first version, unchanged. */
+  const take = input.take ?? 0;
   const sounds = [...input.sounds].sort(
     (a, b) => a.start - b.start || a.eventId.localeCompare(b.eventId),
   );
@@ -298,7 +330,8 @@ export function composeTextbook(
           ? 'pad'
           : repeats
             ? 'ostinato'
-            : bursts || song.onsetDensity === 'busy'
+            : // An odd take trades struck chords and broken ones where the sounds leave the choice open.
+              (bursts || song.onsetDensity === 'busy') !== (take % 2 === 1)
               ? 'arpeggio'
               : 'block',
       rhythm: s.density === 'busy' || even ? 'beats' : 'original',
@@ -319,12 +352,38 @@ export function composeTextbook(
     tonic + scale[((degree % 7) + 7) % 7]! + 12 * Math.floor(degree / 7);
   const cadenceAt =
     Math.max(0, Math.floor((input.seconds - rules.ending.minRingSeconds) / bar)) * bar;
+  const musicOf = (notes: BackgroundNote[]): BackgroundPlan => ({
+    rules: rules.version,
+    mix: MIX_RULES.version,
+    source: 'local-rules',
+    seconds: input.seconds,
+    tempo: song.tempoBpm,
+    metre: song.meter,
+    mode,
+    tonic,
+    colour,
+    textbook: song.id,
+    cadenceAt,
+    fadeInSeconds: Math.min(rules.fade.inSeconds, input.seconds / 3),
+    fadeOutSeconds: Math.min(rules.fade.outSeconds, input.seconds / 3),
+    notes,
+    duck: duckPoints(sounds, input.seconds),
+  });
+  // The song's phrases are placed first, so the chords under them can be the ones that fit them.
+  const quoted = phrases.length ? arrangeTextbookMelody(input, musicOf([]), rules) : null;
+  const barChords = quoted
+    ? quotedBarChords(quoted.music.notes, bar, beat, scale, tonic)
+    : new Map<number, number>();
   const degreeAt = (at: number) => {
     const b = Math.floor(at / bar + 1e-7);
     if (at >= cadenceAt - 1e-9) return 1;
     if (cadenceAt >= 2 * bar && b === Math.round(cadenceAt / bar) - 1) return 5;
+    const under = barChords.get(b);
+    if (under) return under;
     const s = sections.find((s) => b >= s.startBar && b < s.endBar)!;
-    return progression[Math.floor(b / (s.density === 'busy' ? 2 : 1)) % progression.length]!;
+    const step = Math.floor(b / (s.density === 'busy' ? 2 : 1));
+    // A later take walks the same chords from another point; the first bar still opens on the first chord.
+    return progression[(step + (step > 0 ? take : 0)) % progression.length]!;
   };
   const triad = (at: number) => [0, 2, 4].map((step) => degreePitch(degreeAt(at) - 1 + step));
   const notes: BackgroundNote[] = [];
@@ -341,10 +400,19 @@ export function composeTextbook(
       notes.push({
         at,
         length,
+        // Chords and bass sit below the tune, so the melody is heard on top even in one plain voice.
         midi:
           part === 'rhythm'
             ? 0
-            : fitOctave(Math.round(midi), rules.register.minMidi, rules.register.maxMidi),
+            : fitOctave(
+                Math.round(midi),
+                rules.register.minMidi,
+                part === 'chord'
+                  ? rules.register.chordMax
+                  : part === 'bass'
+                    ? rules.register.chordMax - 12
+                    : rules.register.maxMidi,
+              ),
         part,
         accent,
       });
@@ -354,7 +422,10 @@ export function composeTextbook(
     const { start, end } = portrait.bars[b]!;
     if (start >= cadenceAt - 1e-9) break;
     const section = sections.find((s) => b >= s.startBar && b < s.endBar)!,
-      chord = triad(start);
+      // Where the song's tune is quoted, the chord thins (root and third) to leave the tune room on top.
+      chord = triad(start).slice(0, barChords.has(b) ? rules.quote.chordVoices : 3),
+      // …and is struck softly there.
+      chordAccent = barChords.has(b) ? rules.rhythm.softAccent : section.accent;
     const onsets =
       section.rhythm === 'original'
         ? rhythmOnsets.filter((n) => n.at >= start - 1e-9 && n.at < end - 1e-9)
@@ -368,7 +439,7 @@ export function composeTextbook(
           Math.min(n.beats * beat * rules.rhythm.gate, end - n.at),
           chord[i % chord.length]!,
           'chord',
-          section.accent,
+          chordAccent,
         ),
       );
     } else
@@ -379,7 +450,7 @@ export function composeTextbook(
             Math.min(n.beats * beat * rules.rhythm.gate, end - n.at),
             midi,
             'chord',
-            section.accent,
+            chordAccent,
           );
     // A pitched voice carries the clock even without a selected drummer.
     for (let p = 0; p < song.meter; p++) {
@@ -407,7 +478,8 @@ export function composeTextbook(
     (n) => n >= rules.register.minMidi && n <= rules.register.maxMidi,
   );
   let phrase = 0;
-  for (const gap of gaps) {
+  // With the song's phrases the tune is quoted from the song; the program's answer motif is only for feature-only songs.
+  for (const gap of quoted ? [] : gaps) {
     const before = sounds
       .filter((s) => s.end <= gap.start + margin + 1e-9)
       .sort((a, b) => b.end - a.end)[0];
@@ -449,7 +521,7 @@ export function composeTextbook(
         rules.register.minSongRange,
         rules.register.maxSongRange,
       );
-      const variation = song.repetition === 'high' ? 0 : phrase % 2;
+      const variation = song.repetition === 'high' ? 0 : (phrase + take) % 2;
       for (let i = 0; i < motifDegrees.length; i++) {
         let d = motifDegrees[i]!;
         if (before && knownFeature(before, 'contour')) {
@@ -484,25 +556,13 @@ export function composeTextbook(
   const final = triad(cadenceAt);
   for (const midi of final) add(cadenceAt, input.seconds - cadenceAt, midi, 'chord', 0);
   add(cadenceAt, input.seconds - cadenceAt, final[0]! - 12, 'bass', rules.rhythm.weak);
+  if (quoted) {
+    retreatUnderSounds(notes, sounds, rules);
+    notes.push(...quoted.music.notes);
+    if (notes.length > rules.limits.maxNotes) throw new Error('textbook-note-limit');
+  }
   notes.sort((a, b) => a.at - b.at || a.part.localeCompare(b.part) || a.midi - b.midi);
-  const music: BackgroundPlan = {
-    rules: rules.version,
-    mix: MIX_RULES.version,
-    source: 'local-rules',
-    seconds: input.seconds,
-    tempo: song.tempoBpm,
-    metre: song.meter,
-    mode,
-    tonic,
-    colour,
-    textbook: song.id,
-    cadenceAt,
-    fadeInSeconds: Math.min(rules.fade.inSeconds, input.seconds / 3),
-    fadeOutSeconds: Math.min(rules.fade.outSeconds, input.seconds / 3),
-    notes,
-    duck: duckPoints(sounds, input.seconds),
-  };
-  const arranged = arrangeTextbookMelody(input, music, rules);
+  const arranged = { music: musicOf(notes), quotes: quoted?.quotes ?? [] };
   return {
     status: 'ready',
     version: TEXTBOOK_COMPOSE_VERSION,

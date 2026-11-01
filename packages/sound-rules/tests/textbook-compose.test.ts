@@ -39,6 +39,7 @@ const textbookTracks = [
 import {
   composeTextbook,
   TEXTBOOK_RULES,
+  TEXTBOOK_TAKES,
   textbookPortrait,
   textbookRuleProblems,
 } from '../src/textbookCompose.ts';
@@ -278,4 +279,22 @@ test('maximum valid subdivision stays bounded and long grouping never invents ov
   const varied = { ...base, rhythmCell: [1.75, 4] };
   const r = ready(input({ textbook: varied, sounds: [sound({ length: 'long' })] }));
   assert.ok(r.plan.motif.beats.every((n) => n > 0 && n <= 4));
+});
+test('换一换: take 0 is the first version; each later take is another, reproducible version on the same song clock', () => {
+  const versions = Array.from({ length: TEXTBOOK_TAKES }, (_, take) => ready(input({ take })));
+  assert.deepEqual(versions[0], ready(input()));
+  assert.equal(
+    new Set(versions.map((made) => JSON.stringify(made.music.notes))).size,
+    TEXTBOOK_TAKES,
+  );
+  assert.equal(new Set(versions.map((made) => made.identity)).size, TEXTBOOK_TAKES);
+  versions.forEach((made, take) => {
+    assert.deepEqual(ready(input({ take })), made);
+    // The song's clock and the child's sounds stay as they are: same tempo, metre, cadence and ducking.
+    assert.equal(made.music.tempo, versions[0]!.music.tempo);
+    assert.equal(made.music.metre, versions[0]!.music.metre);
+    assert.equal(made.music.cadenceAt, versions[0]!.music.cadenceAt);
+    assert.deepEqual(made.music.duck, versions[0]!.music.duck);
+  });
+  for (const take of [-1, 1.5, 100]) assert.equal(isTextbookComposeInput(input({ take })), false);
 });

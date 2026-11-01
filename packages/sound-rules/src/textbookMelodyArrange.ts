@@ -69,7 +69,8 @@ export function arrangeTextbookMelody(
     const same = phrases.filter((p) => !wanted || sourceContour(p) === wanted);
     const pool = same.length ? same : phrases;
     // The same recurring child sound reuses a related source phrase; later distinct sounds advance through the source.
-    const start = (before ? before.n - 1 : ordinal) % pool.length;
+    // A later take (换一换) starts that walk further along.
+    const start = ((before ? before.n - 1 : ordinal) + (input.take ?? 0)) % pool.length;
     const candidates = Array.from(
       { length: pool.length },
       (_, i) => pool[(start + i) % pool.length]!,
@@ -144,11 +145,8 @@ export function arrangeTextbookMelody(
             (best, n) => (Math.abs(n - midi) < Math.abs(best - midi) ? n : best),
             pool[0]!,
           );
-        const accent = window.busy
-          ? rules.rhythm.softAccent
-          : before?.intensity === 'soft'
-            ? rules.rhythm.softAccent
-            : rules.rhythm.mediumAccent;
+        const accent = // The song's own tune leads the background: louder than the chords, softer where the sounds are busy.
+          window.busy || before?.intensity === 'soft' ? rules.quote.busyAccent : rules.quote.accent;
         notes.push({
           at: at + item.offset * beat,
           length: item.n.beats * beat * rules.answer.notePortion,
@@ -167,12 +165,20 @@ export function arrangeTextbookMelody(
       if (window.busy) break;
     }
   }
-  // Local overlap/entry changes alter the actual dynamics, not a cache id or arbitrary random seed.
+  retreatUnderSounds(notes, sounds, rules);
+  notes.sort((a, b) => a.at - b.at || a.part.localeCompare(b.part) || a.midi - b.midi);
+  if (notes.length > rules.limits.maxNotes) throw new Error('textbook-note-limit');
+  return { music: { ...base, notes }, quotes };
+}
+
+/** Local overlap/entry changes alter the actual dynamics, not a cache id or arbitrary random seed. */
+export function retreatUnderSounds(
+  notes: BackgroundNote[],
+  sounds: readonly TextbookSound[],
+  rules: TextbookRules,
+) {
   for (const note of notes) {
     const active = sounds.filter((s) => s.start <= note.at && s.end > note.at);
     if (active.length > 1) note.accent /= 1 + (active.length - 1) * rules.quote.overlapRetreat;
   }
-  notes.sort((a, b) => a.at - b.at || a.part.localeCompare(b.part) || a.midi - b.midi);
-  if (notes.length > rules.limits.maxNotes) throw new Error('textbook-note-limit');
-  return { music: { ...base, notes }, quotes };
 }

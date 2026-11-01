@@ -27,6 +27,8 @@ export type TextbookComposeInput = {
   mood: MoodId | null;
   textbook: TextbookTrack;
   sounds: readonly TextbookSound[];
+  /** 换一换: which version to make from the same input (missing or 0 = the first). */
+  take?: number;
 };
 const finite = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 const member = (v: unknown, values: readonly unknown[]) => values.includes(v);
@@ -51,6 +53,8 @@ export function isTextbookComposeInput(value: unknown): value is TextbookCompose
     !Array.isArray(v.sounds) ||
     v.sounds.length > 64
   )
+    return false;
+  if (v.take !== undefined && (!Number.isInteger(v.take) || v.take < 0 || v.take > 99))
     return false;
   if (
     v.contentToken !== undefined &&

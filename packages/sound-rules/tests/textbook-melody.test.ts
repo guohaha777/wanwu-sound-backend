@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import type { TextbookMelody } from '@wanwu-v2/contracts/textbook-melody';
 import { isTextbookMelody } from '@wanwu-v2/contracts/textbook-melody';
 import type { TextbookComposeInput, TextbookSound } from '@wanwu-v2/contracts/textbook-compose';
-import { composeTextbook } from '../src/textbookCompose.ts';
+import { composeTextbook, TEXTBOOK_RULES } from '../src/textbookCompose.ts';
 const melody: TextbookMelody = {
   version: 'textbook-melody-v1',
   source: 'basic-pitch',
@@ -158,4 +158,58 @@ test('source quoting and reversals stay bounded for short and truncated works', 
       ),
     );
   }
+});
+test('two songs under the same mood get their own chords, taken from their own melodies', () => {
+  const minorTune: TextbookMelody = {
+    ...melody,
+    phrases: [
+      {
+        id: 'q1',
+        startBeat: 0,
+        endBeat: 8,
+        // Two-beat bars A–C, E–C, D–F, A–F: IV, I, ii, IV (a tie goes to the commoner chord), not the mood's I–V–vi–IV.
+        notes: [69, 72, 76, 72, 62, 65, 69, 65].map((midi, i) => ({
+          atBeat: i,
+          beats: 1,
+          midi,
+          confidence: 0.8,
+        })),
+      },
+    ],
+  };
+  const first = ready(input([sound(1, 1.5)]));
+  const base = input([sound(1, 1.5)]);
+  const second = ready({
+    ...base,
+    textbook: { ...base.textbook, id: 'test:other', melody: minorTune },
+  });
+  assert.notDeepEqual(first.plan.progression, second.plan.progression);
+  assert.deepEqual(second.plan.progression.slice(0, 4), [4, 1, 2, 4]);
+  const bassAt = (r: typeof first, bar: number) =>
+    r.music.notes.find((n) => n.part === 'bass' && Math.abs(n.at - bar * 1.25) < 1e-6)?.midi;
+  assert.notEqual(bassAt(first, 1), bassAt(second, 1));
+});
+test('the quoted tune sits above the chords and is played louder than them where the sounds leave room', () => {
+  const r = ready(input([sound(1, 1.5)]));
+  const melodyNotes = r.music.notes.filter((n) => n.part === 'melody');
+  const chords = r.music.notes.filter((n) => n.part === 'chord');
+  assert.ok(chords.every((n) => n.midi <= TEXTBOOK_RULES.register.chordMax));
+  const mean = (list: typeof chords, key: 'midi' | 'accent') =>
+    list.reduce((sum, n) => sum + n[key], 0) / list.length;
+  assert.ok(mean(melodyNotes, 'midi') > mean(chords, 'midi'));
+  assert.ok(mean(melodyNotes, 'accent') > mean(chords, 'accent'));
+  // Under each bar that quotes the song, that bar's first quoted note belongs to the chord (root, third or fifth over the
+  // bass), and the chord is thinned to two voices so the tune is heard.
+  const bar = (60 / 96) * 2;
+  const bass = r.music.notes.filter((n) => n.part === 'bass');
+  let checked = 0;
+  for (const q of melodyNotes.filter((n) => Math.abs(n.at / bar - Math.round(n.at / bar)) < 1e-6)) {
+    const root = bass.find((b) => Math.abs(b.at - q.at) < 1e-6);
+    if (!root || q.at >= r.music.cadenceAt - 2 * bar) continue;
+    assert.ok([0, 3, 4, 7].includes((((q.midi - root.midi) % 12) + 12) % 12), `bar at ${q.at}`);
+    const struck = chords.filter((c) => Math.abs(c.at - q.at) < 1e-6);
+    assert.ok(struck.length <= TEXTBOOK_RULES.quote.chordVoices, `voices at ${q.at}`);
+    checked++;
+  }
+  assert.ok(checked >= 3, `checked ${checked} bars`);
 });

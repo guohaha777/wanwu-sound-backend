@@ -23,6 +23,7 @@
     "minMidi": 36,
     "maxMidi": 88,
     "melodyLift": 12,
+    "chordMax": 64,
     "maxSongRange": 19,
     "minSongRange": 7
   },
@@ -69,7 +70,10 @@
     "outSeconds": 0.8
   },
   "quote": {
-    "busyNotes": 3,
+    "busyNotes": 5,
+    "accent": 0.9,
+    "busyAccent": 0.5,
+    "chordVoices": 2,
     "minNotes": 2,
     "highRegister": 69,
     "overlapRetreat": 0.4

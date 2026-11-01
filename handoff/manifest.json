@@ -49,7 +49,7 @@
     },
     {
       "path": "packages/contracts/src/textbookCompose.ts",
-      "sha256": "e925a6aa5abd2f007c061cb0763c0c9f5e63ba082a4603e51e778c52d332f44e"
+      "sha256": "6c3af67778c14114fb28e84300112c3799f37aa4f51b046043620af6cbc59e42"
     },
     {
       "path": "packages/contracts/src/textbookMelody.ts",
@@ -101,7 +101,7 @@
     },
     {
       "path": "packages/sound-rules/rules/textbook-compose.v1.json",
-      "sha256": "5424de91fb70b10fe28983fb2b029dd8fef3fa9d9853e27a66b1069454ab48dd"
+      "sha256": "db4149dc1b0058362f904cf5db4f9d87a8518505a9fe826ff4526fffe288ca9e"
     },
     {
       "path": "packages/sound-rules/rules/textbook-match.v1.json",
@@ -165,7 +165,11 @@
     },
     {
       "path": "packages/sound-rules/src/textbookCompose.ts",
-      "sha256": "2ac3294cc5fe583a0605bef74d8fa935c3feed1cb84aaa77234a722439206b45"
+      "sha256": "6fbdef44fa449aa3bc3ab9d3633a7857634fce0599a38e30bd785faa3923528e"
+    },
+    {
+      "path": "packages/sound-rules/src/textbookHarmony.ts",
+      "sha256": "7ee0cecb93e900e8530621208a41cdcecbf9e19b8c60548b4e697bcc273bd3d5"
     },
     {
       "path": "packages/sound-rules/src/textbookMatch.ts",
@@ -173,7 +177,7 @@
     },
     {
       "path": "packages/sound-rules/src/textbookMelodyArrange.ts",
-      "sha256": "ecc94c66335a7e1e0f5c5f614ca2f36963ae4db692acf21732ee5955b74da82c"
+      "sha256": "8568606ebc996712d550d6a8d78d7b1ec1f01c09c5571358c2bc088533531ec5"
     },
     {
       "path": "packages/sound-rules/src/textbookPortrait.ts",
@@ -209,11 +213,11 @@
     },
     {
       "path": "packages/sound-rules/tests/textbook-compose.test.ts",
-      "sha256": "e58ddfd60b993149463eb0c2211d822226c7758cf7502f56627931dd92cb52ed"
+      "sha256": "77192a600476740596a0dd41d4ab83d19c62d3aad533954f0e89f27d0a3791fa"
     },
     {
       "path": "packages/sound-rules/tests/textbook-melody.test.ts",
-      "sha256": "0a49fef955e32f9e1b63b7962777c81e51271e080e962048f845ed6e4c748138"
+      "sha256": "91dbdb9b37b5ee6418b9eb9fe7facd253cb524b00c32a42a59eb83c3fec307c0"
     },
     {
       "path": "packages/sound-rules/tests/textbookMatch.test.ts",
