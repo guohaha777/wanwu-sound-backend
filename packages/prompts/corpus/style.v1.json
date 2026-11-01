@@ -12,7 +12,17 @@
   "ask": {"reader": "teacher", "maxChars": 40},
   "cardTitle": {"reader": "child", "maxChars": 12},
   "cardLine": {"reader": "child", "maxChars": 30},
-  "teacherLine": {"reader": "teacher", "maxChars": 40}
+  "teacherLine": {"reader": "teacher", "maxChars": 40},
+  "cardKnowledge": {"reader": "child", "maxChars": 18},
+  "cardFind": {"reader": "child", "maxChars": 85},
+  "cardAsk": {"reader": "child", "maxChars": 36},
+  "cardTry": {"reader": "child", "maxChars": 65},
+  "teacherConcept": {"reader": "teacher", "maxChars": 85},
+  "teacherHow": {"reader": "teacher", "maxChars": 60},
+  "teacherListen": {"reader": "teacher", "maxChars": 60},
+  "teacherBasis": {"reader": "teacher", "maxChars": 60},
+  "summaryChild": {"reader": "child", "maxChars": 60},
+  "summaryTeacher": {"reader": "teacher", "maxChars": 80}
  },
  "placeholderChars": 4,
  "childAvoid": ["音域", "声部", "织体", "密度", "动态", "层次", "动机", "和声"],

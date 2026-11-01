@@ -8,6 +8,8 @@ import {MOODS} from '@wanwu-v2/contracts/arrangement';
 import {AI_BACKGROUND_STEPS,isBackgroundBrief,parseBackgroundResult} from '@wanwu-v2/contracts/background';
 import type {AiBackgroundStep,BackgroundBrief,BackgroundResult,BackgroundUnavailable} from '@wanwu-v2/contracts/background';
 import {isTextbookTalk,isTextbookTalkBrief,isWorkTalkBrief,isWorkTalkReply} from '@wanwu-v2/contracts/talk';
+import {isDiscoveryBrief} from '@wanwu-v2/contracts/discovery';
+import {buildDiscovery,buildDiscoveryRepair,readDiscovery} from '@wanwu-v2/prompts/tasks';
 import {buildBackgroundCompose,buildMoodWords,readBackgroundCompose,buildTextbookFeatures,buildTextbookTalk,buildWorkTalk,isTextbookFeaturesBrief,readMoodWords,readReply,readTextbookFeatures,readTextbookTalk,readWorkTalk} from '@wanwu-v2/prompts/tasks';
 import type {BuiltPrompt} from '@wanwu-v2/prompts/tasks';
 import {ApiError} from '../errors.ts';
@@ -19,6 +21,8 @@ import {GuestFailure,postJson} from './net.ts';
 import type {Post} from './net.ts';
 import {OVERRIDE_HEADER,parseOverride} from './override.ts';
 import {chat} from './providers/language.ts';
+import {DISCOVERY_RULES} from '@wanwu-v2/sound-rules/discovery';
+import {observeDiscovery} from './discovery.ts';
 import {chatVoice,chatWithAudio} from './providers/audio.ts';
 import {generateAudio} from './providers/music.ts';
 
@@ -27,7 +31,10 @@ import {generateAudio} from './providers/music.ts';
  * why. Mood words are short; talk rewords up to nine facts and takes qwen3.8-flash 4–6 s (measured 2026-10-30) while the
  * corpus shows; a composition plan is longer and asks the model to think.
  */
-export const GUEST_TIMEOUT_MS={mood:5_500,talk:9_500,compose:19_000,audio:55_000,listen:7_500,features:4_500} as const;
+export const GUEST_TIMEOUT_MS={mood:5_500,talk:9_500,compose:19_000,audio:55_000,listen:7_500,features:4_500,discovery:17_000} as const;
+// Listening, text generation and one optional repair share the configured total budget.
+const DISCOVERY_BUDGET_MS=DISCOVERY_RULES.analysis.budgetMs;
+const DISCOVERY_REPAIR_MIN_MS=DISCOVERY_RULES.analysis.repairMinMs;
 /** A teaching-music excerpt: about 30 s of low-bitrate mono mp3 (≈ 180 KB); the request may carry up to 1.2 MB of base64. */
 const EXCERPT_MAX_CHARS=1_200_000;
 export type GuestContext={config:GuestConfig;post:Post;budget:DailyBudget;jobs:BackgroundJobs};
@@ -102,6 +109,42 @@ export function guestRoutes(app:FastifyInstance,context:GuestContext){
   if(readTextbookTalk(reply,brief).acceptance.status==='rejected'
    ||!isTextbookTalk(value))throw new ApiError(502,'failed');
   return {feature:value.feature,meeting:value.meeting,task:value.task,model,promptVersion};
+ });
+
+ // Actual mix → validated listening observations → independent text task → per-entry acceptance.
+ app.post('/api/v1/discovery/work',{...GUEST_RATE_LIMIT,bodyLimit:5_200_000},async request=>{
+  const incoming=request.body;
+  if(!isDiscoveryBrief(incoming))throw new ApiError(400,'invalid-request');
+  const started=Date.now();
+  providers(request);
+  // Reserve the text phase even when listening fails; audio is not stored or logged.
+  const listener=context.config.audio;
+  let observed;
+  try{
+   observed=await observeDiscovery(incoming,context.post,incoming.audio&&listener&&!spend(listener)?listener:null);
+  }catch{
+   throw new ApiError(400,'invalid-request');
+  }
+  const brief=observed.brief;
+  request.log.info({task:'music-discovery-listen',result:observed.status,ms:Date.now()-started,requestId:request.id},'Wanwu listening');
+  const first=await text(request,'music-discovery',()=>buildDiscovery(brief),DISCOVERY_RULES.analysis.textMs);
+  let acceptance=readDiscovery(first.reply,brief).acceptance;
+  const left=DISCOVERY_BUDGET_MS-(Date.now()-started);
+  if(acceptance.notes.length&&left>=DISCOVERY_REPAIR_MIN_MS){
+   try{
+    const again=await text(request,'music-discovery-repair',()=>buildDiscoveryRepair(brief,first.reply,acceptance.notes),left);
+    const repaired=readDiscovery(again.reply,brief).acceptance;
+    if(repaired.set){
+     const kept=acceptance.set?.points??[];
+     const extra=repaired.set.points.filter(point=>!kept.some(item=>item.point===point.point));
+     acceptance={...repaired,set:{...repaired.set,points:[...kept,...extra].slice(0,3)}};
+    }
+   }catch{/* the repair failed: the page keeps its local set */}
+  }
+  // Whether the set passed and why not (tokens and rule words only: no names, recordings or keys).
+  request.log.info({task:'music-discovery-check',accepted:acceptance.set?.points.length??0,notes:acceptance.notes,requestId:request.id},'Wanwu guest AI set');
+  if(!acceptance.set)throw new ApiError(502,'failed');
+  return {set:acceptance.set,rejected:acceptance.notes.length,observations:brief.observations,mode:brief.mode,model:first.model,promptVersion:first.promptVersion};
  });
 
  // 课本特征卡: the page measured the recording; the audio model hears the excerpt (when sent and set up), else the language

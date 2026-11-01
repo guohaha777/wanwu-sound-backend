@@ -12,6 +12,8 @@ export * from './background.ts';
 export * from './talk.ts';
 export * from './words.ts';
 export * from './features.ts';
+// 音乐小发现 is not in TASKS (the dev prompt lab lists those); its prompt is built and checked here for the server.
+export * from './discovery.ts';
 export {readReply} from './reply.ts';
 export {SYSTEM_PROMPT,promptProblems} from './files.ts';
 export type {BuiltPrompt,PromptFile,PromptSpec} from './files.ts';

@@ -13,6 +13,7 @@
   "./work": "./src/work.ts",
   "./textbook": "./src/textbook.ts",
   "./background": "./src/background.ts",
-  "./talk": "./src/talk.ts"
+  "./talk": "./src/talk.ts",
+  "./discovery": "./src/discovery.ts"
  }
 }

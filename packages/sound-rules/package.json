@@ -17,6 +17,7 @@
   "./ai-compose": "./src/aiCompose.ts",
   "./composition-identity": "./src/compositionIdentity.ts",
   "./kept-background": "./src/keptBackground.ts",
+  "./discovery": "./src/discovery.ts",
   "./textbook-match": "./src/textbookMatch.ts",
   "./schema": "./src/schema.ts"
  }
