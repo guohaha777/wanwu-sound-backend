@@ -13,6 +13,7 @@ import {browserBundle,openRenderer,renderInBrowser} from '../../src/browser/runn
 import {prototypeInput,writePrototypeSources} from '../../src/prototype-fixtures.ts';
 import {readPcm16Wave,pcmMetrics} from '@wanwu-v2/audio-engine/pcm';
 import {analyseSamples} from '@wanwu-v2/sound-rules/analysis';
+import {MIX_RULES} from '@wanwu-v2/sound-rules/rules';
 
 let browser:Browser,bundle:string;
 // Match production's one fresh Chromium per job, not one browser accumulating
@@ -99,12 +100,20 @@ test('complete render is real stereo 48k PCM and never mutates the saved input',
  });
 });
 
-test('a 45-second sound starting at the 45-second edge keeps its whole 90-second tail',{timeout:180_000},async()=>{
+// Where a piece ends (mix rules `ending`, since mix-v2): the last sound may run `overrunSeconds` past the chosen length,
+// then everything is cut with a `fadeSeconds` fade — a 45-second sound at the 45-second edge no longer plays to 90 s.
+test('a 45-second sound starting at the 45-second edge runs only the overrun past the length, then fades out',{timeout:180_000},async()=>{
  await prepared('tail',async(input,sources)=>{
   input.settings.background.enabled=false;
   const result=await renderInBrowser(browser,bundle,input,sources),pcm=readPcm16Wave(result.wav);
-  assert.equal(pcm.channels[0]!.length,90*48000);
-  assert.ok(pcmMetrics([pcm.channels[0]!.slice(-4800)]).rms>.001,'last 100ms must still contain sound');
+  const {overrunSeconds,fadeSeconds}=MIX_RULES.ending,rate=48000;
+  const samples=pcm.channels[0]!;
+  assert.equal(samples.length,(input.arrangement.spanSeconds+overrunSeconds)*rate);
+  const fadeFrom=samples.length-Math.round(fadeSeconds*rate);
+  const before=pcmMetrics([samples.slice(fadeFrom-rate/10,fadeFrom)]).rms;
+  const last=pcmMetrics([samples.slice(-rate/100)]).rms;
+  assert.ok(before>.001,'the sound still plays right up to the fade');
+  assert.ok(last<before*.1,'the last 10 ms have faded out');
  });
 });
 

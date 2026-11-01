@@ -179,7 +179,8 @@ export async function renderWork(
   const node=ctx.createBufferSource();
   const gain=ctx.createGain();
   node.buffer=under;
-  gain.gain.value=background.volume*MIX_RULES.backgroundMaxGain;
+  // The finished piece sounds as it did in 万物成曲 (its own background maximum).
+  gain.gain.value=background.volume*MIX_RULES.composeBackgroundMaxGain;
   node.connect(gain).connect(master);
   node.start(0);
  }

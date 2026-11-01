@@ -189,6 +189,9 @@ export const mixLimits={
  version:'version',
  childGain:[.1,1],
  backgroundMaxGain:[0,1],
+ // 万物成曲's volume slider (under 想听多久), and so the shelf and the server's finished piece: it reaches further there;
+ // 万物声场 keeps backgroundMaxGain.
+ composeBackgroundMaxGain:[0,2],
  duck:{depthDb:[0,18],attackSeconds:[.005,1],releaseSeconds:[.01,3]},
  limiter:{thresholdDb:[-24,0],kneeDb:[0,40],ratio:[1,20],attackSeconds:[0,1],releaseSeconds:[0,1]},
  // Where a piece stops: a last sound may run this far past the chosen length, then everything is cut with a short fade.
