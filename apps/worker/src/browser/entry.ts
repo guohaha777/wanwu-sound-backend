@@ -11,17 +11,24 @@ export async function render(input:RenderInput){
  const load=async(id:string)=>{
   let buffer=buffers.get(id);
   if(!buffer){
-   const response=await fetch(`/sources/${encodeURIComponent(id)}`);if(!response.ok)throw new Error('missing-source');
+   const response=await fetch(`/sources/${encodeURIComponent(id)}`);
+   if(!response.ok)throw new Error('missing-source');
    buffer=await decoder.decodeAudioData(await response.arrayBuffer());
-   buffers.set(id,buffer);while(buffers.size>2)buffers.delete(buffers.keys().next().value!);
+   buffers.set(id,buffer);
+   while(buffers.size>2)buffers.delete(buffers.keys().next().value!);
   }
   return buffer;
  };
  let steps=0;
- const release=async()=>{await new Promise<void>(done=>setTimeout(done,0));++steps;
-  const progress=(globalThis as unknown as {wanwuProgress?:(step:number)=>Promise<void>}).wanwuProgress;await progress?.(steps);
+ const release=async()=>{
+  await new Promise<void>(done=>setTimeout(done,0));
+  ++steps;
+  const progress=(globalThis as unknown as {wanwuProgress?:(step:number)=>Promise<void>}).wanwuProgress;
+  await progress?.(steps);
  };
- const result=await renderWork(input,load,release);buffers.clear();await release();
+ const result=await renderWork(input,load,release);
+ buffers.clear();
+ await release();
  const channels=Array.from({length:result.numberOfChannels},(_,c)=>result.getChannelData(c));
  const metrics=pcmMetrics(channels);
  // Binary transfer, not millions of JSON numbers copied through the browser driver.

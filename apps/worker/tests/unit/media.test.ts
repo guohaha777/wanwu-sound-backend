@@ -15,6 +15,8 @@ test('allow supported real container/codec combinations, not filenames or MIME c
  assert.throws(()=>validateProbe(null),/unsupported-media/);
 });
 test('bounded local decoding does not allow network protocols or playlist demuxers',()=>{
- assert.equal(MAX_SOURCE_BYTES,20*1024*1024);assert.equal(MAX_SOURCE_SECONDS,45.5);
- assert.equal(INPUT_FLAGS[1],'file,pipe');assert.ok(!INPUT_FLAGS[3]!.includes('hls'));
+ assert.equal(MAX_SOURCE_BYTES,20*1024*1024);
+ assert.equal(MAX_SOURCE_SECONDS,45.5);
+ assert.equal(INPUT_FLAGS[1],'file,pipe');
+ assert.ok(!INPUT_FLAGS[3]!.includes('hls'));
 });

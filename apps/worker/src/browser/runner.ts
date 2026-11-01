@@ -23,13 +23,18 @@ export async function openRenderer(){
  try{
   let status='Linux sandbox inspection is unavailable on this platform; the Linux container gate is still pending.';
   if(process.platform==='linux'){
-   const page=await browser.newPage();await page.goto('chrome://sandbox');
-   status=await page.locator('body').innerText();await page.close();
+   const page=await browser.newPage();
+   await page.goto('chrome://sandbox');
+   status=await page.locator('body').innerText();
+   await page.close();
   }
   const linuxSandboxVerified=process.platform==='linux'&&linuxSandboxEnabled(status);
   if(process.platform==='linux'&&!linuxSandboxVerified)throw new MediaError('renderer-sandbox-unverified');
   return {browser,identity:{browserVersion:browser.version(),platform:process.platform,linuxSandboxVerified,sandboxStatus:status.slice(0,4096)}};
- }catch(error){await browser.close();throw error;}
+ }catch(error){
+  await browser.close();
+  throw error;
+ }
 }
 
 export async function renderInBrowser(browser:Browser,bundle:string,input:RenderInput,sources:ReadonlyMap<string,NormalizedSource>,timeoutMs=180_000){
@@ -65,7 +70,11 @@ export async function renderInBrowser(browser:Browser,bundle:string,input:Render
   },input);
   const expired=new Promise<never>((_,reject)=>{timer=setTimeout(()=>reject(new MediaError('render-timeout')),timeoutMs);});
   const metrics=await Promise.race([run,expired]);
-  const bytes=output.result;if(!bytes)throw new MediaError('missing-render-output');
+  const bytes=output.result;
+  if(!bytes)throw new MediaError('missing-render-output');
   return {wav:Buffer.from(bytes.buffer,bytes.byteOffset,bytes.byteLength),metrics};
- }finally{clearTimeout(timer);try{await context?.close();}finally{await transport.close();}}
+ }finally{
+  clearTimeout(timer);
+  try{await context?.close();}finally{await transport.close();}
+ }
 }

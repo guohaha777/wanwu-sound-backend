@@ -7,12 +7,16 @@ export function sqlAdapter(connection:Pick<Pool,'query'>|PoolClient){return {exe
 export function mediaBoss(pool:Pool,worker=false){
  const boss=new PgBoss({db:sqlAdapter(pool),schema:'wanwu_jobs',migrate:false,supervise:worker,schedule:false,
   max:2,application_name:worker?'wanwu-media':'wanwu-api-queue'});
- boss.on('error',()=>{console.error('Wanwu queue operation failed; details suppressed.');});return boss;
+ boss.on('error',()=>{console.error('Wanwu queue operation failed; details suppressed.');});
+ return boss;
 }
 export async function installMediaQueue(pool:Pool){
  const boss=new PgBoss({db:sqlAdapter(pool),schema:'wanwu_jobs',schedule:false,supervise:false});
  boss.on('error',()=>{});
- try{await boss.start();await boss.createQueue(MEDIA_QUEUE,{policy:'singleton',retryLimit:2,retryDelay:5,expireInSeconds:240,deleteAfterSeconds:7*86400});}
+ try{
+  await boss.start();
+  await boss.createQueue(MEDIA_QUEUE,{policy:'singleton',retryLimit:2,retryDelay:5,expireInSeconds:240,deleteAfterSeconds:7*86400});
+ }
  finally{await boss.stop();}
  await pool.query('REVOKE ALL ON SCHEMA wanwu_jobs FROM PUBLIC');
  await pool.query('GRANT USAGE ON SCHEMA wanwu_jobs TO wanwu_app');
@@ -21,5 +25,6 @@ export async function installMediaQueue(pool:Pool){
 }
 export async function enqueueMedia(boss:PgBoss,tx:PoolClient,data:MediaJob){
  const id=await boss.send(MEDIA_QUEUE,data,{priority:data.kind==='source'?100:0,retryLimit:2,retryDelay:5,expireInSeconds:240,db:sqlAdapter(tx)});
- if(!id)throw new Error('media-job-not-enqueued');return id;
+ if(!id)throw new Error('media-job-not-enqueued');
+ return id;
 }

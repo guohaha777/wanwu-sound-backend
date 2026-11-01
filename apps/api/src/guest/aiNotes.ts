@@ -17,7 +17,11 @@ const REGISTER={low:-12,mid:0,high:12} as const;
 const REST={sparse:2,medium:1,busy:0} as const;
 const MIDI_LOW=36,MIDI_HIGH=96;
 
-export function developIdea(brief:BackgroundBrief,idea:MusicIdea,rules:BackgroundRules=BACKGROUND_RULES):BackgroundNoteData[]{
+export function developIdea(
+ brief:BackgroundBrief,
+ idea:MusicIdea,
+ rules:BackgroundRules=BACKGROUND_RULES,
+):BackgroundNoteData[]{
  const plan=backgroundPlan({seconds:brief.seconds,sounding:brief.sounding,mood:brief.mood,textbook:brief.textbook,seed:brief.workId},rules);
  const beat=60/plan.tempo,bar=beat*plan.metre,end=plan.cadenceAt,seconds=plan.seconds;
  const {scale}=rules.modes[plan.mode],{liftSemitones,minGapBeats,marginSeconds,noteLengthPortion}=rules.melody;
@@ -26,16 +30,24 @@ export function developIdea(brief:BackgroundBrief,idea:MusicIdea,rules:Backgroun
   base+scale[((degree%7)+7)%7]!+12*Math.floor(degree/7)+REGISTER[register]));
 
  const busy=mergeSpans(brief.sounding.map(span=>({start:span.start-marginSeconds,end:span.end+marginSeconds})),seconds);
- const gaps:{start:number;end:number}[]=[];let from=0;
- for(const span of [...busy,{start:seconds,end:seconds}]){if(span.start-from>=minGapBeats*beat)gaps.push({start:from,end:span.start});from=Math.max(from,span.end);}
+ const gaps:{start:number;end:number}[]=[];
+ let from=0;
+ for(const span of [...busy,{start:seconds,end:seconds}]){
+  if(span.start-from>=minGapBeats*beat)gaps.push({start:from,end:span.start});
+  from=Math.max(from,span.end);
+ }
 
  const motifBeats=idea.motifBeats.reduce((sum,value)=>sum+value,0),motifLength=motifBeats*beat;
  const melody:BackgroundNoteData[]=[],part=end/4,repeats=[0,0,0,0];
  for(let t=0;t<end-1e-9;){
   const index=Math.min(3,Math.floor(t/part+1e-9)),section=idea.sections[index]!;
   const fits=gaps.some(gap=>t>=gap.start-1e-9&&t+motifLength<=Math.min(gap.end,end)+1e-9);
-  if(!fits){t+=beat;continue;}
-  const shift=repeats[index]!%2===1?1:0;repeats[index]!++;
+  if(!fits){
+   t+=beat;
+   continue;
+  }
+  const shift=repeats[index]!%2===1?1:0;
+  repeats[index]!++;
   let at=t;
   idea.motifDegrees.forEach((degree,i)=>{
    const length=idea.motifBeats[i]!*beat;

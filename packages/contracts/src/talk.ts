@@ -22,7 +22,9 @@ export type Discovery<N extends string=string>=
  |{kind:'ending';name:N;same:boolean}
  |{kind:'single';name:N};
 export type DiscoveryKind=Discovery['kind'];
-export const DISCOVERY_KINDS:readonly DiscoveryKind[]=['opening','repeat','echo','together','long-short','rest','busier','ending','single'];
+export const DISCOVERY_KINDS:readonly DiscoveryKind[]=[
+ 'opening','repeat','echo','together','long-short','rest','busier','ending','single',
+];
 
 /** What happened when the textbook song's feature met the child's sounds (found by the background rules). */
 export type MeetingKind='together'|'answer'|'fill'|'under';
@@ -41,7 +43,9 @@ export const WORK_TALK_BRIEF_VERSION='work-talk-brief-v1' as const;
 export type WorkTalkBrief={
  version:typeof WORK_TALK_BRIEF_VERSION;
  /** The piece's length (seconds) and mood; the textbook song's title when one is chosen (titles name no one). */
- seconds:number;mood:MoodId|null;textbookTitle:string|null;
+ seconds:number;
+ mood:MoodId|null;
+ textbookTitle:string|null;
  facts:Discovery<SoundToken>[];
 };
 /** One child line per fact (same order, same kinds), and one thing to try right away. */
@@ -53,7 +57,10 @@ export type TextbookTalk={feature:string;meeting:string;task:string};
 export const TEXTBOOK_TALK_PARTS:readonly (keyof TextbookTalk)[]=['feature','meeting','task'];
 export type TextbookTalkBrief={
  version:typeof TEXTBOOK_TALK_BRIEF_VERSION;
- title:string;metre:Metre;rhythm:string;childLine:string;
+ title:string;
+ metre:Metre;
+ rhythm:string;
+ childLine:string;
  meeting:MeetingKind;
  /** The child's sound that met the beat, as a token; null when none. */
  example:SoundToken|null;
@@ -83,25 +90,41 @@ export function isDiscovery(value:unknown,name:(value:unknown)=>boolean=nonEmpty
 export function isWorkTalkBrief(value:unknown):value is WorkTalkBrief{
  if(!value||typeof value!=='object')return false;
  const raw=value as Record<string,unknown>;
- return raw.version===WORK_TALK_BRIEF_VERSION&&count(raw.seconds)&&(raw.mood===null||MOODS.includes(raw.mood as MoodId))
+ return raw.version===WORK_TALK_BRIEF_VERSION
+  &&count(raw.seconds)
+  &&(raw.mood===null||MOODS.includes(raw.mood as MoodId))
   &&(raw.textbookTitle===null||nonEmpty(raw.textbookTitle))
-  &&Array.isArray(raw.facts)&&raw.facts.length>0&&raw.facts.every(fact=>isDiscovery(fact,isSoundToken));
+  &&Array.isArray(raw.facts)
+  &&raw.facts.length>0
+  &&raw.facts.every(fact=>isDiscovery(fact,isSoundToken));
 }
 
 export function isTextbookTalkBrief(value:unknown):value is TextbookTalkBrief{
  if(!value||typeof value!=='object')return false;
- const raw=value as Record<string,unknown>,local=raw.local as Record<string,unknown>|null;
- return raw.version===TEXTBOOK_TALK_BRIEF_VERSION&&nonEmpty(raw.title)&&[2,3,4].includes(raw.metre as number)&&nonEmpty(raw.rhythm)&&nonEmpty(raw.childLine)
+ const raw=value as Record<string,unknown>;
+ const local=raw.local as Record<string,unknown>|null;
+ return raw.version===TEXTBOOK_TALK_BRIEF_VERSION
+  &&nonEmpty(raw.title)
+  &&[2,3,4].includes(raw.metre as number)
+  &&nonEmpty(raw.rhythm)
+  &&nonEmpty(raw.childLine)
   &&MEETING_KINDS.includes(raw.meeting as MeetingKind)
   &&(raw.example===null||isSoundToken(raw.example))
-  &&!!local&&typeof local==='object'&&TEXTBOOK_TALK_PARTS.every(part=>nonEmpty(local[part]));
+  &&!!local
+  &&typeof local==='object'
+  &&TEXTBOOK_TALK_PARTS.every(part=>nonEmpty(local[part]));
 }
 
 /** The reply's shape only; whether its words may be shown is checked against the facts by @wanwu-v2/prompts/accept. */
 export function isWorkTalkReply(value:unknown):value is WorkTalkReply{
  if(!value||typeof value!=='object')return false;
  const raw=value as Record<string,unknown>;
- return Array.isArray(raw.lines)&&raw.lines.every(item=>item&&typeof item==='object'&&DISCOVERY_KINDS.includes(item.kind)&&nonEmpty(item.line))&&nonEmpty(raw.tryThis);
+ return Array.isArray(raw.lines)
+  &&raw.lines.every(item=>item
+   &&typeof item==='object'
+   &&DISCOVERY_KINDS.includes(item.kind)
+   &&nonEmpty(item.line))
+  &&nonEmpty(raw.tryThis);
 }
 export function isTextbookTalk(value:unknown):value is TextbookTalk{
  if(!value||typeof value!=='object')return false;

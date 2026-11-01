@@ -11,5 +11,8 @@ try{
  const healthy=process.argv.includes('--worker-only')?!!worker&&worker.seconds<90:!!worker&&worker.seconds<90&&!!backups&&backups.status==='pass'&&backups.seconds<26*3600&&!!cleanup&&cleanup.status==='pass'&&cleanup.seconds<2*3600&&pending<50;
  console.log(JSON.stringify({status:healthy?'pass':'attention',queuePending:pending,queueFailures:failures,workerAgeSeconds:worker?.seconds??null,backup:backups??null,cleanup:cleanup??null}));
  if(!healthy)process.exitCode=1;
-}catch{console.error('Wanwu operational health check failed; details suppressed.');process.exitCode=1;}
+}catch{
+ console.error('Wanwu operational health check failed; details suppressed.');
+ process.exitCode=1;
+}
 finally{await database.close();}

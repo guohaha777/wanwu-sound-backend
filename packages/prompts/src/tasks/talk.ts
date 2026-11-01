@@ -16,7 +16,8 @@ import {readReply} from './reply.ts';
 const shapeOnly=(ok:boolean,what:string)=>ok?[]:[what];
 
 export const WORK_TALK_PROMPT=loadPrompt(workTalkFile as PromptFile,{
- task:'work-talk',model:'language',
+ task:'work-talk',
+ model:'language',
  placeholders:['seconds','mood','textbook','facts','discoveryMax','tryThisMax','example'],
  templates:{factLine:['n','kind','values','local'],'words.noTextbook':[]},
  tables:{'words.mood':['none',...MOODS]},
@@ -26,23 +27,34 @@ export const WORK_TALK_PROMPT=loadPrompt(workTalkFile as PromptFile,{
 export function buildWorkTalk(brief:WorkTalkBrief){
  const file=WORK_TALK_PROMPT;
  const facts=brief.facts.map((fact,i)=>fill(file.factLine as string,{
-  n:i+1,kind:fact.kind,
+  n:i+1,
+  kind:fact.kind,
   values:Object.entries(discoveryValues(fact)).map(([key,value])=>`${key}=${value}`).join('，')||'无',
   local:discoveryText(fact).line,
  })).join('\n');
  return buildPrompt(file,{
-  seconds:Math.round(brief.seconds),mood:word(file,'words.mood',brief.mood??'none'),
+  seconds:Math.round(brief.seconds),
+  mood:word(file,'words.mood',brief.mood??'none'),
   textbook:brief.textbookTitle?`「${brief.textbookTitle}」`:word(file,'words','noTextbook'),
-  facts,discoveryMax:STYLE.slots.discovery.maxChars,tryThisMax:STYLE.slots.tryThis.maxChars,example:exampleJson(file),
+  facts,
+  discoveryMax:STYLE.slots.discovery.maxChars,
+  tryThisMax:STYLE.slots.tryThis.maxChars,
+  example:exampleJson(file),
  });
 }
 export function readWorkTalk(text:string,brief:WorkTalkBrief){
  const read=readReply(text);
- return {repairs:read.repairs,acceptance:'problem' in read?{status:'rejected' as const,value:{lines:brief.facts.map(()=>null),tryThis:null},notes:[read.problem]}:acceptWorkTalk(read.value,brief)};
+ return {
+  repairs:read.repairs,
+  acceptance:'problem' in read
+   ?{status:'rejected' as const,value:{lines:brief.facts.map(()=>null),tryThis:null},notes:[read.problem]}
+   :acceptWorkTalk(read.value,brief),
+ };
 }
 
 export const TEXTBOOK_TALK_PROMPT=loadPrompt(textbookTalkFile as PromptFile,{
- task:'textbook-talk',model:'language',
+ task:'textbook-talk',
+ model:'language',
  placeholders:['title','metre','rhythm','childLine','meeting','feature','meetingLine','task','talkMax','example'],
  tables:{'words.meeting':MEETING_KINDS},
  example:value=>shapeOnly(isTextbookTalk(value),'要有 feature、meeting、task 三句'),
@@ -51,13 +63,24 @@ export const TEXTBOOK_TALK_PROMPT=loadPrompt(textbookTalkFile as PromptFile,{
 export function buildTextbookTalk(brief:TextbookTalkBrief){
  const file=TEXTBOOK_TALK_PROMPT;
  return buildPrompt(file,{
-  title:brief.title,metre:metreNames()[brief.metre],rhythm:brief.rhythm,childLine:brief.childLine,
+  title:brief.title,
+  metre:metreNames()[brief.metre],
+  rhythm:brief.rhythm,
+  childLine:brief.childLine,
   meeting:word(file,'words.meeting',brief.meeting),
-  feature:brief.local.feature,meetingLine:brief.local.meeting,task:brief.local.task,
-  talkMax:STYLE.slots.talk.maxChars,example:exampleJson(file),
+  feature:brief.local.feature,
+  meetingLine:brief.local.meeting,
+  task:brief.local.task,
+  talkMax:STYLE.slots.talk.maxChars,
+  example:exampleJson(file),
  });
 }
 export function readTextbookTalk(text:string,brief:TextbookTalkBrief){
  const read=readReply(text);
- return {repairs:read.repairs,acceptance:'problem' in read?{status:'rejected' as const,value:{feature:null,meeting:null,task:null},notes:[read.problem]}:acceptTextbookTalk(read.value,brief)};
+ return {
+  repairs:read.repairs,
+  acceptance:'problem' in read
+   ?{status:'rejected' as const,value:{feature:null,meeting:null,task:null},notes:[read.problem]}
+   :acceptTextbookTalk(read.value,brief),
+ };
 }

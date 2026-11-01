@@ -27,9 +27,11 @@ export class ContentAdmin{
  });}
  async disableEntry(actor:Actor,id:string){return transaction(this.context.pool,async tx=>{
   await lockActor(tx,actor,true);
-  const entry=(await tx.query('SELECT source_id FROM library_entries WHERE id=$1',[id])).rows[0];if(!entry)throw new ApiError(404,'not-found');
+  const entry=(await tx.query('SELECT source_id FROM library_entries WHERE id=$1',[id])).rows[0];
+  if(!entry)throw new ApiError(404,'not-found');
   await tx.query('SELECT id FROM sources WHERE id=$1 FOR UPDATE',[entry.source_id]);
-  await tx.query('UPDATE library_entries SET disabled_at=now(),updated_at=now() WHERE id=$1',[id]);await audit(tx,actor.id,'library.disabled',id);
+  await tx.query('UPDATE library_entries SET disabled_at=now(),updated_at=now() WHERE id=$1',[id]);
+  await audit(tx,actor.id,'library.disabled',id);
  });}
  async status(actor:Actor){return transaction(this.context.pool,async tx=>{
   await lockActor(tx,actor,true);

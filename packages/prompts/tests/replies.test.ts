@@ -25,7 +25,8 @@ test('reading: Markdown, a sentence before the JSON and a trailing comma are rep
 
 test('work talk: a good reply is shown as is, with the child names put back',()=>{
  const {acceptance}=readWorkTalk(JSON.stringify(good),workBrief);
- assert.equal(acceptance.status,'accepted');assert.deepEqual(acceptance.notes,[]);
+ assert.equal(acceptance.status,'accepted');
+ assert.deepEqual(acceptance.notes,[]);
  assert.equal(restoreNames(acceptance.value.lines[1]!,tokenized.names),'「小林家的狗」响了 3 次，像小朋友在拍手。');
  assert.equal(restoreNames(acceptance.value.tryThis!,tokenized.names),'把「王老师的铃」往后挪一点，听听会不会分开。');
 });
@@ -41,8 +42,11 @@ test('work talk: a line that adds a fact, a sound, a term, a judgement or too ma
  assert.equal(acceptance.status,'partly');
  assert.deepEqual(acceptance.value.lines.map(line=>line!==null),[true,false,false,false,false,false]);
  const notes=acceptance.notes.join('\n');
- assert.match(notes,/写了事实里没有的数字 4/);assert.match(notes,/没有的「声音1」/);assert.match(notes,/术语「声部」/);
- assert.match(notes,/「真棒」/);assert.match(notes,/超过上限 45/);
+ assert.match(notes,/写了事实里没有的数字 4/);
+ assert.match(notes,/没有的「声音1」/);
+ assert.match(notes,/术语「声部」/);
+ assert.match(notes,/「真棒」/);
+ assert.match(notes,/超过上限 45/);
 });
 
 test('work talk: wrong order or kind, extra or missing lines, a wrong shape',()=>{
@@ -51,7 +55,8 @@ test('work talk: wrong order or kind, extra or missing lines, a wrong shape',()=
  assert.deepEqual(acceptance.value.lines.slice(0,2),[null,null]);
  assert.match(acceptance.notes.join('\n'),/多出的 1 句已丢弃[\s\S]*第 1 条应该是 opening，回复写成了 repeat/);
  const short=readWorkTalk(JSON.stringify({...good,lines:good.lines.slice(0,2)}),workBrief).acceptance;
- assert.equal(short.status,'partly');assert.match(short.notes.join(),/第 3 条（together）没有写/);
+ assert.equal(short.status,'partly');
+ assert.match(short.notes.join(),/第 3 条（together）没有写/);
  assert.equal(readWorkTalk('{"text":"好"}',workBrief).acceptance.status,'rejected');
  assert.equal(readWorkTalk('抱歉',workBrief).acceptance.status,'rejected');
 });
@@ -59,7 +64,8 @@ test('work talk: wrong order or kind, extra or missing lines, a wrong shape',()=
 test('textbook talk: the feature must name the song; each part falls back on its own',()=>{
  const reply={feature:'这首歌是三拍子，像摇篮在晃。',meeting:'你的「声音1」踩在拍子上。',task:'把一个声音往后挪一点，再听听。'};
  const {acceptance}=readTextbookTalk(JSON.stringify(reply),textbookBrief);
- assert.equal(acceptance.status,'partly');assert.equal(acceptance.value.feature,null);
+ assert.equal(acceptance.status,'partly');
+ assert.equal(acceptance.value.feature,null);
  assert.match(acceptance.notes.join(),/没有提到歌名「摇篮曲」/);
  assert.equal(readTextbookTalk(JSON.stringify({...reply,feature:'「摇篮曲」是三拍子，像摇篮在晃。'}),textbookBrief).acceptance.status,'accepted');
  assert.equal(readTextbookTalk(JSON.stringify({...reply,meeting:'你的「声音2」踩在拍子上。'}),textbookBrief).acceptance.value.meeting,null);

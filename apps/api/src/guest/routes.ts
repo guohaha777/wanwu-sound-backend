@@ -47,12 +47,23 @@ export function guestRoutes(app:FastifyInstance,context:GuestContext){
  /** A text task: language model → reply text. Failures become the error bodies the page already reads. */
  const text=async(request:FastifyRequest,task:string,built:(provider:Provider)=>BuiltPrompt,timeoutMs:number=GUEST_TIMEOUT_MS.talk)=>{
   const started=Date.now(),{language}=providers(request);
-  if(!language){outcome(request,task,started,'not-open',null);throw new ApiError(503,'not-open');}
-  if(spend(language)){outcome(request,task,started,'quota',language);throw new ApiError(429,'rate-limited',context.budget.retryAfter());}
+  if(!language){
+   outcome(request,task,started,'not-open',null);
+   throw new ApiError(503,'not-open');
+  }
+  if(spend(language)){
+   outcome(request,task,started,'quota',language);
+   throw new ApiError(429,'rate-limited',context.budget.retryAfter());
+  }
   const prompt=built(language);
-  try{const reply=await chat(context.post,language,prompt,timeoutMs);outcome(request,task,started,'ok',language);return {reply,model:language.model,promptVersion:prompt.version};}
+  try{
+   const reply=await chat(context.post,language,prompt,timeoutMs);
+   outcome(request,task,started,'ok',language);
+   return {reply,model:language.model,promptVersion:prompt.version};
+  }
   catch(error){
-   const reason=error instanceof GuestFailure?error.reason:'failed';outcome(request,task,started,reason,language);
+   const reason=error instanceof GuestFailure?error.reason:'failed';
+   outcome(request,task,started,reason,language);
    if(reason==='quota')throw new ApiError(429,'rate-limited',60);
    if(reason==='timeout')throw new ApiError(504,'temporarily-unavailable');
    throw new ApiError(502,'failed');
@@ -74,7 +85,8 @@ export function guestRoutes(app:FastifyInstance,context:GuestContext){
  });
 
  app.post('/api/v1/talk/work',GUEST_RATE_LIMIT,async request=>{
-  const brief=request.body;if(!isWorkTalkBrief(brief))throw new ApiError(400,'invalid-request');
+  const brief=request.body;
+  if(!isWorkTalkBrief(brief))throw new ApiError(400,'invalid-request');
   const {reply,model,promptVersion}=await text(request,'work-talk',()=>buildWorkTalk(brief));
   // Protocol shape (WorkTalkReply + model + promptVersion): the page runs the same acceptance again line by line.
   const value=readReply(reply).value;
@@ -83,10 +95,12 @@ export function guestRoutes(app:FastifyInstance,context:GuestContext){
  });
 
  app.post('/api/v1/talk/textbook',GUEST_RATE_LIMIT,async request=>{
-  const brief=request.body;if(!isTextbookTalkBrief(brief))throw new ApiError(400,'invalid-request');
+  const brief=request.body;
+  if(!isTextbookTalkBrief(brief))throw new ApiError(400,'invalid-request');
   const {reply,model,promptVersion}=await text(request,'textbook-talk',()=>buildTextbookTalk(brief));
   const value=readReply(reply).value;
-  if(readTextbookTalk(reply,brief).acceptance.status==='rejected'||!isTextbookTalk(value))throw new ApiError(502,'failed');
+  if(readTextbookTalk(reply,brief).acceptance.status==='rejected'
+   ||!isTextbookTalk(value))throw new ApiError(502,'failed');
   return {feature:value.feature,meeting:value.meeting,task:value.task,model,promptVersion};
  });
 
@@ -95,18 +109,33 @@ export function guestRoutes(app:FastifyInstance,context:GuestContext){
  // program's own result (this answers 502/503 and the page knows why). Server total stays under the page's 15 s.
  app.post('/api/v1/textbook/features',{...GUEST_RATE_LIMIT,bodyLimit:EXCERPT_MAX_CHARS+64*1024},async request=>{
   const body=request.body as {brief?:unknown;audio?:unknown};
-  if(!body||typeof body!=='object'||Object.keys(body).some(key=>key!=='brief'&&key!=='audio')||!isTextbookFeaturesBrief(body.brief))throw new ApiError(400,'invalid-request');
+  if(!body
+   ||typeof body!=='object'
+   ||Object.keys(body).some(key=>key!=='brief'&&key!=='audio')
+   ||!isTextbookFeaturesBrief(body.brief))throw new ApiError(400,'invalid-request');
   const audio=body.audio===undefined?null:typeof body.audio==='string'&&body.audio.length<=EXCERPT_MAX_CHARS&&/^[A-Za-z0-9+/=]+$/.test(body.audio)?body.audio:'bad';
   if(audio==='bad')throw new ApiError(400,'invalid-request');
   const brief=body.brief,started=Date.now(),{language}=providers(request),listener=context.config.audio;
   // Each try is asked and checked with its own brief: the language model hears nothing (listenSeconds 0), so its rhythm,
   // metre and tempo are not taken — only its mood and words.
   const tries:{source:'audio'|'language';provider:Provider;brief:typeof brief;run:(provider:Provider)=>Promise<string>;prompt:ReturnType<typeof buildTextbookFeatures>}[]=[];
-  if(audio&&listener){const prompt=buildTextbookFeatures(brief);tries.push({source:'audio',provider:listener,brief,prompt,run:provider=>chatWithAudio(context.post,provider,prompt,audio,GUEST_TIMEOUT_MS.listen)});}
-  if(language){const numbers={...brief,listenSeconds:0},prompt=buildTextbookFeatures(numbers);tries.push({source:'language',provider:language,brief:numbers,prompt,run:provider=>chat(context.post,provider,prompt,GUEST_TIMEOUT_MS.features)});}
-  if(!tries.length){outcome(request,'textbook-features',started,'not-open',null);throw new ApiError(503,'not-open');}
+  if(audio&&listener){
+   const prompt=buildTextbookFeatures(brief);
+   tries.push({source:'audio',provider:listener,brief,prompt,run:provider=>chatWithAudio(context.post,provider,prompt,audio,GUEST_TIMEOUT_MS.listen)});
+  }
+  if(language){
+   const numbers={...brief,listenSeconds:0},prompt=buildTextbookFeatures(numbers);
+   tries.push({source:'language',provider:language,brief:numbers,prompt,run:provider=>chat(context.post,provider,prompt,GUEST_TIMEOUT_MS.features)});
+  }
+  if(!tries.length){
+   outcome(request,'textbook-features',started,'not-open',null);
+   throw new ApiError(503,'not-open');
+  }
   for(const attempt of tries){
-   if(spend(attempt.provider)){outcome(request,'textbook-features',started,'quota',attempt.provider);continue;}
+   if(spend(attempt.provider)){
+    outcome(request,'textbook-features',started,'quota',attempt.provider);
+    continue;
+   }
    try{
     const read=readTextbookFeatures(await attempt.run(attempt.provider),attempt.brief);
     if(read.acceptance.value){
@@ -139,7 +168,9 @@ export function guestRoutes(app:FastifyInstance,context:GuestContext){
 
  app.post('/api/v1/backgrounds',GUEST_RATE_LIMIT,async(request,reply)=>{
   const body=request.body as {step?:unknown;brief?:unknown};
-  if(!exact(body,['brief','step'])||!AI_BACKGROUND_STEPS.includes(body.step as AiBackgroundStep)||!isBackgroundBrief(body.brief))throw new ApiError(400,'invalid-request');
+  if(!exact(body,['brief','step'])
+   ||!AI_BACKGROUND_STEPS.includes(body.step as AiBackgroundStep)
+   ||!isBackgroundBrief(body.brief))throw new ApiError(400,'invalid-request');
   const step=body.step as AiBackgroundStep,brief=body.brief,started=Date.now(),{language,music}=providers(request);
   const jobId=context.jobs.start(async()=>{const result=await runStep(step,brief,language,music);
    outcome(request,step,started,result.status==='ready'?'ok':result.reason,step==='audio-ai'?music:language);return result;});
@@ -149,7 +180,8 @@ export function guestRoutes(app:FastifyInstance,context:GuestContext){
 
  app.get<{Params:{jobId:string}}>('/api/v1/backgrounds/:jobId',async request=>{
   if(!/^[a-f0-9-]{36}$/.test(request.params.jobId))throw new ApiError(400,'invalid-request');
-  const state=context.jobs.get(request.params.jobId);if(!state)throw new ApiError(404,'not-found');
+  const state=context.jobs.get(request.params.jobId);
+  if(!state)throw new ApiError(404,'not-found');
   return state;
  });
 }

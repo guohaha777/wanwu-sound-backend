@@ -48,7 +48,12 @@ export type TextbookTrack={
  childLine:string;
  /** What made which part: `example` marks the made-up examples; words by `code` = the corpus line used when no model
   *  answered (a teaching-music card made on the page). */
- extraction:{numbers:'code'|'score'|'example';words:'ai'|'teacher'|'code'|'example';confidence:number;earChecked:boolean};
+ extraction:{
+  numbers:'code'|'score'|'example';
+  words:'ai'|'teacher'|'code'|'example';
+  confidence:number;
+  earChecked:boolean;
+ };
 };
 
 const nonEmpty=(value:unknown):value is string=>typeof value==='string'&&value.length>0;
@@ -58,19 +63,42 @@ const midi=(value:unknown)=>Number.isInteger(value)&&(value as number)>=21&&(val
 export function isTextbookTrack(value:unknown):value is TextbookTrack{
  if(!value||typeof value!=='object')return false;
  const raw=value as Record<string,unknown>;
- if(raw.version!==TEXTBOOK_CONTRACT_VERSION||!nonEmpty(raw.id)||!nonEmpty(raw.title)||!nonEmpty(raw.childLine))return false;
+ if(raw.version!==TEXTBOOK_CONTRACT_VERSION
+  ||!nonEmpty(raw.id)
+  ||!nonEmpty(raw.title)
+  ||!nonEmpty(raw.childLine))return false;
  const source=raw.source as Record<string,unknown>|null;
- if(source!==null&&(!source||typeof source!=='object'||!nonEmpty(source.edition)||!nonEmpty(source.title)||!Number.isInteger(source.grade)||!Number.isInteger(source.unit)))return false;
- if(typeof raw.tempoBpm!=='number'||raw.tempoBpm<40||raw.tempoBpm>200||![2,3,4].includes(raw.meter as number))return false;
+ if(source!==null
+  &&(!source
+   ||typeof source!=='object'
+   ||!nonEmpty(source.edition)
+   ||!nonEmpty(source.title)
+   ||!Number.isInteger(source.grade)
+   ||!Number.isInteger(source.unit)))return false;
+ if(typeof raw.tempoBpm!=='number'
+  ||raw.tempoBpm<40
+  ||raw.tempoBpm>200
+  ||![2,3,4].includes(raw.meter as number))return false;
  const cell=raw.rhythmCell;
- if(!Array.isArray(cell)||!cell.length||cell.length>16||!cell.every(beats=>typeof beats==='number'&&beats>=.25&&beats<=4))return false;
+ if(!Array.isArray(cell)
+  ||!cell.length
+  ||cell.length>16
+  ||!cell.every(beats=>typeof beats==='number'&&beats>=.25&&beats<=4))return false;
  const range=raw.pitchRange as Record<string,unknown>|null;
  if(!range||!midi(range.low)||!midi(range.high)||(range.low as number)>(range.high as number))return false;
- if(!DENSITIES.includes(raw.onsetDensity as Density)||!BRIGHTNESSES.includes(raw.brightness as Brightness)||!TEXTBOOK_MODES.includes(raw.mode as TextbookMode))return false;
+ if(!DENSITIES.includes(raw.onsetDensity as Density)
+  ||!BRIGHTNESSES.includes(raw.brightness as Brightness)
+  ||!TEXTBOOK_MODES.includes(raw.mode as TextbookMode))return false;
  if(!LEVELS.includes(raw.repetition as Level)||!MOODS.includes(raw.mood as MoodId))return false;
- if(raw.tonic!==undefined&&!(Number.isInteger(raw.tonic)&&(raw.tonic as number)>=0&&(raw.tonic as number)<=11))return false;
+ if(raw.tonic!==undefined
+  &&!(Number.isInteger(raw.tonic)&&(raw.tonic as number)>=0&&(raw.tonic as number)<=11))return false;
  if(raw.pulse!==undefined&&raw.pulse!=='even'&&raw.pulse!=='none')return false;
  const extraction=raw.extraction as Record<string,unknown>|null;
- return !!extraction&&['code','score','example'].includes(extraction.numbers as string)&&['ai','teacher','code','example'].includes(extraction.words as string)
-  &&typeof extraction.confidence==='number'&&extraction.confidence>=0&&extraction.confidence<=1&&typeof extraction.earChecked==='boolean';
+ return !!extraction
+  &&['code','score','example'].includes(extraction.numbers as string)
+  &&['ai','teacher','code','example'].includes(extraction.words as string)
+  &&typeof extraction.confidence==='number'
+  &&extraction.confidence>=0
+  &&extraction.confidence<=1
+  &&typeof extraction.earChecked==='boolean';
 }

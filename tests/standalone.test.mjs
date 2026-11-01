@@ -9,10 +9,17 @@ test('backend workspaces and Docker images no longer require the frontend source
  assert.ok(!pkg.workspaces.includes('apps/web'));
  for(const file of ['runtime/Dockerfile','api-test/Dockerfile','media-prototype/Dockerfile']){
   const docker=await readFile(new URL('../deploy/'+file,import.meta.url),'utf8');
-  assert.doesNotMatch(docker,/apps\/web/);assert.match(docker,/COPY data\/catalogue/);
+  assert.doesNotMatch(docker,/apps\/web/);
+  assert.match(docker,/COPY data\/catalogue/);
  }
 });
 test('the independent trusted catalogue verifies all eight originals and previews',async()=>{
- const catalogue=await trustedCatalogue(true);assert.equal(catalogue.size,8);
- for(const [id,item]of catalogue){assert.ok(id.startsWith('example:'));assert.equal(item.id,id);assert.ok(item.bytes>0);assert.match(item.checksum,/^[a-f0-9]{64}$/);}
+ const catalogue=await trustedCatalogue(true);
+ assert.equal(catalogue.size,8);
+ for(const [id,item]of catalogue){
+  assert.ok(id.startsWith('example:'));
+  assert.equal(item.id,id);
+  assert.ok(item.bytes>0);
+  assert.match(item.checksum,/^[a-f0-9]{64}$/);
+ }
 });

@@ -10,26 +10,43 @@ type Limits={readonly [key:string]:Range|List|Words|Limits|'version'};
 export type RuleProblem=string;
 
 function walk(value:unknown,limits:Limits,path:string,problems:RuleProblem[]){
- if(!value||typeof value!=='object'||Array.isArray(value)){problems.push(`${path} 应该是一组参数`);return;}
+ if(!value||typeof value!=='object'||Array.isArray(value)){
+  problems.push(`${path} 应该是一组参数`);
+  return;
+ }
  const record=value as Record<string,unknown>;
  for(const key of Object.keys(record))if(!(key in limits))problems.push(`${path}.${key} 不认识（拼错了？）`);
  for(const [key,limit] of Object.entries(limits)){
-  const at=`${path}.${key}`,item=record[key];
-  if(item===undefined){problems.push(`${at} 缺少`);continue;}
-  if(limit==='version'){if(typeof item!=='string'||!item)problems.push(`${at} 应该是版本名`);continue;}
-  if(Array.isArray(limit)&&typeof limit[0]!=='number'){
-   if(!(limit as readonly unknown[]).includes(item))problems.push(`${at} = ${JSON.stringify(item)}，只能是 ${limit.join(' / ')}`);
+  const at=`${path}.${key}`;
+  const item=record[key];
+  if(item===undefined){
+   problems.push(`${at} 缺少`);
    continue;
   }
+  if(limit==='version'){
+   if(typeof item!=='string'||!item)problems.push(`${at} 应该是版本名`);
+   continue;
+  }
+  // A list of words: the value must be one of them.
+  if(Array.isArray(limit)&&typeof limit[0]!=='number'){
+   if(!(limit as readonly unknown[]).includes(item))
+    problems.push(`${at} = ${JSON.stringify(item)}，只能是 ${limit.join(' / ')}`);
+   continue;
+  }
+  // [min, max, fewest, most]: a list of numbers.
   if(Array.isArray(limit)&&limit.length===4){
    const [min,max,fewest,most]=limit as unknown as List;
-   if(!Array.isArray(item)||item.length<fewest||item.length>most){problems.push(`${at} 应该是 ${fewest}–${most} 个数字的列表`);continue;}
+   if(!Array.isArray(item)||item.length<fewest||item.length>most){
+    problems.push(`${at} 应该是 ${fewest}–${most} 个数字的列表`);
+    continue;
+   }
    item.forEach((value,i)=>{
     if(typeof value!=='number'||!Number.isFinite(value))problems.push(`${at}[${i}] 应该是数字`);
     else if(value<min||value>max)problems.push(`${at}[${i}] = ${value}，超出允许范围 [${min}, ${max}]`);
    });
    continue;
   }
+  // [min, max]: one number.
   if(Array.isArray(limit)){
    const [min,max]=limit as unknown as Range;
    if(typeof item!=='number'||!Number.isFinite(item))problems.push(`${at} 应该是数字`);
@@ -40,7 +57,12 @@ function walk(value:unknown,limits:Limits,path:string,problems:RuleProblem[]){
  }
 }
 
-export function checkRules(name:string,value:unknown,limits:Limits,relations:readonly [boolean,string][]=[]):RuleProblem[]{
+export function checkRules(
+ name:string,
+ value:unknown,
+ limits:Limits,
+ relations:readonly [boolean,string][]=[],
+):RuleProblem[]{
  const problems:RuleProblem[]=[];
  walk(value,limits,name,problems);
  if(!problems.length)for(const [ok,message] of relations)if(!ok)problems.push(`${name}: ${message}`);
@@ -55,14 +77,27 @@ export const analysisLimits={
  units:{mergeGapSeconds:[0,1],minSeconds:[.01,1],splitAboveSeconds:[.2,10],splitDipDb:[2,30],maxCount:[1,200]},
  kind:{oneMaxSeconds:[.5,10],oneDominanceDb:[3,40],seriesQuietRatio:[0,1]},
  unitLength:{shortBelowSeconds:[.05,2],longAboveSeconds:[.2,5]},
- brightness:{fftSize:[256,8192],maxFrames:[4,400],withinDb:[3,60],ignoreBelowHz:[0,1000],lowBelowHz:[100,8000],highAboveHz:[200,12000]},
+ brightness:{
+  fftSize:[256,8192],
+  maxFrames:[4,400],
+  withinDb:[3,60],
+  ignoreBelowHz:[0,1000],
+  lowBelowHz:[100,8000],
+  highAboveHz:[200,12000],
+ },
 } as const satisfies Limits;
 
 const tone={attackSeconds:[.001,.5],lowpassHz:[500,20000],highShelfDb:[-12,12]} as const;
 const wave={rateHz:[.1,12],depthCents:[0,600],gainDepth:[0,.9]} as const;
 export const shapingLimits={
  version:'version',
- level:{targetRmsDb:[-40,-6],maxBoostDb:[0,40],peakCeilingDb:[-12,0],choiceDb:{soft:[-30,0],medium:[-30,0],loud:[-30,0]},unchosenDb:[-30,0]},
+ level:{
+  targetRmsDb:[-40,-6],
+  maxBoostDb:[0,40],
+  peakCeilingDb:[-12,0],
+  choiceDb:{soft:[-30,0],medium:[-30,0],loud:[-30,0]},
+  unchosenDb:[-30,0],
+ },
  intensityTone:{soft:tone,medium:tone,loud:tone},
  pitch:{semitonesPerStep:[0,12],maxSemitones:[0,12],shelfDbPerStep:[0,12]},
  duration:{stretchPerStep:[1,4],minStretch:[.2,1],maxStretch:[1,4],textureMinStretch:[.2,1],textureMaxStretch:[1,4]},
@@ -73,21 +108,60 @@ export const shapingLimits={
  },
  pattern:{
   repeat:{minCount:[1,8],gapSeconds:[0,3],motifMaxSeconds:[.2,10],waveSeconds:[.5,10],waveGapSeconds:[0,3]},
-  bursts:{minGroups:[1,6],hitsPerGroup:[1,8],hitMaxSeconds:[.05,3],innerGapSeconds:[0,1],groupGapSeconds:[.1,3],gustSeconds:[.3,5],gainJitterDb:[0,12]},
+  bursts:{
+   minGroups:[1,6],
+   hitsPerGroup:[1,8],
+   hitMaxSeconds:[.05,3],
+   innerGapSeconds:[0,1],
+   groupGapSeconds:[.1,3],
+   gustSeconds:[.3,5],
+   gainJitterDb:[0,12],
+  },
   fadeIn:{portion:[.1,1],fromHz:[100,8000],seriesFromDb:[-40,0]},
  },
  grain:{seconds:[.02,.3]},
- edges:{unitTailSeconds:[0,1],unitGapSeconds:[0,1],releaseMinSeconds:[.005,.5],releasePortion:[0,.5],cutFadePortion:[.1,.9],textureFadeSeconds:[.05,2]},
+ edges:{
+  unitTailSeconds:[0,1],
+  unitGapSeconds:[0,1],
+  releaseMinSeconds:[.005,.5],
+  releasePortion:[0,.5],
+  cutFadePortion:[.1,.9],
+  textureFadeSeconds:[.05,2],
+ },
  limits:{cardMaxSeconds:[2,10],clipMaxSeconds:[10,120]},
 } as const satisfies Limits;
 
 const mode={scale:[0,11,7,7],melody:[0,11,3,7]} as const;
-const moodBackground={tempo:[40,180],metre:[2,4],mode:['major','minor','pentatonic','dorian'],tonic:[48,72],progression:[1,7,1,8],melodyEveryBeats:[.5,4],accent:[0,1]} as const;
+const moodBackground={
+ tempo:[40,180],
+ metre:[2,4],
+ mode:['major','minor','pentatonic','dorian'],
+ tonic:[48,72],
+ progression:[1,7,1,8],
+ melodyEveryBeats:[.5,4],
+ accent:[0,1],
+} as const;
 export const backgroundLimits={
  version:'version',
  modes:{major:mode,minor:mode,pentatonic:mode,dorian:mode},
- moods:{none:moodBackground,happy:moodBackground,calm:moodBackground,lively:moodBackground,sad:moodBackground,angry:moodBackground,scared:moodBackground,curious:moodBackground},
- melody:{liftSemitones:[0,24],rangeSemitones:[5,24],leapSteps:[1,4],minGapBeats:[.5,8],marginSeconds:[0,1],noteLengthPortion:[.2,1]},
+ moods:{
+  none:moodBackground,
+  happy:moodBackground,
+  calm:moodBackground,
+  lively:moodBackground,
+  sad:moodBackground,
+  angry:moodBackground,
+  scared:moodBackground,
+  curious:moodBackground,
+ },
+ melody:{
+  liftSemitones:[0,24],
+  rangeSemitones:[5,24],
+  leapSteps:[1,4],
+  minGapBeats:[.5,8],
+  marginSeconds:[0,1],
+  noteLengthPortion:[.2,1],
+ },
  // The melody answers the child's sounds: moves away from their register, follows the contour of the sound just heard
  // (0 = no, 1 = yes), and is a little stronger after a loud sound, lighter after a soft one.
  answer:{registerShiftSemitones:[0,12],followContour:[0,1],intensityAccent:[0,.4]},
@@ -95,7 +169,14 @@ export const backgroundLimits={
  rhythm:{two:[0,1,2,2],three:[0,1,3,3],four:[0,1,4,4],accentBoost:[0,1]},
  ending:{minRingSeconds:[.5,6]},
  // A chosen textbook song: which layers play its characteristic rhythm (0 = no, 1 = yes) and whether the key follows it.
- song:{chordsFollow:[0,1],drumsFollow:[0,1],bassFollow:[0,1],keyFollow:[0,1],chordLengthPortion:[.2,1],offbeatAccent:[0,1]},
+ song:{
+  chordsFollow:[0,1],
+  drumsFollow:[0,1],
+  bassFollow:[0,1],
+  keyFollow:[0,1],
+  chordLengthPortion:[.2,1],
+  offbeatAccent:[0,1],
+ },
  // 万物声场 with a song: only its beat — how strong the first beat of a bar and the others are, and the beat's level;
  // withOriginal: the beat's level over the song's own recording (课本灵感 听原曲; above 1, as a recording is far louder
  // than a tick — the limiter keeps the sum from clipping).
@@ -123,7 +204,12 @@ export const textbookMatchLimits={
 // 音乐类型 (music-types-v1): a recording's sound features (rhythm steady / free, one line or accompanied, drums or not),
 // each measured on its own, and the measuring path their combination takes. precheck / detect are shares 0–1 (see
 // ../README.md); paths.*.key weights how much each piece of key evidence counts.
-const measurePath={tempo:[true,false],beatCue:['onsets','bass','drums','none'],strongBeat:[true,false],key:{whole:[0,2],bass:[0,2],ending:[0,2]}} as const;
+const measurePath={
+ tempo:[true,false],
+ beatCue:['onsets','bass','drums','none'],
+ strongBeat:[true,false],
+ key:{whole:[0,2],bass:[0,2],ending:[0,2]},
+} as const;
 export const musicTypesLimits={
  version:'version',
  precheck:{tonalBelow:[0,1]},

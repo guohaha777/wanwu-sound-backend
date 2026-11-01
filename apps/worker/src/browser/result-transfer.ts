@@ -10,7 +10,9 @@ export class ResultReceiver{
    ||!chunk.length||chunk.length>RESULT_CHUNK_BYTES||offset+chunk.length>total)return 'invalid';
   if(offset!==this.received||(this.bytes!==null&&this.bytes.length!==total))return 'conflict';
   this.bytes??=new Uint8Array(total);
-  this.bytes.set(chunk,offset);this.received+=chunk.length;return 'accepted';
+  this.bytes.set(chunk,offset);
+  this.received+=chunk.length;
+  return 'accepted';
  }
  get result():Uint8Array<ArrayBuffer>|null{return this.bytes&&this.received===this.bytes.length?this.bytes:null;}
 }

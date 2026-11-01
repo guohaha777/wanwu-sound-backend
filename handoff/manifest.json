@@ -474,39 +474,39 @@
     },
     {
       "path": "packages/contracts/src/account.ts",
-      "sha256": "67082f67042187f12c68cbed0b873b696635fe085868ff4be5a7ec4ce29a8267"
+      "sha256": "bbf48ac724a46c8d07d307611f7553c2dabdc7fd1109b9225593c9a8d181f551"
     },
     {
       "path": "packages/contracts/src/api.ts",
-      "sha256": "390269373aff6a94de4e65df49d0ee697f969d8f2852f6b2cb50a6c8ad735cc4"
+      "sha256": "2207babc97b919c5634b2a2fc689c2d9f3dca4567e9f56bd9d8021aa3eb6f0c4"
     },
     {
       "path": "packages/contracts/src/arrangement.ts",
-      "sha256": "9d69ed8cf6f103b38aba7bda111616d27413a0d981263e03088473adcbdd06a1"
+      "sha256": "4e0bfd6437099958171ed91194d5ccba5d060c4980af214b38fa63037820ec1e"
     },
     {
       "path": "packages/contracts/src/background.ts",
-      "sha256": "877a22519fc14eee45eac236c3ff003cd3c9b5c7a8e9bbdb1e4a62b32bc86a39"
+      "sha256": "6f9c6d43f2f8cd8642196c843ec6c477fa8a7a11b928c0a746a1b48d7813ebf7"
     },
     {
       "path": "packages/contracts/src/cloud.ts",
-      "sha256": "5f009b029e83a93dfa51da5755b61d952f64f0495d58635645a34bf46c5fefef"
+      "sha256": "e246f90c08c41f87bea12dbe2bffe150ca77a79fa886e7931c3442d4d65bc99a"
     },
     {
       "path": "packages/contracts/src/sound.ts",
-      "sha256": "f707170720f206d9e6776c954ed79b481f3de2dbdf77e0809648db81cc47c44b"
+      "sha256": "b24dcf03938fa77d23d7a4e3d254eea0a85d316f16e777cb69fbff82f7000c16"
     },
     {
       "path": "packages/contracts/src/talk.ts",
-      "sha256": "050308a42094def843f7b0c81f8a553f22f6df7d3a595112d19775b872944fe2"
+      "sha256": "38fdf9553885f0867346541da68c6416efe9152e0658536f54d67695e456f083"
     },
     {
       "path": "packages/contracts/src/textbook.ts",
-      "sha256": "ca421377257762fb43be2f59d5171ad4716bdd9c0004da49c66c42969abdd9c0"
+      "sha256": "186342f87ffbb18621a9917687a2bb4c6db61f1bb34a80281cb4cbb4d109c640"
     },
     {
       "path": "packages/contracts/src/work.ts",
-      "sha256": "775a35b2de686d08b6a6945c116ff2d27404e7f076d86552bd887ee9671aff11"
+      "sha256": "b524f04cbbafea9592d2c7da4ac4d8584789298c486376791a523f18dedff07d"
     },
     {
       "path": "packages/sound-rules/README.md",
@@ -542,63 +542,63 @@
     },
     {
       "path": "packages/sound-rules/src/analysis.ts",
-      "sha256": "3f9694ad4a78c9f25b9607005f0a8cdcc2b0636c989275d41b161a98f1142485"
+      "sha256": "3e40a5d1909168e3903d25a86516b973d8f2177397790ec14dd9433fa6ed6daf"
     },
     {
       "path": "packages/sound-rules/src/arrange.ts",
-      "sha256": "8a64fb86c6169d442b62c4720ee244d77b9dc88fc8108a68f9b73ce7f708cf52"
+      "sha256": "08b0afce0f149a0cf98ae770dc3bed188e09f156ab240c58b610917cc175465b"
     },
     {
       "path": "packages/sound-rules/src/background.ts",
-      "sha256": "5f02958924c354e53208601f16e527947207d78e9199ea38584a3f6d8d41a607"
+      "sha256": "6f98c5f567d3b2346fc8d7add071d2f63584fadc18c6bf12a59d75173d68554a"
     },
     {
       "path": "packages/sound-rules/src/mix.ts",
-      "sha256": "96443766d8dde9ec476c5d26f7d86f3be24f6551a498c872e151d42c440faeee"
+      "sha256": "f0ae0ffb2c94406c0dbe5d8ac631d71519f7f3d4b8fdd660575992ad8530a12d"
     },
     {
       "path": "packages/sound-rules/src/random.ts",
-      "sha256": "bd2dd034582ba1dd644993c8da8f1ae670aee5b53dd274e43a69b144dd3ed5d6"
+      "sha256": "8ba71607ca6adb818e780a78b1f2a9f786fcd8b8a49beb1c781655a9cab1080e"
     },
     {
       "path": "packages/sound-rules/src/rules.ts",
-      "sha256": "b6c48b5250a557d4d1f4fafc83eb6b6fda5ee6114768c46f4525d6ceabae18cc"
+      "sha256": "89572858910de965a1f683bf3c2acf19db665163476f4ec00a3f6214083a8df1"
     },
     {
       "path": "packages/sound-rules/src/schema.ts",
-      "sha256": "b31fbadbbf54f0541f4e136a1dfbeb23711f852805ef10148c8bbfd85b7c4a1a"
+      "sha256": "6eaece44f9d90dc41625f3436dd73940756ce449b87c5ebd33f8292d18990baa"
     },
     {
       "path": "packages/sound-rules/src/shaping.ts",
-      "sha256": "5467be47189cc012f87d1683c23fd0506f832bad59e52058e319f946c7b29080"
+      "sha256": "bf698bf65fb6e69e7e6c1ec8713be945919cac31b66d55b4dd95531ef278002b"
     },
     {
       "path": "packages/sound-rules/src/spectrum.ts",
-      "sha256": "cac0a0f08709c22a9040d5f2158f97407c6c424efd5853e05c5e7737e8f04ada"
+      "sha256": "33b481c1911d57ee69f7d07d3f5c2c747bfd642092764cf2c0261c035f926d8d"
     },
     {
       "path": "packages/sound-rules/src/textbookMatch.ts",
-      "sha256": "002acd6c548adc8d35bfcd6446674206975819bd5b3dfbfbe4c6c6c0f9161c9c"
+      "sha256": "67d41ea52eff8f84442e2b4ed382b72fdb5863362f2a28eec7b463fd518c93d7"
     },
     {
       "path": "packages/sound-rules/tests/analysis.test.ts",
-      "sha256": "bf3f941aadf2cd4c0365b37e8bc3d253a954cbe189d130865ec9363818326c5f"
+      "sha256": "340fd47c2bbf86874b0f7a99d49818b13e941ac6a392ac7163165bb3a6a1afbe"
     },
     {
       "path": "packages/sound-rules/tests/background.test.ts",
-      "sha256": "149c4efc6bb44f4e10afa8a1ede6cdecc4381bb5da1376870f19cbbb0e2d64a2"
+      "sha256": "a9eeae3f2897aa231acb86f6fdce2c20a8634babb282ff75a881751827c8451e"
     },
     {
       "path": "packages/sound-rules/tests/helpers.ts",
-      "sha256": "bc298c81d713d73072d77de8319f89854a23379954b2b7ec8f625df98dc40dc3"
+      "sha256": "1ca27ad586bf3d62a300aa6e163568fa275260e534c0fc4bf9a40585e71a2a4f"
     },
     {
       "path": "packages/sound-rules/tests/rules.test.ts",
-      "sha256": "6a6a260913aa4c0fee3afa0c4e8eefeef02d2416dfed11e9c10fdd0c0d7c1074"
+      "sha256": "5f0d93430a85465de7cca6489d33b79a898787380689a90352fcefc0d1edb08d"
     },
     {
       "path": "packages/sound-rules/tests/shaping.test.ts",
-      "sha256": "24ac1761d85bf8c1ca560afeb20f5c9570a5afd4b4fddfab1fb6e911e9b48357"
+      "sha256": "19ff6dbbac9ae1f787de34b12fe61c1d6a5927032ae043ecaae04c21576f540b"
     },
     {
       "path": "packages/sound-rules/tests/textbookMatch.test.ts",
@@ -610,31 +610,31 @@
     },
     {
       "path": "packages/audio-engine/src/background.ts",
-      "sha256": "6a6d15c3ac07b382f61b0b616e30663e5ce1da5309a8ece7157c9e1e9bc3ebde"
+      "sha256": "8321db55d08e238d958a7c737475c28bc49b054896e701ce2cca8c1d8af755cf"
     },
     {
       "path": "packages/audio-engine/src/grains.ts",
-      "sha256": "f2fbeff9d1253700a163ae7a29222b0c41217838f6592ebc5c4d3f9b6be2d045"
+      "sha256": "b0f9260348ee27cf59397889ca165dbb5087ddc6dc15c6b27e83367bd422a79a"
     },
     {
       "path": "packages/audio-engine/src/instruments.ts",
-      "sha256": "2d6031b10847663092eccd60d795915366bf463be94f609b7c1fbab6c48be2f9"
+      "sha256": "e8b2b3ad64610b0de7e00bc01deda855f86c1e23595b89f2f7e68da23b51bd61"
     },
     {
       "path": "packages/audio-engine/src/pcm.ts",
-      "sha256": "b66b0090752a86105294d4d1587834fcaa06f861805180c6c8efbce2da3cc550"
+      "sha256": "fe3db6c5f0452453955af6b598bd842109aef97570424357de37f8f98c9dc444"
     },
     {
       "path": "packages/audio-engine/src/render.ts",
-      "sha256": "68e36169fca6c3bbdaa5b58578b67b14fc32175c1b1646a552fa1dad629f72b4"
+      "sha256": "d514a735de1ef9f40c6ef4fd19d168b207224462b41f86339e86fe1c3c2e1cee"
     },
     {
       "path": "packages/audio-engine/src/shaping.ts",
-      "sha256": "4d695940b7f9bc2bef0bfe571099e2c1ad5e0564cf487b732194eed47423b799"
+      "sha256": "544361376a45f1e34fa9f5978395f54ae7e7a06bb1b45485fff14eb6506246e2"
     },
     {
       "path": "packages/audio-engine/src/timeline.ts",
-      "sha256": "616562e446c37bd0701573fa74737ddb59cc5bc42d2b4e92e20cf5cd6b41ca08"
+      "sha256": "df71478fd30fd9fdcd50535bbabc7557010ded5f98344610db7b6036384bcdca"
     },
     {
       "path": "packages/audio-engine/src/version.ts",
@@ -642,7 +642,7 @@
     },
     {
       "path": "packages/audio-engine/tests/pcm.test.ts",
-      "sha256": "162d1731162a5a40fa53f84efc13280e90fef941224d764db0293521f2ff0baf"
+      "sha256": "91bb1d781659cf65e6fa9dc1192d30375b6ca8f67d8aa12d1fe4e34200fbd360"
     },
     {
       "path": "packages/prompts/README.md",
@@ -714,23 +714,23 @@
     },
     {
       "path": "packages/prompts/src/accept.ts",
-      "sha256": "3f24b7dada2837cf340826eeee6413f273c6e817e0f46c82aa06330d3c5892bb"
+      "sha256": "71297de7f4abf7b15221e3fddc784423311079cdd3d6c6490284a85be730c400"
     },
     {
       "path": "packages/prompts/src/corpus.ts",
-      "sha256": "9e03c929888f046df35da76ba1ebcab92e27dcd0ae80949aa4964ff5875ccf66"
+      "sha256": "6be8e0987540d7b00d00eb6d8c96028e47443a656dca1e6a3a3d7bea6deb8eac"
     },
     {
       "path": "packages/prompts/src/explain/accept.ts",
-      "sha256": "55b0076567752c08574733eab0ad569276112f2bc5f195a461ccd5a00f51b5dc"
+      "sha256": "8a64c67b4caab957e852ace6b77ce3340f3d64a09dd4ded732336df1944ed839"
     },
     {
       "path": "packages/prompts/src/explain/card.ts",
-      "sha256": "d4fb08e9d53b3abb3ce9fa1ed4bdddc7df22abd7eff10d094115cb1c1aca99cc"
+      "sha256": "6c93ed4c28943196ee1e51d49dad02b78418f507d41d69db8e6450fe662e0b41"
     },
     {
       "path": "packages/prompts/src/explain/corpus.ts",
-      "sha256": "c71883e9932a006f28bc62e1ea8690ff38c595e0c4a93f39c4fea59a4e08ec94"
+      "sha256": "b957cecf67805d961e4ac3ffca7544762110c17ca72227d10c953ae44feedc6e"
     },
     {
       "path": "packages/prompts/src/explain/index.ts",
@@ -738,15 +738,15 @@
     },
     {
       "path": "packages/prompts/src/explain/points.ts",
-      "sha256": "b48799b93e6ee2c1ed4218dc0b3fcfc1070033eee3c58402c7a7e2cf545a11f4"
+      "sha256": "875233af2db9c76c37b821f6277ed53fb37d1f5950c88cb27b3c834a8a635d1d"
     },
     {
       "path": "packages/prompts/src/explain/rhythm.ts",
-      "sha256": "ab31b29ba2cb28af63c05af92729192d7ff06ade1b545afe48ee553e246b7f9d"
+      "sha256": "ef462c7821f3dbaacb15cc37227c6e5f455007f0309d7f2fd8916926cfc0d9ff"
     },
     {
       "path": "packages/prompts/src/fill.ts",
-      "sha256": "44d2ab089ba1c27f9fd733af4dfc2273759cf781d2d02b0fcb29b35b4776a6e0"
+      "sha256": "a21a9258a0660b2ef962c99eb5169069dabbd5236facfdb2e1583c26a20a5ece"
     },
     {
       "path": "packages/prompts/src/style.ts",
@@ -754,43 +754,43 @@
     },
     {
       "path": "packages/prompts/src/tasks/background.ts",
-      "sha256": "2c561723debd82e6bd21377c6f255ec041c2f86e7f46a8f4217856b510bf1055"
+      "sha256": "d11959cf14929955cb47884d65d932b9bf992f151d004f7f95650b06ad2fb5a4"
     },
     {
       "path": "packages/prompts/src/tasks/features.ts",
-      "sha256": "9caf4791ff72b0438aca882ba0ac874fb30a25527f07d33b2c895fcdde77cc9f"
+      "sha256": "c34a919a56834db63c3d783548ac8bfca37fd0877f723e813cd752b2580e84ef"
     },
     {
       "path": "packages/prompts/src/tasks/files.ts",
-      "sha256": "dc1350c4a4da9127aae63021d53c441514ac7aba1fbe3dcc2569e25aa1d852d3"
+      "sha256": "6c6e46337c091722cae11d2f9675ab5f4bf09893ddd8700fb4149a7e65f17a81"
     },
     {
       "path": "packages/prompts/src/tasks/index.ts",
-      "sha256": "96a0bf7e273983865e291f02a393f25bad95da0f5ca345cf6341ad8d356bd71b"
+      "sha256": "44f29da526d2bb4be1eff70eabfb8b2e3f4ac453d4b2665d150ea1862de95b75"
     },
     {
       "path": "packages/prompts/src/tasks/reply.ts",
-      "sha256": "39ee76698e8a03d488f77362e18203f33379eabe4f68c405b0b51b1db3766277"
+      "sha256": "a2a115a049500f537ec9e913b0dd98d1cf2689d17130f0d1d9ef1b1a9946c2a3"
     },
     {
       "path": "packages/prompts/src/tasks/talk.ts",
-      "sha256": "15bdc84052eb5f656c8f0eecd418fb3c0b9ca3c9c37f88445616c8f29b6bb123"
+      "sha256": "071b50b7c3fd0034c9fdb6630022d90ba7b5e684eb38931cb2c4dca2aee05478"
     },
     {
       "path": "packages/prompts/src/tasks/words.ts",
-      "sha256": "60ddcc9dc31757a6f82a6a43d5af829c4712ef97c79ed8097d51d25dda759437"
+      "sha256": "623dcf0260623d51e2989d5b1b876f9fefad730874b47e2a1aaadbf9981fec13"
     },
     {
       "path": "packages/prompts/tests/corpus.test.ts",
-      "sha256": "be50dae723140dadee1c6668c4a7abe05d8958f94d3899ada2c91114b42ac040"
+      "sha256": "5027f875537533c8d8c4c78c124ba3d8f9a36fd621290e02215f0038c4761790"
     },
     {
       "path": "packages/prompts/tests/explain.test.ts",
-      "sha256": "af110546dd80564a4cc3cfa083fe60b5685bf3cdfa27442d8e52efd53cf00701"
+      "sha256": "ccd314be98667f49ebb5ea7ee4efbed7bf0bdd24d378e65d161a131f5c05f2d0"
     },
     {
       "path": "packages/prompts/tests/features.test.ts",
-      "sha256": "05584a1e98dcde72ebf6a814ec6822f34f7813f8cf6a23eea5c8341f81569499"
+      "sha256": "cb1921a725d519b7ec9a9426f75bb996c894c05175f4561c1db015e235f954c5"
     },
     {
       "path": "packages/prompts/tests/fixtures/briefs.ts",
@@ -798,11 +798,11 @@
     },
     {
       "path": "packages/prompts/tests/prompts.test.ts",
-      "sha256": "997935a6310bb073278a83fe2ccd41d15aa2ef6a0148d723f62a3ff97fb00603"
+      "sha256": "2372386aa8dba8b4453a3d6096b0e9b3f0e7ae6653b0d4d81539d6d72283d5d0"
     },
     {
       "path": "packages/prompts/tests/replies.test.ts",
-      "sha256": "276e71c71d1ecba6f950f799e82ab9d91485cd55ea0fb9ef2952235842077352"
+      "sha256": "4fc3729ebcb8aa76dc0c20d027b65939f0df811c9e7283a0f227edf758deef44"
     },
     {
       "path": "packages/music-features/package.json",
@@ -810,19 +810,19 @@
     },
     {
       "path": "packages/music-features/src/evaluate.ts",
-      "sha256": "38f25ab615be4516abbaa3eb746bdcd1c081b14f3548e377369d367be1c235e4"
+      "sha256": "de83117745ffd28b036d2925638a131bd38ea90c31155107bb175c695ed46554"
     },
     {
       "path": "packages/music-features/src/fft.ts",
-      "sha256": "a48077c62e38fb0a9764b14418871b5464faf15147caad28993311d770696985"
+      "sha256": "9ccb6cabcb3dd3e0234f9bdb01bb01ddd9686548c979d63b2625af821915b51a"
     },
     {
       "path": "packages/music-features/src/index.ts",
-      "sha256": "4e4edb228ad2e2b7c0a9f2177360a23559319ced4b37d7bc779100e4ffa44bb8"
+      "sha256": "84634e6e5794206c7b50c0f2cfda3e4a96c030fe653e2e37f42dbee6027159d0"
     },
     {
       "path": "packages/music-features/src/measure.ts",
-      "sha256": "35f73ed465542401892371ac3385e126c73f9b73e15f9597488a67bd70bbf18a"
+      "sha256": "77956a63f15705363c3135c7e22ba6d21085663b2aae8ad65ac06322052ae2a1"
     },
     {
       "path": "packages/music-features/tests/evaluate.test.ts",
@@ -830,7 +830,7 @@
     },
     {
       "path": "packages/music-features/tests/measure.test.ts",
-      "sha256": "ed91fd8e67e3147c55f1650a862cb07d4d2f3644ebb4c3d3ac79347de06a8840"
+      "sha256": "8deea1e9707636039569a8d163161024abc842b8e753e59ce73eccf0dcb94c51"
     }
   ]
 }

@@ -88,7 +88,10 @@ export function isValidClip(clip:unknown):clip is SourceClip{
 export function parseArrangement(value:unknown):Arrangement|null{
  if(!value||typeof value!=='object')return null;
  const raw=value as Record<string,unknown>;
- if(raw.version!==ARRANGEMENT_CONTRACT_VERSION||typeof raw.id!=='string'||!raw.id||typeof raw.updatedAt!=='string')return null;
+ if(raw.version!==ARRANGEMENT_CONTRACT_VERSION
+  ||typeof raw.id!=='string'
+  ||!raw.id
+  ||typeof raw.updatedAt!=='string')return null;
  if(raw.origin!=='example'&&raw.origin!=='child')return null;
  if(raw.mood!==null&&!isValidMood(raw.mood))return null;
  if(!Number.isInteger(raw.rows)||(raw.rows as number)<DEFAULT_ROWS||(raw.rows as number)>MAX_ROWS)return null;
@@ -96,7 +99,11 @@ export function parseArrangement(value:unknown):Arrangement|null{
  if(!Array.isArray(raw.units)||!Array.isArray(raw.events))return null;
  if(raw.units.length>ARRANGEMENT_MAX_UNITS||raw.events.length>ARRANGEMENT_MAX_EVENTS)return null;
  const units:SoundUnitDraft[]=[];
- for(const item of raw.units){const unit=parseSoundUnitDraft(item);if(!unit)return null;units.push(unit);}
+ for(const item of raw.units){
+  const unit=parseSoundUnitDraft(item);
+  if(!unit)return null;
+  units.push(unit);
+ }
  if(new Set(units.map(unit=>unit.id)).size!==units.length)return null;
  if(new Set(units.map(unit=>unit.markerIndex)).size!==units.length)return null;
  const unitIds=new Set(units.map(unit=>unit.id)),eventIds=new Set<string>();

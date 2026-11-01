@@ -15,5 +15,7 @@ export function fill(text:string,values:Readonly<Record<string,string|number>>){
 
 /** Placeholders a text may use; anything else is reported as `where 用了不认识的占位符 {x}`. */
 export function unknownPlaceholders(where:string,text:string,allowed:readonly string[]){
- return placeholders(text).filter(name=>!allowed.includes(name)).map(name=>`${where} 用了不认识的占位符 {${name}}（可用：${allowed.length?allowed.map(item=>`{${item}}`).join(' '):'无'}）`);
+ return placeholders(text)
+  .filter(name=>!allowed.includes(name))
+  .map(name=>`${where} 用了不认识的占位符 {${name}}（可用：${allowed.length?allowed.map(item=>`{${item}}`).join(' '):'无'}）`);
 }

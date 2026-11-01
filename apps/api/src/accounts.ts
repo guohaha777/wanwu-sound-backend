@@ -21,12 +21,17 @@ async function admin(tx:Tx,id:string){
 }
 
 export class Accounts{
- readonly db:Database;readonly passwords:Passwords;
- constructor(db:Database,passwords:Passwords){this.db=db;this.passwords=passwords;}
+ readonly db:Database;
+ readonly passwords:Passwords;
+ constructor(db:Database,passwords:Passwords){
+  this.db=db;
+  this.passwords=passwords;
+ }
  async authenticated(id:string,version:number){
   const [row]=await this.db.select().from(accounts).where(eq(accounts.id,id));
   if(!row||row.authVersion!==version)throw new ApiError(401,'needs-account');
-  if(row.status!=='active')throw new ApiError(403,'account-disabled');return row;
+  if(row.status!=='active')throw new ApiError(403,'account-disabled');
+  return row;
  }
  async register(input:{username:string;password:string;invitationCode:string}){
   const hash=await this.passwords.hash(input.password);
@@ -39,19 +44,25 @@ export class Accounts{
    const [row]=await tx.select().from(accounts).where(eq(accounts.id,id));
    const redeemed=await tx.update(invitations).set({redeemedBy:row!.id,redeemedAt:new Date()}).where(and(
     eq(invitations.digest,tokenDigest(input.invitationCode)),isNull(invitations.redeemedAt),isNull(invitations.revokedAt),gt(invitations.expiresAt,new Date()))).returning({id:invitations.id});
-   if(redeemed.length!==1)throw new ApiError(400,'invalid-invitation');return row!;
-  });}catch(error){if(isUnique(error))throw new ApiError(409,'username-taken');throw error;}
+   if(redeemed.length!==1)throw new ApiError(400,'invalid-invitation');
+   return row!;
+  });}catch(error){
+   if(isUnique(error))throw new ApiError(409,'username-taken');
+   throw error;
+  }
  }
  async login(username:string,password:string){
   const [row]=await this.db.select().from(accounts).where(eq(accounts.username,username));
   if(!await this.passwords.verify(row?.passwordHash??null,password))throw new ApiError(401,'invalid-credentials');
-  if(row!.status!=='active')throw new ApiError(403,'account-disabled');return row!;
+  if(row!.status!=='active')throw new ApiError(403,'account-disabled');
+  return row!;
  }
  async createInvitation(actorId:string){
   const code=randomToken(),id=randomUUID();
   return this.db.transaction(async tx=>{await admin(tx,actorId);
    const [row]=await tx.insert(invitations).values({id,digest:tokenDigest(code),createdBy:actorId,expiresAt:new Date(Date.now()+INVITATION_MS)}).returning();
-   await audit(tx,actorId,'invitation.created',id);return {...invitationView(row!),code};
+   await audit(tx,actorId,'invitation.created',id);
+   return {...invitationView(row!),code};
   });
  }
  async listInvitations(actorId:string){return this.db.transaction(async tx=>{await admin(tx,actorId);
@@ -59,12 +70,17 @@ export class Accounts{
  });}
  async revokeInvitation(actorId:string,id:string){return this.db.transaction(async tx=>{await admin(tx,actorId);
   const [row]=await tx.select().from(invitations).where(eq(invitations.id,id)).for('update');
-  if(!row)throw new ApiError(404,'not-found');if(row.redeemedAt)throw new ApiError(409,'already-redeemed');
-  if(!row.revokedAt){await tx.update(invitations).set({revokedAt:new Date()}).where(eq(invitations.id,id));await audit(tx,actorId,'invitation.revoked',id);}
+  if(!row)throw new ApiError(404,'not-found');
+  if(row.redeemedAt)throw new ApiError(409,'already-redeemed');
+  if(!row.revokedAt){
+   await tx.update(invitations).set({revokedAt:new Date()}).where(eq(invitations.id,id));
+   await audit(tx,actorId,'invitation.revoked',id);
+  }
  });}
  async setStatus(actorId:string,id:string,status:AccountStatus){return this.db.transaction(async tx=>{await admin(tx,actorId);
   const [target]=await tx.select().from(accounts).where(eq(accounts.id,id)).for('update');
-  if(!target)throw new ApiError(404,'not-found');if(target.role==='admin')throw new ApiError(403,'forbidden');
+  if(!target)throw new ApiError(404,'not-found');
+  if(target.role==='admin')throw new ApiError(403,'forbidden');
   if(target.status!==status){
    await tx.update(accounts).set({status,authVersion:sql`${accounts.authVersion}+1`,updatedAt:new Date()}).where(eq(accounts.id,id));
    await tx.delete(sessions).where(eq(sessions.accountId,id));
@@ -78,10 +94,12 @@ export class Accounts{
   const token=randomToken(),expiresAt=new Date(Date.now()+RESET_MS);
   return this.db.transaction(async tx=>{await admin(tx,actorId);
    const [target]=await tx.select().from(accounts).where(eq(accounts.id,id)).for('update');
-   if(!target)throw new ApiError(404,'not-found');if(target.status!=='active')throw new ApiError(403,'account-disabled');
+   if(!target)throw new ApiError(404,'not-found');
+   if(target.status!=='active')throw new ApiError(403,'account-disabled');
    await tx.update(passwordResets).set({revokedAt:new Date()}).where(and(eq(passwordResets.accountId,id),isNull(passwordResets.usedAt),isNull(passwordResets.revokedAt)));
    await tx.insert(passwordResets).values({id:randomUUID(),accountId:id,createdBy:actorId,digest:tokenDigest(token),expiresAt});
-   await audit(tx,actorId,'password-reset.issued',id);return {token,expiresAt:expiresAt.toISOString()};
+   await audit(tx,actorId,'password-reset.issued',id);
+   return {token,expiresAt:expiresAt.toISOString()};
   });
  }
  async resetPassword(token:string,password:string){
@@ -104,7 +122,9 @@ export class Accounts{
   const hash=await this.passwords.hash(password);
   await this.db.transaction(async tx=>{
    const [current]=await tx.select().from(accounts).where(eq(accounts.id,target.id)).for('update');
-   if(!current||current.status!=='active'||current.authVersion!==target.authVersion)throw new ApiError(401,'needs-account');
+   if(!current
+    ||current.status!=='active'
+    ||current.authVersion!==target.authVersion)throw new ApiError(401,'needs-account');
    await tx.update(accounts).set({passwordHash:hash,authVersion:sql`${accounts.authVersion}+1`,updatedAt:new Date()}).where(eq(accounts.id,target.id));
    await tx.delete(sessions).where(eq(sessions.accountId,target.id));
    await tx.update(passwordResets).set({revokedAt:new Date()}).where(and(eq(passwordResets.accountId,target.id),isNull(passwordResets.usedAt),isNull(passwordResets.revokedAt)));
@@ -115,12 +135,14 @@ export class Accounts{
 
 /** Only called by the protected deployment CLI / test seed, never an HTTP route. */
 export async function firstAdmin(db:Database,passwords:Passwords,username:string,password:string){
- const clean=loginUsername(username);if(!clean||!validPassword(password))throw new ApiError(400,'invalid-request');
+ const clean=loginUsername(username);
+ if(!clean||!validPassword(password))throw new ApiError(400,'invalid-request');
  const passwordHash=await passwords.hash(password);
  return db.transaction(async tx=>{
   await tx.execute(sql`SELECT pg_advisory_xact_lock(728091,2)`);
   if((await tx.select({id:accounts.id}).from(accounts).where(eq(accounts.role,'admin')).limit(1)).length)throw new ApiError(409,'admin-already-exists');
   const [row]=await tx.insert(accounts).values({id:randomUUID(),username:clean,nickname:clean,role:'admin',status:'active',passwordHash}).returning();
-  await audit(tx,row!.id,'admin.bootstrap',row!.id);return accountView(row!);
+  await audit(tx,row!.id,'admin.bootstrap',row!.id);
+  return accountView(row!);
  });
 }

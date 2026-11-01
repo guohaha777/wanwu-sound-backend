@@ -21,11 +21,14 @@ export function scheduleGrains(ctx:BaseAudioContext,source:AudioBuffer,plan:Shap
   const centre=k*hop,start=k===0?centre:centre-hop,length=k===0?hop:grain;
   const rate=2**(centsAt(plan,event,centre)/1200);
   const node=ctx.createBufferSource(),window=ctx.createGain();
-  node.buffer=source;node.playbackRate.value=rate;
-  window.gain.value=0;window.gain.setValueCurveAtTime(k===0?falling:hann,event.at+start,length);
+  node.buffer=source;
+  node.playbackRate.value=rate;
+  window.gain.value=0;
+  window.gain.setValueCurveAtTime(k===0?falling:hann,event.at+start,length);
   node.connect(window).connect(output);
   // The grain's middle lines up with where the event is in the source at that moment.
   const offset=event.from+centre/plan.stretch-(k===0?0:hop*rate);
-  node.start(event.at+start,Math.max(0,Math.min(offset,last)));node.stop(event.at+start+length+.005);
+  node.start(event.at+start,Math.max(0,Math.min(offset,last)));
+  node.stop(event.at+start+length+.005);
  }
 }

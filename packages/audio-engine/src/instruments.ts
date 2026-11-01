@@ -2,8 +2,12 @@ import type {BackgroundPart} from '@wanwu-v2/sound-rules/background';
 
 export type InstrumentRecipe='pad'|'bells'|'pulse';
 export type Instrument={
- id:string;name:string;source:'local-synth';recipe:InstrumentRecipe;
- lead:readonly BackgroundPart[];can:readonly BackgroundPart[];
+ id:string;
+ name:string;
+ source:'local-synth';
+ recipe:InstrumentRecipe;
+ lead:readonly BackgroundPart[];
+ can:readonly BackgroundPart[];
 };
 
 /** Existing synthesised voices, not a sampled instrument library. IDs/timbres are unchanged. */

@@ -24,7 +24,8 @@ export const AI_BACKGROUND_STEPS:readonly AiBackgroundStep[]=['audio-ai','notes-
 export type RuleVersions={analysis:string;shaping:string;background:string;mix:string};
 
 /** Only the textbook song's features — never its audio, score or melody. */
-export type TextbookFeatures=Pick<TextbookTrack,'id'|'tempoBpm'|'meter'|'rhythmCell'|'onsetDensity'|'pitchRange'|'brightness'|'mode'|'repetition'|'mood'|'tonic'>;
+export type TextbookFeatures=Pick<TextbookTrack,
+ 'id'|'tempoBpm'|'meter'|'rhythmCell'|'onsetDensity'|'pitchRange'|'brightness'|'mode'|'repetition'|'mood'|'tonic'>;
 
 export type BackgroundBrief={
  version:typeof BACKGROUND_REQUEST_VERSION;
@@ -35,7 +36,9 @@ export type BackgroundBrief={
  /** When the child's sounds are heard (seconds): the background leaves room there. */
  sounding:{start:number;end:number}[];
  /** What the local rules chose, so every step starts from the same frame. */
- tempo:number;metre:Metre;mode:TextbookTrack['mode'];
+ tempo:number;
+ metre:Metre;
+ mode:TextbookTrack['mode'];
  mood:MoodId|null;
  /** The arrangement in the same words as the textbook features. */
  arrangement:{density:Density;repetition:Level;register:Level};
@@ -52,7 +55,13 @@ export type BackgroundBrief={
 };
 
 /** One note of an AI-notes background, already developed and checked by the server with the shared rules. */
-export type BackgroundNoteData={at:number;length:number;midi:number;part:'chord'|'bass'|'melody'|'rhythm';accent:number};
+export type BackgroundNoteData={
+ at:number;
+ length:number;
+ midi:number;
+ part:'chord'|'bass'|'melody'|'rhythm';
+ accent:number;
+};
 export type BackgroundUnavailable='not-open'|'offline'|'quota'|'timeout'|'failed';
 export type BackgroundResult=
  |{status:'ready';source:'audio-ai';audioUrl:string;durationMs:number;model:string;promptVersion:string}
@@ -67,15 +76,30 @@ const PARTS=['chord','bass','melody','rhythm'];
 export function isBackgroundBrief(value:unknown):value is BackgroundBrief{
  if(!value||typeof value!=='object')return false;
  const raw=value as Record<string,unknown>;
- if(raw.version!==BACKGROUND_REQUEST_VERSION||!nonEmpty(raw.workId)||!finite(raw.seconds)||raw.seconds<=0)return false;
- if(!Array.isArray(raw.sounding)||!raw.sounding.every(span=>span&&finite(span.start)&&finite(span.end)&&span.end>=span.start))return false;
- if(!finite(raw.tempo)||![2,3,4].includes(raw.metre as number)||!TEXTBOOK_MODES.includes(raw.mode as TextbookTrack['mode']))return false;
+ if(raw.version!==BACKGROUND_REQUEST_VERSION
+  ||!nonEmpty(raw.workId)
+  ||!finite(raw.seconds)
+  ||raw.seconds<=0)return false;
+ if(!Array.isArray(raw.sounding)
+  ||!raw.sounding.every(span=>span&&finite(span.start)&&finite(span.end)&&span.end>=span.start))return false;
+ if(!finite(raw.tempo)
+  ||![2,3,4].includes(raw.metre as number)
+  ||!TEXTBOOK_MODES.includes(raw.mode as TextbookTrack['mode']))return false;
  if(raw.mood!==null&&!MOODS.includes(raw.mood as MoodId))return false;
  const arrangement=raw.arrangement as Record<string,unknown>|null;
- if(!arrangement||!DENSITIES.includes(arrangement.density as Density)||!LEVELS.includes(arrangement.repetition as Level)||!LEVELS.includes(arrangement.register as Level))return false;
+ if(!arrangement
+  ||!DENSITIES.includes(arrangement.density as Density)
+  ||!LEVELS.includes(arrangement.repetition as Level)
+  ||!LEVELS.includes(arrangement.register as Level))return false;
  if(!Array.isArray(raw.instruments)||!raw.instruments.every(nonEmpty))return false;
  const teaching=raw.teachingMusic as Record<string,unknown>|null|undefined;
- if(teaching!==null&&(!teaching||typeof teaching!=='object'||!nonEmpty(teaching.musicId)||Object.keys(teaching).length!==1||raw.textbook!==null))return false;
+ // Teaching music: only its id, and never together with a textbook song.
+ if(teaching!==null
+  &&(!teaching
+   ||typeof teaching!=='object'
+   ||!nonEmpty(teaching.musicId)
+   ||Object.keys(teaching).length!==1
+   ||raw.textbook!==null))return false;
  const rules=raw.rules as Record<string,unknown>|null;
  return !!rules&&['analysis','shaping','background','mix'].every(key=>nonEmpty(rules[key]));
 }
@@ -84,16 +108,38 @@ export function isBackgroundBrief(value:unknown):value is BackgroundBrief{
 export function parseBackgroundResult(value:unknown,seconds:number):BackgroundResult|null{
  if(!value||typeof value!=='object')return null;
  const raw=value as Record<string,unknown>;
- if(raw.status==='unavailable')return BACKGROUND_UNAVAILABLE.includes(raw.reason as BackgroundUnavailable)?raw as BackgroundResult:null;
+ if(raw.status==='unavailable')
+  return BACKGROUND_UNAVAILABLE.includes(raw.reason as BackgroundUnavailable)?raw as BackgroundResult:null;
  if(raw.status!=='ready'||!nonEmpty(raw.model)||!nonEmpty(raw.promptVersion))return null;
  if(raw.source==='audio-ai'){
   const url=raw.audioUrl;
-  return nonEmpty(url)&&/^https:\/\//.test(url)&&finite(raw.durationMs)&&raw.durationMs>0&&raw.durationMs<=seconds*1000+500?raw as BackgroundResult:null;
+  // An https file, no longer than the piece (half a second of slack).
+  return nonEmpty(url)
+   &&/^https:\/\//.test(url)
+   &&finite(raw.durationMs)
+   &&raw.durationMs>0
+   &&raw.durationMs<=seconds*1000+500
+   ?raw as BackgroundResult
+   :null;
  }
  if(raw.source==='notes-ai'){
   const notes=raw.notes;
-  return Array.isArray(notes)&&notes.length>0&&notes.every(note=>note&&finite(note.at)&&note.at>=0&&finite(note.length)&&note.length>0&&note.at+note.length<=seconds+1e-6
-   &&Number.isInteger(note.midi)&&PARTS.includes(note.part)&&finite(note.accent)&&note.accent>=0&&note.accent<=1)?raw as BackgroundResult:null;
+  // Every note inside the piece, with a real pitch, a known part and an accent of 0–1.
+  return Array.isArray(notes)
+   &&notes.length>0
+   &&notes.every(note=>note
+    &&finite(note.at)
+    &&note.at>=0
+    &&finite(note.length)
+    &&note.length>0
+    &&note.at+note.length<=seconds+1e-6
+    &&Number.isInteger(note.midi)
+    &&PARTS.includes(note.part)
+    &&finite(note.accent)
+    &&note.accent>=0
+    &&note.accent<=1)
+   ?raw as BackgroundResult
+   :null;
  }
  return null;
 }

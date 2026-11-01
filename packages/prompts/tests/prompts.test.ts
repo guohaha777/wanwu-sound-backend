@@ -28,7 +28,8 @@ test('a bad prompt edit is reported in plain words',()=>{
  const file={...structuredClone(WORK_TALK_PROMPT),lines:['长 {second} 秒'],words:{mood:{none:'没选',hapy:'开心'}}} as PromptFile;
  const problems=promptProblems(file,spec).join('\n');
  assert.match(problems,/work-talk\.lines\[0\] 用了不认识的占位符 \{second\}/);
- assert.match(problems,/words\.mood\.happy 缺少/);assert.match(problems,/words\.mood\.hapy 不认识/);
+ assert.match(problems,/words\.mood\.happy 缺少/);
+ assert.match(problems,/words\.mood\.hapy 不认识/);
  assert.match(promptProblems({...file,task:'x',temperature:3},spec).join('\n'),/task 应该是 work-talk[\s\S]*temperature 应该在 0–1.5/);
 });
 
@@ -46,15 +47,19 @@ test('language tasks share the system prompt with the style words; the music mod
  const talk=buildWorkTalk(workBrief),audio=buildBackgroundAudio(calmLullaby);
  for(const word of [...STYLE.childAvoid,...STYLE.neverSay])assert.ok(talk.system!.includes(word),word);
  assert.match(talk.system!,/只返回一个合法的 JSON 对象/);
- assert.equal(audio.system,null);assert.doesNotMatch(audio.prompt,/\n/);
- assert.match(audio.prompt,/长度 30 秒/);assert.match(audio.prompt,/不要人声/);assert.match(audio.prompt,/约占全曲 27%/);
+ assert.equal(audio.system,null);
+ assert.doesNotMatch(audio.prompt,/\n/);
+ assert.match(audio.prompt,/长度 30 秒/);
+ assert.match(audio.prompt,/不要人声/);
+ assert.match(audio.prompt,/约占全曲 27%/);
 });
 
 test('work talk: each fact with its local sentence, sounds only as tokens',()=>{
  const {prompt}=buildWorkTalk(workBrief);
  assert.match(prompt,/1\. kind=opening｜first=声音1，next=声音2｜本地说法：「声音1」先出现，「声音2」随后跟上。/);
  assert.match(prompt,/kind=long-short｜long=声音2，longSeconds=6\.2/);
- assert.match(prompt,/课本歌曲：「摇篮曲」/);assert.match(prompt,/不超过 45 个字/);
+ assert.match(prompt,/课本歌曲：「摇篮曲」/);
+ assert.match(prompt,/不超过 45 个字/);
 });
 
 test('AI notes: four sections counted from the sounding spans; asking again asks for a different motif',()=>{

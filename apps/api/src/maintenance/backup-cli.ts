@@ -10,15 +10,31 @@ import {pgCommand} from './pgTools.ts';
 const database=openDatabase(process.env.WANWU_MIGRATION_DATABASE_URL??'','owner'),runId=randomUUID();
 let directory:string|undefined;
 try{
- const keyPath=process.env.WANWU_BACKUP_PUBLIC_KEY_FILE;if(!keyPath?.startsWith('/'))throw new Error('new-backup-public-key-required');
- const publicPem=await readFile(keyPath,'utf8');directory=await mkdtemp(join(tmpdir(),'wanwu-encrypted-backup-'));
+ const keyPath=process.env.WANWU_BACKUP_PUBLIC_KEY_FILE;
+ if(!keyPath?.startsWith('/'))throw new Error('new-backup-public-key-required');
+ const publicPem=await readFile(keyPath,'utf8');
+ directory=await mkdtemp(join(tmpdir(),'wanwu-encrypted-backup-'));
  await database.pool.query("INSERT INTO maintenance_runs(id,kind,status) VALUES($1,'backup','running')",[runId]);
- const dump=pgCommand('pg_dump',process.env.WANWU_MIGRATION_DATABASE_URL!,['--format=custom','--compress=3','--no-owner','--no-privileges']);dump.child.stdin.end();
+ const dump=pgCommand('pg_dump',process.env.WANWU_MIGRATION_DATABASE_URL!,['--format=custom','--compress=3','--no-owner','--no-privileges']);
+ dump.child.stdin.end();
  const file=join(directory,'database.wwb');
- let result;try{[result]=await Promise.all([encryptBackup(dump.child.stdout,file,publicPem),dump.done]);}catch(error){dump.child.kill('SIGTERM');throw error;}
- const store=new BackupStore();await store.upload(file,result.bytes,result.checksum);const removed=await store.prune();
+ let result;
+ try{[result]=await Promise.all([encryptBackup(dump.child.stdout,file,publicPem),dump.done]);}catch(error){
+  dump.child.kill('SIGTERM');
+  throw error;
+ }
+ const store=new BackupStore();
+ await store.upload(file,result.bytes,result.checksum);
+ const removed=await store.prune();
  const counts={encryptedBytes:result.bytes,expiredBackupVersions:removed};
  await database.pool.query("UPDATE maintenance_runs SET status='pass',counts=$2,finished_at=now() WHERE id=$1",[runId,JSON.stringify(counts)]);
  console.log(JSON.stringify({kind:'backup',status:'pass',...counts}));
-}catch{await database.pool.query("UPDATE maintenance_runs SET status='failed',finished_at=now() WHERE id=$1",[runId]).catch(()=>{});console.error('Wanwu encrypted backup failed; details suppressed.');process.exitCode=1;}
-finally{if(directory)await rm(directory,{recursive:true,force:true});await database.close();}
+}catch{
+ await database.pool.query("UPDATE maintenance_runs SET status='failed',finished_at=now() WHERE id=$1",[runId]).catch(()=>{});
+ console.error('Wanwu encrypted backup failed; details suppressed.');
+ process.exitCode=1;
+}
+finally{
+ if(directory)await rm(directory,{recursive:true,force:true});
+ await database.close();
+}

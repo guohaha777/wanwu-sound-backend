@@ -16,7 +16,8 @@ export {readReply} from './reply.ts';
 export {SYSTEM_PROMPT,promptProblems} from './files.ts';
 export type {BuiltPrompt,PromptFile,PromptSpec} from './files.ts';
 
-export type TaskId='background-audio'|'background-notes'|'work-talk'|'textbook-talk'|'sound-hint'|'mood-words'|'textbook-words'|'textbook-features';
+export type TaskId='background-audio'|'background-notes'|'work-talk'|'textbook-talk'|'sound-hint'|'mood-words'
+ |'textbook-words'|'textbook-features';
 /**
  * Who answers when the model does not: every task has a fallback that needs no network. `runtime` tasks run while a
  * child uses the site; `development` ones once, before a textbook card ships (and a person checks the result by ear).
@@ -34,5 +35,12 @@ export const TASKS:Record<TaskId,TaskInfo>={
 };
 export const TASK_IDS=Object.keys(TASKS) as TaskId[];
 
-/** Versions of the shared system prompt, the explanation card's, and every task prompt; an AI result carries the one it was made with. */
-export const PROMPT_VERSIONS={system:SYSTEM_PROMPT.version,explainSystem:EXPLAIN_SYSTEM_PROMPT.version,...Object.fromEntries(TASK_IDS.map(id=>[id,TASKS[id].file.version]))} as Readonly<Record<'system'|'explainSystem'|TaskId,string>>;
+/**
+ * Versions of the shared system prompt, the explanation card's, and every task prompt; an AI result carries the one it
+ * was made with.
+ */
+export const PROMPT_VERSIONS={
+ system:SYSTEM_PROMPT.version,
+ explainSystem:EXPLAIN_SYSTEM_PROMPT.version,
+ ...Object.fromEntries(TASK_IDS.map(id=>[id,TASKS[id].file.version])),
+} as Readonly<Record<'system'|'explainSystem'|TaskId,string>>;

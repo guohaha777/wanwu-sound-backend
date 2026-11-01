@@ -11,8 +11,12 @@ import {transaction} from '../db/transaction.ts';
 import {ApiError} from '../errors.ts';
 
 export class Library{
- readonly context:CloudContext;readonly sources:Sources;
- constructor(context:CloudContext,sources:Sources){this.context=context;this.sources=sources;}
+ readonly context:CloudContext;
+ readonly sources:Sources;
+ constructor(context:CloudContext,sources:Sources){
+  this.context=context;
+  this.sources=sources;
+ }
  private unit(value:unknown,source:SourceRow):SoundUnitDraft|null{
   const unit=parseSoundUnitDraft(value);
   if(!unit||Object.keys(unit).some(key=>!['version','id','sourceId','name','maker','markerIndex','shape','input','createdAt','analysis'].includes(key))
@@ -26,15 +30,18 @@ export class Library{
    ||typeof value.sourceId!=='string'||!['private','teachers'].includes(value.scope as string))throw new ApiError(400,'invalid-request');
   if(!confirmed(value.confirmation))throw new ApiError(400,'confirmation-required');
   return transaction(this.context.pool,async tx=>{
-   await lockActor(tx,actor);const source=await authorizedSource(tx,actor,value.sourceId as string);
+   await lockActor(tx,actor);
+   const source=await authorizedSource(tx,actor,value.sourceId as string);
    if(source.status!=='ready')throw new ApiError(409,'source-not-ready');
-   const unit=kind==='sound-unit'?this.unit(value.unit,source):null;if(kind==='sound-unit'&&!unit)throw new ApiError(400,'invalid-request');
+   const unit=kind==='sound-unit'?this.unit(value.unit,source):null;
+   if(kind==='sound-unit'&&!unit)throw new ApiError(400,'invalid-request');
    const id=randomUUID(),confirmation=randomUUID();
    await tx.query('INSERT INTO confirmations(id,actor_id,kind,target_id,fingerprint,parameters,statement_version) VALUES($1,$2,\'library\',$3,$4,$5,$6)',
     [confirmation,actor.id,id,source.checksum,JSON.stringify({kind,scope:value.scope,unit,playbackChecksum:source.playback_checksum,selection:source.selection,parametersHash:digest(unit)}),CONFIRMATION_VERSION]);
    await tx.query('INSERT INTO library_entries(id,owner_id,source_id,kind,scope,unit,source_checksum,confirmation_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8)',
     [id,actor.id,source.id,kind,value.scope,unit?JSON.stringify(unit):null,source.checksum,confirmation]);
-   await audit(tx,actor.id,'library.created',id);return {entryId:id};
+   await audit(tx,actor.id,'library.created',id);
+   return {entryId:id};
   });
  }
  async list(actor:Actor,kind:'source'|'sound-unit',scope:'mine'|'teachers',cursor:string|null){
@@ -56,20 +63,25 @@ export class Library{
  }
  async edit(actor:Actor,id:string,body:unknown){
   const input=body as {scope:LibraryScope;unit?:unknown;confirmation:unknown}|null;
-  if(!input||!['private','teachers'].includes(input.scope)||!confirmed(input.confirmation))throw new ApiError(400,'confirmation-required');
+  if(!input
+   ||!['private','teachers'].includes(input.scope)
+   ||!confirmed(input.confirmation))throw new ApiError(400,'confirmation-required');
   return transaction(this.context.pool,async tx=>{
    await lockActor(tx,actor);
    const entry=(await tx.query('SELECT * FROM library_entries WHERE id=$1 AND owner_id=$2 AND removed_at IS NULL AND disabled_at IS NULL',[id,actor.id])).rows[0];
    if(!entry)throw new ApiError(404,'not-found');
    if(!exactObject(input,entry.kind==='source'?['scope','confirmation']:['scope','unit','confirmation']))throw new ApiError(400,'invalid-request');
-   const source=await authorizedSource(tx,actor,entry.source_id);if(source.status!=='ready')throw new ApiError(409,'source-not-ready');
+   const source=await authorizedSource(tx,actor,entry.source_id);
+   if(source.status!=='ready')throw new ApiError(409,'source-not-ready');
    if(!(await tx.query('SELECT id FROM library_entries WHERE id=$1 AND owner_id=$2 AND removed_at IS NULL AND disabled_at IS NULL FOR UPDATE',[id,actor.id])).rowCount)throw new ApiError(404,'not-found');
-   const unit=entry.kind==='sound-unit'?this.unit(input.unit,source):null;if(entry.kind==='sound-unit'&&!unit)throw new ApiError(400,'invalid-request');
+   const unit=entry.kind==='sound-unit'?this.unit(input.unit,source):null;
+   if(entry.kind==='sound-unit'&&!unit)throw new ApiError(400,'invalid-request');
    const confirmation=randomUUID();
    await tx.query('INSERT INTO confirmations(id,actor_id,kind,target_id,fingerprint,parameters,statement_version) VALUES($1,$2,\'library\',$3,$4,$5,$6)',
     [confirmation,actor.id,id,source.checksum,JSON.stringify({kind:entry.kind,scope:input.scope,unit,playbackChecksum:source.playback_checksum,selection:source.selection,parametersHash:digest(unit)}),CONFIRMATION_VERSION]);
    await tx.query('UPDATE library_entries SET scope=$2,unit=$3,confirmation_id=$4,updated_at=now() WHERE id=$1',[id,input.scope,unit?JSON.stringify(unit):null,confirmation]);
-   await audit(tx,actor.id,'library.updated',id);return {entryId:id};
+   await audit(tx,actor.id,'library.updated',id);
+   return {entryId:id};
   });
  }
  async remove(actor:Actor,id:string){return transaction(this.context.pool,async tx=>{

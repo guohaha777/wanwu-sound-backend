@@ -15,7 +15,8 @@ async function files(dir,base=dir){
  for(const entry of await readdir(dir,{withFileTypes:true})){
   if(skip(entry.name))continue;
   const full=path.join(dir,entry.name);
-  if(entry.isDirectory())out.push(...await files(full,base));else out.push(path.relative(base,full));
+  if(entry.isDirectory())out.push(...await files(full,base));
+  else out.push(path.relative(base,full));
  }
  return out.sort();
 }
@@ -33,7 +34,10 @@ export async function main(args=process.argv.slice(2)){
    const [x,y]=[a.includes(file)?await sha(path.join(from,file)):null,b.includes(file)?await sha(path.join(to,file)):null];
    if(x!==y)changed.push(`packages/${name}/${file}`);
   }
-  if(!dry){await rm(to,{recursive:true,force:true});await cp(from,to,{recursive:true,filter:source=>!skip(path.basename(source))});}
+  if(!dry){
+   await rm(to,{recursive:true,force:true});
+   await cp(from,to,{recursive:true,filter:source=>!skip(path.basename(source))});
+  }
  }
  if(!dry){
   const manifestFile=path.join(root,'handoff/manifest.json'),manifest=JSON.parse(await readFile(manifestFile,'utf8'));
@@ -44,4 +48,7 @@ export async function main(args=process.argv.slice(2)){
  }
  console.log(JSON.stringify({status:dry?'dry-run':'synced',changed},null,1));
 }
-if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url))main().catch(error=>{console.error(error.message);process.exitCode=1;});
+if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url))main().catch(error=>{
+ console.error(error.message);
+ process.exitCode=1;
+});

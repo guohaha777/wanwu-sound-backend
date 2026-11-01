@@ -9,7 +9,8 @@ import {LOCAL_INSTRUMENTS} from '@wanwu-v2/audio-engine/instruments';
 import type {ChosenShape} from '@wanwu-v2/contracts/sound';
 
 function difference(left:AudioBuffer,right:AudioBuffer){
- if(left.length!==right.length||left.numberOfChannels!==right.numberOfChannels)throw new Error('different-render-length');
+ if(left.length!==right.length
+  ||left.numberOfChannels!==right.numberOfChannels)throw new Error('different-render-length');
  let maximum=0;
  for(let c=0;c<left.numberOfChannels;c++){
   const a=left.getChannelData(c),b=right.getChannelData(c);
@@ -44,6 +45,7 @@ export async function run(){
   const parts=assignParts(chosen),voices=Object.fromEntries(chosen.map(instrument=>[instrument.id,instrument.recipe]));
   maxBackgroundDifference=Math.max(maxBackgroundDifference,difference(await renderBackground(plan,parts,voices),await legacyBackground(plan,parts,voices)));
  }
- let originalDifference=0;for(let i=0;i<original.length;i++)originalDifference=Math.max(originalDifference,Math.abs(original[i]!-source.getChannelData(0)[i]!));
+ let originalDifference=0;
+ for(let i=0;i<original.length;i++)originalDifference=Math.max(originalDifference,Math.abs(original[i]!-source.getChannelData(0)[i]!));
  return {shapingCases:shapes.length,backgroundCases:choices.length,maxShapingDifference,maxBackgroundDifference,originalDifference};
 }

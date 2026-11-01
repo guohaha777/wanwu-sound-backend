@@ -45,7 +45,10 @@ export function missingProvenance(source:SoundSource):('label'|'recordedBy'|'rec
  return missing;
 }
 /** Trim and cap free-text provenance; empty becomes null so "not filled" is explicit. */
-export function cleanSourceText(value:string){const clean=[...value.replace(/\s+/g,' ').trim()].slice(0,SOURCE_TEXT_MAX).join('');return clean||null;}
+export function cleanSourceText(value:string){
+ const clean=[...value.replace(/\s+/g,' ').trim()].slice(0,SOURCE_TEXT_MAX).join('');
+ return clean||null;
+}
 
 export type PitchChoice='low'|'mid'|'high';
 export type DurationChoice='short'|'medium'|'long';
@@ -53,7 +56,13 @@ export type ContourChoice='rising'|'falling'|'flat'|'wavy';
 export type IntensityChoice='soft'|'medium'|'loud';
 export type PatternChoice='once'|'repeat'|'bursts'|'fade-in';
 /** The five paper-card dimensions: 高低、长短、变化、轻响、出现方式. No sixth dimension. */
-export type SoundShape={pitch:PitchChoice;duration:DurationChoice;contour:ContourChoice;intensity:IntensityChoice;pattern:PatternChoice};
+export type SoundShape={
+ pitch:PitchChoice;
+ duration:DurationChoice;
+ contour:ContourChoice;
+ intensity:IntensityChoice;
+ pattern:PatternChoice;
+};
 export type SoundDimension=keyof SoundShape;
 
 export const SOUND_DIMENSIONS:readonly SoundDimension[]=['pitch','duration','contour','intensity','pattern'];
@@ -111,7 +120,8 @@ export const SOUND_SOURCE_SLACK_MS=500;
 /** Only known dimensions, each with a valid value; any subset (including none) is allowed. */
 export function isChosenShape(shape:unknown):shape is ChosenShape{
  if(!shape||typeof shape!=='object'||Array.isArray(shape))return false;
- return Object.entries(shape).every(([dimension,value])=>(SOUND_DIMENSIONS as readonly string[]).includes(dimension)
+ return Object.entries(shape).every(([dimension,value])=>
+  (SOUND_DIMENSIONS as readonly string[]).includes(dimension)
   &&(SOUND_CHOICES[dimension as SoundDimension] as readonly string[]).includes(value as string));
 }
 
@@ -119,7 +129,10 @@ export function isCompleteShape(shape:Partial<SoundShape>):shape is SoundShape{
  return SOUND_DIMENSIONS.every(dimension=>(SOUND_CHOICES[dimension] as readonly string[]).includes(shape[dimension] as string));
 }
 
-export function normalizeMakerName(name:string){const clean=[...name.replace(/\s+/g,'').trim()].slice(0,MAKER_NAME_MAX).join('');return clean||null;}
+export function normalizeMakerName(name:string){
+ const clean=[...name.replace(/\s+/g,'').trim()].slice(0,MAKER_NAME_MAX).join('');
+ return clean||null;
+}
 
 export function normalizeSoundName(name:string,fallback:string){
  const clean=[...name.replace(/\s+/g,' ').trim()].slice(0,SOUND_NAME_MAX).join('');
@@ -179,16 +192,29 @@ export type SoundAnalysis={
 };
 
 const finite=(value:unknown):value is number=>typeof value==='number'&&Number.isFinite(value);
-const isSpan=(value:unknown):value is SoundSpan=>!!value&&typeof value==='object'
- &&finite((value as SoundSpan).startMs)&&finite((value as SoundSpan).endMs)&&(value as SoundSpan).startMs<=(value as SoundSpan).endMs;
+const isSpan=(value:unknown):value is SoundSpan=>!!value
+ &&typeof value==='object'
+ &&finite((value as SoundSpan).startMs)
+ &&finite((value as SoundSpan).endMs)
+ &&(value as SoundSpan).startMs<=(value as SoundSpan).endMs;
 /** Validates a stored or received analysis before shaping trusts it. */
 export function isSoundAnalysis(value:unknown):value is SoundAnalysis{
  if(!value||typeof value!=='object')return false;
  const a=value as Record<string,unknown>;
- return typeof a.rules==='string'&&!!a.rules&&finite(a.durationMs)&&typeof a.silent==='boolean'&&(a.main===null||isSpan(a.main))
-  &&Array.isArray(a.units)&&a.units.every(unit=>isSpan(unit)&&finite((unit as unknown as {peakDb:unknown}).peakDb))
-  &&SOUND_KINDS.includes(a.kind as SoundKind)&&finite(a.unitMs)&&SOUND_CHOICES.duration.includes(a.lengthBand as DurationChoice)
-  &&finite(a.loudnessDb)&&finite(a.peakDb)&&finite(a.brightnessHz)&&SOUND_CHOICES.pitch.includes(a.band as PitchChoice);
+ return typeof a.rules==='string'
+  &&!!a.rules
+  &&finite(a.durationMs)
+  &&typeof a.silent==='boolean'
+  &&(a.main===null||isSpan(a.main))
+  &&Array.isArray(a.units)
+  &&a.units.every(unit=>isSpan(unit)&&finite((unit as unknown as {peakDb:unknown}).peakDb))
+  &&SOUND_KINDS.includes(a.kind as SoundKind)
+  &&finite(a.unitMs)
+  &&SOUND_CHOICES.duration.includes(a.lengthBand as DurationChoice)
+  &&finite(a.loudnessDb)
+  &&finite(a.peakDb)
+  &&finite(a.brightnessHz)
+  &&SOUND_CHOICES.pitch.includes(a.band as PitchChoice);
 }
 
 const text=(value:unknown)=>value===null||typeof value==='string';
@@ -198,12 +224,21 @@ const text=(value:unknown)=>value===null||typeof value==='string';
  */
 export function isSoundSource(value:unknown):value is SoundSource{
  if(!value||typeof value!=='object')return false;
- const s=value as Record<string,unknown>,p=s.provenance as Record<string,unknown>|null;
- if(typeof s.id!=='string'||!s.id||!SOUND_SOURCE_KINDS.includes(s.kind as SoundSourceKind)||typeof s.label!=='string')return false;
- if(!finite(s.durationMs)||s.durationMs<=0||(s.kind!=='example'&&s.durationMs>SOUND_SOURCE_MAX_MS+SOUND_SOURCE_SLACK_MS))return false;
+ const s=value as Record<string,unknown>;
+ const p=s.provenance as Record<string,unknown>|null;
+ if(typeof s.id!=='string'
+  ||!s.id
+  ||!SOUND_SOURCE_KINDS.includes(s.kind as SoundSourceKind)
+  ||typeof s.label!=='string')return false;
+ if(!finite(s.durationMs)
+  ||s.durationMs<=0
+  ||(s.kind!=='example'&&s.durationMs>SOUND_SOURCE_MAX_MS+SOUND_SOURCE_SLACK_MS))return false;
  // MIME is only a browser/file hint. The server validates real container/codec bytes before ready.
- if(typeof s.mimeType!=='string'||! /^(?:audio\/|video\/(?:mp4|webm)(?:;|$)|application\/(?:octet-stream|ogg)(?:;|$))/.test(s.mimeType))return false;
- return !!p&&typeof p==='object'&&['recordedBy','recordedOn','place','group','provenanceUrl'].every(key=>text(p[key]));
+ if(typeof s.mimeType!=='string'
+  ||! /^(?:audio\/|video\/(?:mp4|webm)(?:;|$)|application\/(?:octet-stream|ogg)(?:;|$))/.test(s.mimeType))return false;
+ return !!p
+  &&typeof p==='object'
+  &&['recordedBy','recordedOn','place','group','provenanceUrl'].every(key=>text(p[key]));
 }
 
 /**

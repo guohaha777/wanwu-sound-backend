@@ -5,12 +5,26 @@ import type {Metre,TextbookMode} from '@wanwu-v2/contracts/textbook';
 import type {MeasurePath} from '@wanwu-v2/sound-rules/rules';
 import type {Measurement,SoundFeatures} from './measure.ts';
 
-/** What a professional may fill in (all optional). `voice` (人声) is kept for the audio model; the program does not judge it. */
+/**
+ * What a professional may fill in (all optional). `voice` (人声) is kept for the audio model; the program does not
+ * judge it.
+ */
 export type MusicAnswers={
- tonic?:number;mode?:TextbookMode;meter?:Metre;tempoBpm?:number;downbeatSeconds?:number;rhythmCell?:number[];
- musical?:boolean;rhythm?:SoundFeatures['rhythm'];texture?:SoundFeatures['texture'];drums?:boolean;voice?:boolean;
+ tonic?:number;
+ mode?:TextbookMode;
+ meter?:Metre;
+ tempoBpm?:number;
+ downbeatSeconds?:number;
+ rhythmCell?:number[];
+ musical?:boolean;
+ rhythm?:SoundFeatures['rhythm'];
+ texture?:SoundFeatures['texture'];
+ drums?:boolean;
+ voice?:boolean;
 };
-export const ANSWER_FIELDS=['musical','rhythm','texture','drums','tempoBpm','meter','downbeatSeconds','tonic','mode','rhythmCell'] as const;
+export const ANSWER_FIELDS=[
+ 'musical','rhythm','texture','drums','tempoBpm','meter','downbeatSeconds','tonic','mode','rhythmCell',
+] as const;
 export type AnswerField=typeof ANSWER_FIELDS[number];
 /** One judged field. `note` names a typical slip: double / half tempo, the relative key, a strong beat a beat off. */
 export type FieldCheck={field:AnswerField;ok:boolean;note?:'double'|'half'|'relative'|'offbeat'};
@@ -46,7 +60,9 @@ export function judge(m:Measurement,a:MusicAnswers,picked:readonly number[]=m.ca
  if(a.tonic!==undefined){
   const ok=m.tonic===a.tonic;
   // The relative key: a major key read as the minor a minor third below, or the other way round.
-  const relative=a.mode!==undefined&&a.mode!==m.mode&&(a.mode==='minor'?(a.tonic+3)%12===m.tonic:(a.tonic+9)%12===m.tonic);
+  const relative=a.mode!==undefined
+   &&a.mode!==m.mode
+   &&(a.mode==='minor'?(a.tonic+3)%12===m.tonic:(a.tonic+9)%12===m.tonic);
   put('tonic',ok,!ok&&relative?'relative':undefined);
  }
  if(a.mode!==undefined)put('mode',m.mode===a.mode);
@@ -64,7 +80,8 @@ export function summarise(recordings:readonly Pick<JudgedRecording,'checks'>[]):
  const out:Summary={};
  for(const {checks} of recordings)for(const check of checks){
   const score=out[check.field]??={right:0,judged:0,notes:{}};
-  score.judged++;if(check.ok)score.right++;
+  score.judged++;
+  if(check.ok)score.right++;
   if(check.note)score.notes[check.note]=(score.notes[check.note]??0)+1;
  }
  return out;
@@ -74,7 +91,12 @@ export function summarise(recordings:readonly Pick<JudgedRecording,'checks'>[]):
 export function report(recordings:readonly JudgedRecording[]){
  const sets=['system','test'] as const;
  return Object.fromEntries(sets.map(set=>{
-  const mine=recordings.filter(r=>r.set===set),paths=[...new Set(mine.map(r=>r.path))];
-  return [set,{count:mine.length,all:summarise(mine),byPath:Object.fromEntries(paths.map(path=>[path,summarise(mine.filter(r=>r.path===path))]))}];
+  const mine=recordings.filter(r=>r.set===set);
+  const paths=[...new Set(mine.map(r=>r.path))];
+  return [set,{
+   count:mine.length,
+   all:summarise(mine),
+   byPath:Object.fromEntries(paths.map(path=>[path,summarise(mine.filter(r=>r.path===path))])),
+  }];
  })) as Record<'system'|'test',{count:number;all:Summary;byPath:Partial<Record<MeasurePath,Summary>>}>;
 }

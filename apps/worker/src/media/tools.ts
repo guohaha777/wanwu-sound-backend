@@ -5,7 +5,11 @@ const execute=promisify(execFile);
 export type MediaTools={ffmpeg:string;ffprobe:string;signal?:AbortSignal};
 export class MediaError extends Error{
  readonly reason:string;
- constructor(reason:string){super(reason);this.name='MediaError';this.reason=reason;}
+ constructor(reason:string){
+  super(reason);
+  this.name='MediaError';
+  this.reason=reason;
+ }
 }
 export const MAX_SOURCE_BYTES=20*1024*1024;
 export const MAX_SOURCE_SECONDS=45.5;

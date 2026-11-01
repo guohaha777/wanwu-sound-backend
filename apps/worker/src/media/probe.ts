@@ -21,5 +21,8 @@ export async function probeAudio(file:string,ffprobe:string,signal?:AbortSignal)
  const result=await runMediaTool(ffprobe,['-v','error',...INPUT_FLAGS,'-show_entries',
   'format=format_name,duration:stream=codec_type,codec_name,channels,sample_rate','-of','json','-i',file],60_000,signal);
  try{return validateProbe(JSON.parse(result.stdout));}
- catch(error){if(error instanceof MediaError)throw error;throw new MediaError('invalid-media');}
+ catch(error){
+  if(error instanceof MediaError)throw error;
+  throw new MediaError('invalid-media');
+ }
 }

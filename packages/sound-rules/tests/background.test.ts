@@ -11,9 +11,11 @@ const lullaby={id:'tb:mock:lullaby',tempoBpm:66,meter:3 as const,rhythmCell:[2,1
 test('the background and mix rule files load and pass their checks',()=>{
  assert.deepEqual(backgroundProblems(BACKGROUND_RULES),[]);
  assert.deepEqual(mixProblems(MIX_RULES),[]);
- const broken=structuredClone(BACKGROUND_RULES);broken.modes.minor.scale=[0,2,3,5,7,8];
+ const broken=structuredClone(BACKGROUND_RULES);
+ broken.modes.minor.scale=[0,2,3,5,7,8];
  assert.match(backgroundProblems(broken).join('\n'),/background\.modes\.minor\.scale 应该是 7–7 个数字的列表/);
- const word=structuredClone(BACKGROUND_RULES);(word.moods.sad as {mode:string}).mode='sadder';
+ const word=structuredClone(BACKGROUND_RULES);
+ (word.moods.sad as {mode:string}).mode='sadder';
  assert.match(backgroundProblems(word).join('\n'),/background\.moods\.sad\.mode = "sadder"，只能是 major \/ minor \/ pentatonic \/ dorian/);
 });
 
@@ -25,7 +27,9 @@ test('the same work always gets the same background; another work gets another m
 
 test('the mood colours the background: sad is minor and slower, lively is quicker; the textbook lends its rhythm',()=>{
  const plain=backgroundPlan(input()),sad=backgroundPlan(input({mood:'sad'})),lively=backgroundPlan(input({mood:'lively'}));
- assert.equal(plain.mode,'major');assert.equal(sad.mode,'minor');assert.equal(sad.colour,'sad');
+ assert.equal(plain.mode,'major');
+ assert.equal(sad.mode,'minor');
+ assert.equal(sad.colour,'sad');
  assert.ok(sad.tempo<plain.tempo&&lively.tempo>plain.tempo);
  const borrowed=backgroundPlan(input({textbook:lullaby}));
  assert.deepEqual([borrowed.tempo,borrowed.metre,borrowed.colour,borrowed.textbook],[66,3,'calm','tb:mock:lullaby'],'no mood: the song gives rhythm and colour');
@@ -66,7 +70,8 @@ test('背景让一让: down by the rule\'s depth while the child\'s sounds play,
  const points=duckPoints([{start:2,end:6},{start:6.2,end:7}],30),low=10**(-MIX_RULES.duck.depthDb/20);
  assert.deepEqual(mergeSpans([{start:2,end:6},{start:6.2,end:7}],30,.48),[{start:2,end:7}],'close sounds count as one');
  assert.equal(points.find(point=>point.at===2)!.gain,low);
- assert.equal(points.at(-1)!.gain,1);assert.ok(Math.abs(points.at(-1)!.at-(7+MIX_RULES.duck.releaseSeconds))<1e-9);
+ assert.equal(points.at(-1)!.gain,1);
+ assert.ok(Math.abs(points.at(-1)!.at-(7+MIX_RULES.duck.releaseSeconds))<1e-9);
  assert.ok(points.every((point,i)=>i===0||point.at>=points[i-1]!.at),'in time order');
 });
 
@@ -100,7 +105,8 @@ test('a chosen song is heard in every layer: chords and drum play its rhythm, th
  const chordAts=new Set(before.filter(note=>note.part==='chord').map(note=>Math.round(note.at/beat*4)/4%2));
  assert.deepEqual([...chordAts].sort(),[0,.75,1],'chords are struck on the song\'s rhythm');
  assert.ok(before.filter(note=>note.part==='bass').every(note=>Number.isInteger(Math.round(note.at/beat*1e6)/1e6)),'bass only on beats');
- assert.equal(((plan.tonic%12)+12)%12,5,'key centre F, the song\'s');assert.equal(plan.mode,'major','lively stays major');
+ assert.equal(((plan.tonic%12)+12)%12,5,'key centre F, the song\'s');
+ assert.equal(plan.mode,'major','lively stays major');
  assert.ok(Math.abs(plan.tonic-BACKGROUND_RULES.moods.lively.tonic)<=6,'in the mood\'s register');
  const off=backgroundPlan(input({textbook:song,mood:'lively'}),{...BACKGROUND_RULES,song:{...BACKGROUND_RULES.song,chordsFollow:0,drumsFollow:0,bassFollow:0,keyFollow:0}});
  assert.equal(off.tonic,BACKGROUND_RULES.moods.lively.tonic);
@@ -129,7 +135,10 @@ test('万物声场\'s beat: every beat of the song\'s tempo, strong on each bar\
  assert.equal(plan.notes.length,Math.ceil(10/beat-1e-9));
  assert.ok(plan.notes.every((note,i)=>Math.abs(note.at-i*beat)<1e-9&&note.part==='rhythm'&&note.at+note.length<=10+1e-9));
  assert.deepEqual(plan.notes.slice(0,4).map(note=>note.accent),[BACKGROUND_RULES.beat.strong,BACKGROUND_RULES.beat.weak,BACKGROUND_RULES.beat.weak,BACKGROUND_RULES.beat.strong]);
- assert.deepEqual(plan.duck,[]);assert.equal(plan.fadeInSeconds,0);
- const louder=structuredClone(BACKGROUND_RULES);louder.beat.strong=.3;louder.beat.weak=.5;
+ assert.deepEqual(plan.duck,[]);
+ assert.equal(plan.fadeInSeconds,0);
+ const louder=structuredClone(BACKGROUND_RULES);
+ louder.beat.strong=.3;
+ louder.beat.weak=.5;
  assert.match(backgroundProblems(louder).join('\n'),/background\.beat\.weak 不能比 strong 还响/);
 });

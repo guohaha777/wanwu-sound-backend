@@ -5,7 +5,13 @@ import path from 'node:path';
 
 // New project secrets only. No cloud calls, existing app reads, or overwriting previous secret material.
 const root=fileURLToPath(new URL('../.secrets/',import.meta.url)),deployment=path.join(root,'deployment');
-try{await mkdir(root,{mode:0o700});}catch(error){if(error.code!=='EEXIST')throw error;const entry=await lstat(root);if(entry.isSymbolicLink()||!entry.isDirectory()||entry.mode&0o077)throw new Error('Existing secret directory must be private; nothing changed');}
+try{await mkdir(root,{mode:0o700});}catch(error){
+ if(error.code!=='EEXIST')throw error;
+ const entry=await lstat(root);
+ if(entry.isSymbolicLink()
+  ||!entry.isDirectory()
+  ||entry.mode&0o077)throw new Error('Existing secret directory must be private; nothing changed');
+}
 await mkdir(deployment,{mode:0o700}); // EEXIST deliberately stops, never rotates an existing key/password.
 const secret=()=>randomBytes(32).toString('base64url'),owner=secret(),app=secret(),session=secret();
 const url=(role,password)=>`postgresql://wanwu_${role}:${password}@database:5432/wanwu_sound`;

@@ -12,12 +12,21 @@ test('backup envelope round-trips actual bytes, authenticates the header/ciphert
  const directory=await mkdtemp(join(tmpdir(),'wanwu-backup-test-'));
  try{
   const bytes=randomBytes(1024*1024+41),encrypted=join(directory,'database.wwb'),restored=join(directory,'restored.dump');
-  const result=await encryptBackup(Readable.from([bytes]),encrypted,publicKey);assert.equal(result.bytes,(await stat(encrypted)).size);assert.equal(result.checksum,await backupChecksum(encrypted));
-  assert.equal((await readFile(encrypted)).includes(bytes.subarray(0,64)),false);assert.equal((await stat(encrypted)).mode&0o777,0o600);
-  await decryptBackup(encrypted,restored,privateKey);assert.deepEqual(await readFile(restored),bytes);
-  await assert.rejects(()=>decryptBackup(encrypted,restored,privateKey));assert.deepEqual(await readFile(restored),bytes);
-  const corrupt=await readFile(encrypted);corrupt[corrupt.length-32]!^=1;const tampered=join(directory,'tampered.wwb'),partial=join(directory,'partial.dump');await writeFile(tampered,corrupt);
-  await assert.rejects(()=>decryptBackup(tampered,partial,privateKey));await assert.rejects(()=>stat(partial));
+  const result=await encryptBackup(Readable.from([bytes]),encrypted,publicKey);
+  assert.equal(result.bytes,(await stat(encrypted)).size);
+  assert.equal(result.checksum,await backupChecksum(encrypted));
+  assert.equal((await readFile(encrypted)).includes(bytes.subarray(0,64)),false);
+  assert.equal((await stat(encrypted)).mode&0o777,0o600);
+  await decryptBackup(encrypted,restored,privateKey);
+  assert.deepEqual(await readFile(restored),bytes);
+  await assert.rejects(()=>decryptBackup(encrypted,restored,privateKey));
+  assert.deepEqual(await readFile(restored),bytes);
+  const corrupt=await readFile(encrypted);
+  corrupt[corrupt.length-32]!^=1;
+  const tampered=join(directory,'tampered.wwb'),partial=join(directory,'partial.dump');
+  await writeFile(tampered,corrupt);
+  await assert.rejects(()=>decryptBackup(tampered,partial,privateKey));
+  await assert.rejects(()=>stat(partial));
   await assert.rejects(()=>encryptBackup(Readable.from([bytes]),join(directory,'private.wwb'),privateKey),/only-have-public-key/);
  }finally{await rm(directory,{recursive:true,force:true});}
 });

@@ -20,7 +20,9 @@ test('the test sounds are sorted into the three kinds',()=>{
 
 test('unchosen dimensions keep the original: own pitch, own lengths, sounds where they are, common loudness',()=>{
  const plan=planCard({},series,'s');
- assert.equal(plan.semitones,0);assert.equal(plan.stretch,1);assert.equal(plan.grainSeconds,null);
+ assert.equal(plan.semitones,0);
+ assert.equal(plan.stretch,1);
+ assert.equal(plan.grainSeconds,null);
  assert.equal(plan.events.length,3,'one event per sound');
  assert.equal(plan.events[0]!.from,series.units[0]!.startMs/1000,'starts where the sound starts, not at second 0');
  assert.ok(Math.abs(plan.gain-originalGain(series))<1e-12,'same level as 听原声');
@@ -116,7 +118,8 @@ test('one sound never lasts longer than the longest field; past the limit it end
  const long=analyseSamples([pulsing(46,2500,4)],RATE),clip={startMs:0,endMs:45_000};
  for(const pattern of SOUND_CHOICES.pattern)assert.ok(planClip({duration:'long',pattern},clip,long,'s').totalSeconds<=clipMaxSeconds+1e-9,pattern);
  const one=planClip({duration:'long'},clip,long,'s');
- assert.equal(one.events.length,1);assert.ok(one.events[0]!.releaseSeconds>1,'a single long sound is cut with a long fade');
+ assert.equal(one.events.length,1);
+ assert.ok(one.events[0]!.releaseSeconds>1,'a single long sound is cut with a long fade');
  const croaks=analyseSamples([join(...Array.from({length:40},()=>join(silence(.8),tone(.3,600))),silence(.4))],RATE);
  const stretched=planClip({duration:'long'},{startMs:0,endMs:Math.round(croaks.durationMs)},croaks,'s');
  assert.ok(stretched.totalSeconds<=clipMaxSeconds+1e-9);

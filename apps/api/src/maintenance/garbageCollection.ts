@@ -16,7 +16,9 @@ async function needed(tx:PoolClient,object:ObjectRow){
  if(referenced)return true;
  if(object.render_id){
   const render=(await tx.query(`SELECT r.status,r.object_key,w.deleted_at FROM render_artifacts r JOIN works w ON w.id=r.work_id WHERE r.id=$1 FOR UPDATE OF w,r`,[object.render_id])).rows[0];
-  if(render&&render.deleted_at===null&&(['queued','processing'].includes(render.status)||render.object_key===object.object_key))return true;
+  if(render
+   &&render.deleted_at===null
+   &&(['queued','processing'].includes(render.status)||render.object_key===object.object_key))return true;
  }
  return false;
 }
@@ -41,12 +43,24 @@ export async function collectGarbage(context:CloudContext,limit=100){
   const objects=(await context.pool.query(`SELECT object_key FROM stored_objects WHERE deleted_at IS NULL ORDER BY gc_checked_at NULLS FIRST,created_at LIMIT $1`,[limit])).rows;
   for(const candidate of objects){try{await transaction(context.pool,async tx=>{
    // Lock business rows before registry rows, matching source/render completion order.
-   const initial=(await tx.query<ObjectRow>('SELECT * FROM stored_objects WHERE object_key=$1 AND deleted_at IS NULL',[candidate.object_key])).rows[0];if(!initial)return;
+   const initial=(await tx.query<ObjectRow>('SELECT * FROM stored_objects WHERE object_key=$1 AND deleted_at IS NULL',[candidate.object_key])).rows[0];
+   if(!initial)return;
    const retain=await needed(tx,initial);
-   const object=(await tx.query<ObjectRow>('SELECT * FROM stored_objects WHERE object_key=$1 AND deleted_at IS NULL FOR UPDATE',[candidate.object_key])).rows[0];if(!object)return;
+   const object=(await tx.query<ObjectRow>('SELECT * FROM stored_objects WHERE object_key=$1 AND deleted_at IS NULL FOR UPDATE',[candidate.object_key])).rows[0];
+   if(!object)return;
    await tx.query('UPDATE stored_objects SET gc_checked_at=now() WHERE object_key=$1',[object.object_key]);
-   if(retain){if(object.collect_after){await tx.query('UPDATE stored_objects SET collect_after=NULL WHERE object_key=$1',[object.object_key]);counts.recovered++;}return;}
-   if(!object.collect_after){await tx.query("UPDATE stored_objects SET collect_after=now()+interval '7 days' WHERE object_key=$1",[object.object_key]);counts.marked++;return;}
+   if(retain){
+    if(object.collect_after){
+     await tx.query('UPDATE stored_objects SET collect_after=NULL WHERE object_key=$1',[object.object_key]);
+     counts.recovered++;
+    }
+    return;
+   }
+   if(!object.collect_after){
+    await tx.query("UPDATE stored_objects SET collect_after=now()+interval '7 days' WHERE object_key=$1",[object.object_key]);
+    counts.marked++;
+    return;
+   }
    if(object.collect_after.getTime()>Date.now())return;
    await context.store.remove(object.object_key);
    await tx.query('UPDATE stored_objects SET deleted_at=now() WHERE object_key=$1',[object.object_key]);
@@ -56,6 +70,9 @@ export async function collectGarbage(context:CloudContext,limit=100){
   await context.pool.query("DELETE FROM sessions WHERE expires_at<now(); DELETE FROM revoked_sessions WHERE expires_at<now()");
   await context.pool.query("UPDATE maintenance_runs SET status=$2,counts=$3,finished_at=now() WHERE id=$1",[runId,counts.failures?'failed':'pass',JSON.stringify(counts)]);
   return counts;
- }catch(error){await context.pool.query("UPDATE maintenance_runs SET status='failed',finished_at=now() WHERE id=$1",[runId]).catch(()=>{});throw error;}
+ }catch(error){
+  await context.pool.query("UPDATE maintenance_runs SET status='failed',finished_at=now() WHERE id=$1",[runId]).catch(()=>{});
+  throw error;
+ }
  finally{try{await lock.query('SELECT pg_advisory_unlock(728091,4)');}finally{lock.release();}}
 }

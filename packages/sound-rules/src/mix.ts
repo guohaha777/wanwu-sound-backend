@@ -13,7 +13,11 @@ export type GainPoint={at:number;gain:number};
 /** Sorted spans inside [0, seconds], with spans closer than `join` seconds merged into one. */
 export function mergeSpans(spans:readonly Span[],seconds:number,join=0):Span[]{
  const merged:Span[]=[];
- for(const span of [...spans].map(item=>({start:Math.max(0,item.start),end:Math.min(seconds,item.end)})).filter(item=>item.end>item.start).sort((a,b)=>a.start-b.start)){
+ // Clipped to the piece, empty ones dropped, in time order.
+ for(const span of [...spans]
+  .map(item=>({start:Math.max(0,item.start),end:Math.min(seconds,item.end)}))
+  .filter(item=>item.end>item.start)
+  .sort((a,b)=>a.start-b.start)){
   const last=merged.at(-1);
   if(last&&span.start-last.end<=join)last.end=Math.max(last.end,span.end);
   else merged.push({...span});

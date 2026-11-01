@@ -10,11 +10,15 @@ import {spectralCentroid} from './spectrum.ts';
 const FLOOR_DB=-120;
 const toDb=(amplitude:number)=>amplitude>0?Math.max(FLOOR_DB,20*Math.log10(amplitude)):FLOOR_DB;
 const round1=(value:number)=>Math.round(value*10)/10;
-const median=(values:readonly number[])=>{const sorted=[...values].sort((a,b)=>a-b);return sorted[Math.floor(sorted.length/2)]??0;};
+const median=(values:readonly number[])=>{
+ const sorted=[...values].sort((a,b)=>a-b);
+ return sorted[Math.floor(sorted.length/2)]??0;
+};
 
 function mono(channels:readonly Float32Array[]){
  if(channels.length===1)return channels[0]!;
- const length=channels[0]?.length??0,out=new Float32Array(length);
+ const length=channels[0]?.length??0;
+ const out=new Float32Array(length);
  for(const channel of channels)for(let i=0;i<length;i++)out[i]!+=channel[i]!/channels.length;
  return out;
 }
@@ -23,12 +27,21 @@ function mono(channels:readonly Float32Array[]){
 function envelope(samples:Float32Array,frameLength:number,smooth:number){
  const raw:number[]=[];
  for(let from=0;from<samples.length;from+=frameLength){
-  let sum=0;const to=Math.min(samples.length,from+frameLength);
+  let sum=0;
+  const to=Math.min(samples.length,from+frameLength);
   for(let i=from;i<to;i++)sum+=samples[i]!*samples[i]!;
   raw.push(sum/Math.max(1,to-from));
  }
  const half=Math.floor(smooth/2);
- return raw.map((_,i)=>{let sum=0,count=0;for(let k=i-half;k<=i+half;k++)if(raw[k]!==undefined){sum+=raw[k]!;count++;}return 10*Math.log10(Math.max(1e-12,sum/count));});
+ // Each frame's power averaged with its neighbours (as many as exist), then in dB.
+ return raw.map((_,i)=>{
+  let sum=0,count=0;
+  for(let k=i-half;k<=i+half;k++)if(raw[k]!==undefined){
+   sum+=raw[k]!;
+   count++;
+  }
+  return 10*Math.log10(Math.max(1e-12,sum/count));
+ });
 }
 
 type Run={from:number;to:number;peak:number};
@@ -39,19 +52,38 @@ function soundingRuns(db:readonly number[],threshold:number,mergeFrames:number){
  db.forEach((value,index)=>{
   if(value<threshold)return;
   const last=runs.at(-1);
-  if(last&&index-last.to<=mergeFrames){last.to=index+1;last.peak=Math.max(last.peak,value);}
+  if(last&&index-last.to<=mergeFrames){
+   last.to=index+1;
+   last.peak=Math.max(last.peak,value);
+  }
   else runs.push({from:index,to:index+1,peak:value});
  });
  return runs;
 }
 /** A long run split at its clear dips: after a peak, a fall of `dip` dB and a rise of `dip` dB again starts a new sound. */
 function splitAtDips(db:readonly number[],run:Run,dip:number):Run[]{
- const parts:Run[]=[];let start=run.from,top=db[run.from]!,low=Infinity,lowAt=run.from,falling=false;
+ const parts:Run[]=[];
+ let start=run.from,top=db[run.from]!,low=Infinity,lowAt=run.from,falling=false;
  for(let i=run.from;i<run.to;i++){
   const value=db[i]!;
-  if(!falling){if(value>top)top=value;else if(value<top-dip){falling=true;low=value;lowAt=i;}}
-  else if(value<low){low=value;lowAt=i;}
-  else if(value>low+dip){parts.push({from:start,to:lowAt,peak:peakOf(db,start,lowAt)});start=lowAt;top=value;falling=false;}
+  if(!falling){
+   if(value>top)top=value;
+   else if(value<top-dip){
+    falling=true;
+    low=value;
+    lowAt=i;
+   }
+  }
+  else if(value<low){
+   low=value;
+   lowAt=i;
+  }
+  else if(value>low+dip){
+   parts.push({from:start,to:lowAt,peak:peakOf(db,start,lowAt)});
+   start=lowAt;
+   top=value;
+   falling=false;
+  }
  }
  parts.push({from:start,to:run.to,peak:peakOf(db,start,run.to)});
  return parts;
@@ -68,46 +100,85 @@ const lengthBandOf=(seconds:number,rules:AnalysisRules):DurationChoice=>
 const bandOf=(hz:number,rules:AnalysisRules):PitchChoice=>
  hz<rules.brightness.lowBelowHz?'low':hz>rules.brightness.highAboveHz?'high':'mid';
 
-export function analyseSamples(channels:readonly Float32Array[],sampleRate:number,rules:AnalysisRules=ANALYSIS_RULES):SoundAnalysis{
- const samples=mono(channels),frame=rules.frameSeconds,frameLength=Math.max(1,Math.round(frame*sampleRate));
+export function analyseSamples(
+ channels:readonly Float32Array[],
+ sampleRate:number,
+ rules:AnalysisRules=ANALYSIS_RULES,
+):SoundAnalysis{
+ const samples=mono(channels);
+ const frame=rules.frameSeconds;
+ const frameLength=Math.max(1,Math.round(frame*sampleRate));
  const db=envelope(samples,frameLength,rules.smoothFrames);
- const durationMs=Math.round(samples.length/sampleRate*1000),ms=(index:number)=>Math.min(durationMs,Math.round(index*frame*1000));
+ const durationMs=Math.round(samples.length/sampleRate*1000);
+ const ms=(index:number)=>Math.min(durationMs,Math.round(index*frame*1000));
  const loudest=Math.max(FLOOR_DB,...db);
- const empty:SoundAnalysis={rules:rules.version,durationMs,silent:true,main:null,units:[],kind:'one',unitMs:durationMs,lengthBand:'medium',
-  loudnessDb:round1(loudest),peakDb:FLOOR_DB,brightnessHz:0,band:'mid'};
+ const empty:SoundAnalysis={
+  rules:rules.version,
+  durationMs,
+  silent:true,
+  main:null,
+  units:[],
+  kind:'one',
+  unitMs:durationMs,
+  lengthBand:'medium',
+  loudnessDb:round1(loudest),
+  peakDb:FLOOR_DB,
+  brightnessHz:0,
+  band:'mid',
+ };
  if(loudest<rules.silence.floorDb)return empty;
 
- const threshold=Math.max(loudest-rules.silence.belowPeakDb,rules.silence.floorDb),u=rules.units;
- const runs=soundingRuns(db,threshold,Math.round(u.mergeGapSeconds/frame)).filter(run=>(run.to-run.from)*frame>=u.minSeconds);
+ const threshold=Math.max(loudest-rules.silence.belowPeakDb,rules.silence.floorDb);
+ const u=rules.units;
+ const runs=soundingRuns(db,threshold,Math.round(u.mergeGapSeconds/frame))
+  .filter(run=>(run.to-run.from)*frame>=u.minSeconds);
  if(!runs.length)return empty;
+ // Long runs are split at their dips into single sounds.
  const units=runs.flatMap(run=>(run.to-run.from)*frame>u.splitAboveSeconds?splitAtDips(db,run,u.splitDipDb):[run])
   .filter(unit=>(unit.to-unit.from)*frame>=u.minSeconds);
- const first=runs[0]!.from,last=runs.at(-1)!.to,mainSeconds=(last-first)*frame;
+ const first=runs[0]!.from;
+ const last=runs.at(-1)!.to;
+ const mainSeconds=(last-first)*frame;
+ // Seconds of quiet between the runs.
  const quiet=runs.slice(1).reduce((sum,run,i)=>sum+(run.from-runs[i]!.to),0)*frame;
  const unitSeconds=median(units.map(unit=>(unit.to-unit.from)*frame));
 
  // Loudness and peak of the sounding part only, so silence around it does not count.
- let power=0,counted=0,peak=0;const active:number[]=[];
- for(let f=first;f<last;f++)if(db[f]!>=threshold){power+=10**(db[f]!/10);counted++;active.push(f);}
- for(let i=first*frameLength;i<Math.min(samples.length,last*frameLength);i++)peak=Math.max(peak,Math.abs(samples[i]!));
+ let power=0,counted=0,peak=0;
+ const active:number[]=[];
+ for(let f=first;f<last;f++)if(db[f]!>=threshold){
+  power+=10**(db[f]!/10);
+  counted++;
+  active.push(f);
+ }
+ for(let i=first*frameLength;i<Math.min(samples.length,last*frameLength);i++)
+  peak=Math.max(peak,Math.abs(samples[i]!));
 
  // Brightness: median spectral centroid over the loud frames (background noise between sounds does not count).
- const {fftSize,maxFrames,withinDb,ignoreBelowHz}=rules.brightness,centroids:number[]=[];
- const loud=active.filter(f=>db[f]!>=loudest-withinDb),step=Math.max(1,loud.length/maxFrames);
+ const {fftSize,maxFrames,withinDb,ignoreBelowHz}=rules.brightness;
+ const centroids:number[]=[];
+ const loud=active.filter(f=>db[f]!>=loudest-withinDb);
+ const step=Math.max(1,loud.length/maxFrames);
  for(let k=0;k<loud.length&&centroids.length<maxFrames;k+=step){
   const centre=(loud[Math.floor(k)]!+.5)*frameLength;
   centroids.push(spectralCentroid(samples,Math.max(0,Math.round(centre-fftSize/2)),fftSize,sampleRate,ignoreBelowHz));
  }
  const brightnessHz=Math.round(median(centroids));
 
+ // The loudest units, at most maxCount, in time order.
  const kept=[...units].sort((a,b)=>b.peak-a.peak).slice(0,u.maxCount).sort((a,b)=>a.from-b.from);
  return {
-  rules:rules.version,durationMs,silent:false,
+  rules:rules.version,
+  durationMs,
+  silent:false,
   main:{startMs:ms(first),endMs:ms(last)},
   units:kept.map(unit=>({startMs:ms(unit.from),endMs:ms(unit.to),peakDb:round1(unit.peak)})),
   kind:kindOf(units,mainSeconds,quiet/Math.max(frame,mainSeconds),rules),
-  unitMs:Math.round(unitSeconds*1000),lengthBand:lengthBandOf(unitSeconds,rules),
-  loudnessDb:round1(10*Math.log10(power/Math.max(1,counted))),peakDb:round1(toDb(peak)),
-  brightnessHz,band:bandOf(brightnessHz,rules),
+  unitMs:Math.round(unitSeconds*1000),
+  lengthBand:lengthBandOf(unitSeconds,rules),
+  loudnessDb:round1(10*Math.log10(power/Math.max(1,counted))),
+  peakDb:round1(toDb(peak)),
+  brightnessHz,
+  band:bandOf(brightnessHz,rules),
  };
 }

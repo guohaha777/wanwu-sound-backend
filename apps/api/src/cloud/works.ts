@@ -22,15 +22,19 @@ function matched(row:WorkRow,etag:unknown){
 }
 function settingsAllowed(settings:WorkContent['settings']){
  if(settings.background.instruments.some(id=>!LOCAL_INSTRUMENTS.some(instrument=>instrument.id===id)))throw new ApiError(400,'invalid-request');
- if(settings.inspiration.kind==='textbook'&&!textbookTrack(settings.inspiration.entryId))throw new ApiError(400,'invalid-request');
+ if(settings.inspiration.kind==='textbook'
+  &&!textbookTrack(settings.inspiration.entryId))throw new ApiError(400,'invalid-request');
 }
 export class Works{
  readonly context:CloudContext;
  constructor(context:CloudContext){this.context=context;}
  async create(actor:Actor,body:unknown){
-  const input=workContent(body);if(!input)throw new ApiError(400,'invalid-request');settingsAllowed(input.settings);
+  const input=workContent(body);
+  if(!input)throw new ApiError(400,'invalid-request');
+  settingsAllowed(input.settings);
   return transaction(this.context.pool,async tx=>{
-   await lockActor(tx,actor);await tx.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))',[input.id]);
+   await lockActor(tx,actor);
+   await tx.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))',[input.id]);
    const existing=(await tx.query<WorkRow>('SELECT * FROM works WHERE id=$1 FOR UPDATE',[input.id])).rows[0];
    if(existing){
     if(existing.owner_id!==actor.id||existing.deleted_at)throw new ApiError(409,'id-conflict');
@@ -46,13 +50,17 @@ export class Works{
   });
  }
  async get(actor:Actor,id:string,revision:number|null=null){return transaction(this.context.pool,async tx=>{
-  await lockActor(tx,actor);const work=await ownedWork(tx,actor,id);if(revision===null)return record(work);
+  await lockActor(tx,actor);
+  const work=await ownedWork(tx,actor,id);
+  if(revision===null)return record(work);
   const snapshot=(await tx.query('SELECT content,created_at FROM work_snapshots WHERE work_id=$1 AND revision=$2',[id,revision])).rows[0];
-  if(!snapshot)throw new ApiError(404,'not-found');return {...snapshot.content,revision,state:'saved' as const,savedRevision:revision,updatedAt:snapshot.created_at.toISOString()} as WorkRecord;
+  if(!snapshot)throw new ApiError(404,'not-found');
+  return {...snapshot.content,revision,state:'saved' as const,savedRevision:revision,updatedAt:snapshot.created_at.toISOString()} as WorkRecord;
  });}
  async list(actor:Actor,state:'draft'|'saved',cursor:string|null){
   if(cursor!==null&&!/^\d+$/.test(cursor))throw new ApiError(400,'invalid-request');
-  const offset=Number(cursor??0);if(!Number.isSafeInteger(offset)||offset>100_000)throw new ApiError(400,'invalid-request');
+  const offset=Number(cursor??0);
+  if(!Number.isSafeInteger(offset)||offset>100_000)throw new ApiError(400,'invalid-request');
   return transaction(this.context.pool,async tx=>{
    await lockActor(tx,actor);
    const rows=(await tx.query<WorkRow>(`SELECT * FROM works WHERE owner_id=$1 AND deleted_at IS NULL AND
@@ -68,7 +76,9 @@ export class Works{
    ||kind==='title'&&(typeof title!=='string'||cleanWorkTitle(title)!==title))throw new ApiError(400,'invalid-request');
   if(settings)settingsAllowed(settings);
   return transaction(this.context.pool,async tx=>{
-   await lockActor(tx,actor);const row=await ownedWork(tx,actor,id);matched(row,etag);
+   await lockActor(tx,actor);
+   const row=await ownedWork(tx,actor,id);
+   matched(row,etag);
    const checked=arrangement?await canonicalSources(tx,actor,arrangement):null;
    const updated=(await tx.query<WorkRow>(`UPDATE works SET arrangement=$2,settings=$3,title=$4,revision=revision+1,state='draft',updated_at=now()
     WHERE id=$1 RETURNING *`,[id,JSON.stringify(checked?.arrangement??row.arrangement),JSON.stringify(settings??row.settings),title??row.title])).rows[0]!;
@@ -76,13 +86,19 @@ export class Works{
   });
  }
  async save(actor:Actor,id:string,body:unknown,etag:unknown){
-  const input=workContent(body);if(!input||input.id!==id||!input.arrangement.events.length)throw new ApiError(400,'invalid-request');settingsAllowed(input.settings);
+  const input=workContent(body);
+  if(!input||input.id!==id||!input.arrangement.events.length)throw new ApiError(400,'invalid-request');
+  settingsAllowed(input.settings);
   return transaction(this.context.pool,async tx=>{
-   await lockActor(tx,actor);const row=await ownedWork(tx,actor,id);matched(row,etag);
+   await lockActor(tx,actor);
+   const row=await ownedWork(tx,actor,id);
+   matched(row,etag);
    const checked=await canonicalSources(tx,actor,input.arrangement);
    const content:WorkContent={...input,arrangement:checked.arrangement};
    const same=digest(content)===digest({id:row.id,title:row.title,arrangement:row.arrangement,settings:row.settings});
-   if(row.state==='saved'&&row.saved_revision===row.revision&&same)return {work:record(row),render:await this.renderRow(tx,id,row.revision)};
+   if(row.state==='saved'
+    &&row.saved_revision===row.revision
+    &&same)return {work:record(row),render:await this.renderRow(tx,id,row.revision)};
    const revision=row.revision+1;
    const updated=(await tx.query<WorkRow>(`UPDATE works SET title=$2,arrangement=$3,settings=$4,revision=$5,state='saved',saved_revision=$5,updated_at=now() WHERE id=$1 RETURNING *`,
     [id,content.title,JSON.stringify(content.arrangement),JSON.stringify(content.settings),revision])).rows[0]!;
@@ -108,18 +124,22 @@ export class Works{
  }
  async render(actor:Actor,id:string,revision:number|null,retry=false){
   return transaction(this.context.pool,async tx=>{
-   await lockActor(tx,actor);const work=await ownedWork(tx,actor,id),wanted=revision??work.saved_revision;
+   await lockActor(tx,actor);
+   const work=await ownedWork(tx,actor,id),wanted=revision??work.saved_revision;
    if(!wanted||wanted>work.revision)throw new ApiError(404,'not-found');
    const row=await this.renderRow(tx,id,wanted);
    if(retry&&row.status==='failed'&&row.failure!=='source-disabled'){
     const result=(await tx.query('UPDATE render_artifacts SET status=\'queued\',failure=NULL,updated_at=now() WHERE work_id=$1 AND revision=$2 RETURNING id',[id,wanted])).rows[0]!;
-    const job=await enqueueMedia(this.context.boss,tx,{kind:'render',renderId:result.id});await tx.query('UPDATE render_artifacts SET job_id=$2 WHERE id=$1',[result.id,job]);
+    const job=await enqueueMedia(this.context.boss,tx,{kind:'render',renderId:result.id});
+    await tx.query('UPDATE render_artifacts SET job_id=$2 WHERE id=$1',[result.id,job]);
     return this.renderRow(tx,id,wanted);
    }return row;
   });
  }
  async remove(actor:Actor,id:string,etag:unknown){return transaction(this.context.pool,async tx=>{
-  await lockActor(tx,actor);const work=await ownedWork(tx,actor,id);matched(work,etag);
+  await lockActor(tx,actor);
+  const work=await ownedWork(tx,actor,id);
+  matched(work,etag);
   await tx.query('UPDATE works SET deleted_at=now(),updated_at=now(),revision=revision+1 WHERE id=$1',[id]);
   await tx.query('UPDATE publications SET status=\'revoked\',revoked_at=now(),generation=$2 WHERE work_id=$1',[id,randomUUID()]);
  });}

@@ -11,23 +11,33 @@ import {ApiError} from '../errors.ts';
 import {enqueueMedia} from '../jobs/mediaQueue.ts';
 
 /** New grants need an active entry; an older work can retain only its own existing grant. */
-export async function authorizedSource(tx:PoolClient,actor:Actor,id:string,workId:string|null=null,readRetained=false):Promise<SourceRow>{
+export async function authorizedSource(
+ tx:PoolClient,
+ actor:Actor,
+ id:string,
+ workId:string|null=null,
+ readRetained=false,
+):Promise<SourceRow>{
  const result=await tx.query<SourceRow>(`SELECT s.* FROM sources s WHERE s.id=$1 AND s.status<>'disabled' AND
   (s.catalogue OR s.owner_id=$2 OR EXISTS(SELECT 1 FROM library_entries l JOIN accounts a ON a.id=l.owner_id
    WHERE l.source_id=s.id AND (l.scope='teachers' OR l.owner_id=$2) AND l.removed_at IS NULL AND l.disabled_at IS NULL AND a.status='active')
    OR EXISTS(SELECT 1 FROM work_source_refs r JOIN works w ON w.id=r.work_id WHERE r.source_id=s.id AND w.owner_id=$2
     AND w.deleted_at IS NULL AND ($4::boolean OR w.id=$3))) FOR UPDATE OF s`,[id,actor.id,workId,readRetained]);
- if(!result.rows[0])throw new ApiError(404,'not-found');return result.rows[0];
+ if(!result.rows[0])throw new ApiError(404,'not-found');
+ return result.rows[0];
 }
 export async function canonicalSources(tx:PoolClient,actor:Actor,arrangement:Arrangement){
  const rows=new Map<string,SourceRow>();
  for(const id of [...new Set(arrangement.units.map(unit=>unit.sourceId))].sort()){
   const source=await authorizedSource(tx,actor,id,arrangement.id);
-  if(source.status!=='ready')throw new ApiError(409,'source-not-ready');rows.set(id,source);
+  if(source.status!=='ready')throw new ApiError(409,'source-not-ready');
+  rows.set(id,source);
  }
  const canonical={...arrangement,units:arrangement.units.map(unit=>({...unit,analysis:rows.get(unit.sourceId)!.analysis!}))};
- for(const event of canonical.events){const unit=canonical.units.find(item=>item.id===event.unitId)!;
-  if(event.clip.endMs>rows.get(unit.sourceId)!.duration_ms!+.5)throw new ApiError(400,'invalid-request');}
+ for(const event of canonical.events){
+  const unit=canonical.units.find(item=>item.id===event.unitId)!;
+  if(event.clip.endMs>rows.get(unit.sourceId)!.duration_ms!+.5)throw new ApiError(400,'invalid-request');
+  }
  for(const id of rows.keys())await tx.query('INSERT INTO work_source_refs(work_id,source_id) VALUES($1,$2) ON CONFLICT DO NOTHING',[arrangement.id,id]);
  return {arrangement:canonical,refs:[...rows.values()].map(row=>({id:row.id,checksum:row.checksum,playbackChecksum:row.playback_checksum!,key:row.playback_key!,durationMs:row.duration_ms!,catalogue:row.catalogue}))};
 }
@@ -40,18 +50,27 @@ export class Sources{
    playback:row.status==='ready'&&row.playback_key?await this.context.store.playback(row.playback_key,300):null};
  }
  async get(actor:Actor,id:string){
-  return transaction(this.context.pool,async tx=>{await lockActor(tx,actor);return this.view(await authorizedSource(tx,actor,id,null,true));});
+  return transaction(this.context.pool,async tx=>{
+   await lockActor(tx,actor);
+   return this.view(await authorizedSource(tx,actor,id,null,true));
+  });
  }
  async intent(actor:Actor,id:string,body:unknown){
   if(exactObject(body,['parentId','selection']))return this.catalogueExcerpt(actor,id,body.parentId,body.selection);
-  const input=uploadRequest(body);if(!input||input.source.id!==id)throw new ApiError(400,'invalid-request');
+  const input=uploadRequest(body);
+  if(!input||input.source.id!==id)throw new ApiError(400,'invalid-request');
   const {pool,store}=this.context;
   const result=await transaction(pool,async tx=>{
-   await lockActor(tx,actor);await tx.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))',[id]);
-   const found=await tx.query<SourceRow>('SELECT * FROM sources WHERE id=$1 FOR UPDATE',[id]);let row=found.rows[0];
+   await lockActor(tx,actor);
+   await tx.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))',[id]);
+   const found=await tx.query<SourceRow>('SELECT * FROM sources WHERE id=$1 FOR UPDATE',[id]);
+   let row=found.rows[0];
    if(row){
     if(row.owner_id!==actor.id)throw new ApiError(409,'id-conflict');
-    if(row.checksum!==input.checksum||row.bytes!==input.bytes||digest(row.metadata)!==digest(input.source)||digest(row.selection)!==digest(input.selection??null))throw new ApiError(409,'source-mismatch');
+    if(row.checksum!==input.checksum
+     ||row.bytes!==input.bytes
+     ||digest(row.metadata)!==digest(input.source)
+     ||digest(row.selection)!==digest(input.selection??null))throw new ApiError(409,'source-mismatch');
     if(row.status==='disabled')throw new ApiError(403,'forbidden');
     if(row.status!=='uploading')return {row};
    }else{
@@ -69,10 +88,16 @@ export class Sources{
   return {status:'uploading',intent:{uploadId:result.upload.id,...await store.upload(result.upload.temporary_key,input.source.mimeType,input.checksum,input.bytes)}};
  }
  private async catalogueExcerpt(actor:Actor,id:string,parentId:unknown,selection:unknown){
-  if(typeof parentId!=='string'||!sourceSelection(selection)||id!==`${parentId}#${selection.startMs}-${selection.endMs}`)throw new ApiError(400,'invalid-request');
+  if(typeof parentId!=='string'
+   ||!sourceSelection(selection)
+   ||id!==`${parentId}#${selection.startMs}-${selection.endMs}`)throw new ApiError(400,'invalid-request');
   return transaction(this.context.pool,async tx=>{
-   await lockActor(tx,actor);const parent=await authorizedSource(tx,actor,parentId);
-   if(!parent.catalogue||parent.parent_id||parent.status!=='ready'||selection.endMs>parent.duration_ms!+.5)throw new ApiError(400,'invalid-request');
+   await lockActor(tx,actor);
+   const parent=await authorizedSource(tx,actor,parentId);
+   if(!parent.catalogue
+    ||parent.parent_id
+    ||parent.status!=='ready'
+    ||selection.endMs>parent.duration_ms!+.5)throw new ApiError(400,'invalid-request');
    await tx.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))',[id]);
    let row=(await tx.query<SourceRow>('SELECT * FROM sources WHERE id=$1 FOR UPDATE',[id])).rows[0];
    if(!row){
@@ -81,7 +106,8 @@ export class Sources{
      VALUES($1,true,$2,$3,$4,'queued',$5,$6,$7,$8) RETURNING *`,[id,JSON.stringify(metadata),parent.checksum,parent.bytes,parent.original_key,parent.original_version,parentId,JSON.stringify(selection)])).rows[0]!;
     await enqueueMedia(this.context.boss,tx,{kind:'source',sourceId:id});
    }
-   if(row.status==='disabled')throw new ApiError(403,'forbidden');return {status:row.status,source:await this.view(row)};
+   if(row.status==='disabled')throw new ApiError(403,'forbidden');
+   return {status:row.status,source:await this.view(row)};
   });
  }
  async complete(actor:Actor,id:string,uploadId:string){
@@ -100,7 +126,8 @@ export class Sources{
    const frozen=await store.freeze(upload.temporary_key,upload.final_key,head);
    await tx.query('UPDATE sources SET original_key=$2,original_version=$3,status=\'queued\',updated_at=now() WHERE id=$1',[id,upload.final_key,frozen.versionId??null]);
    await tx.query('UPDATE uploads SET completed_at=now() WHERE id=$1',[uploadId]);
-   await enqueueMedia(boss,tx,{kind:'source',sourceId:id});return {status:'queued'};
+   await enqueueMedia(boss,tx,{kind:'source',sourceId:id});
+   return {status:'queued'};
   });
  }
 }

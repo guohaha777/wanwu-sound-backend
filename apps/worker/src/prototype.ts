@@ -21,7 +21,8 @@ export async function runPrototype(mode:PrototypeMode='short'){
   for(const [id,file] of files)sources.set(id,await normalizeSource(file,join(directory,'scratch'),tools));
   const result=await renderInBrowser(browser,await browserBundle(),input,sources);
   const wave=join(directory,'mixed.wav'),mp3=join(directory,'mixed.mp3');
-  await writeFile(wave,result.wav,{flag:'wx'});const encoded=await encodeMp3(wave,mp3,tools);
+  await writeFile(wave,result.wav,{flag:'wx'});
+  const encoded=await encodeMp3(wave,mp3,tools);
   const sourceChecksums=[...sources].sort(([a],[b])=>a.localeCompare(b)).map(([sourceId,source])=>({sourceId,
    original:source.sourceChecksum,normalized:source.normalizedChecksum}));
   const inputHash=sha256(Buffer.from(JSON.stringify({input,sourceChecksums})));
@@ -34,7 +35,10 @@ export async function runPrototype(mode:PrototypeMode='short'){
   await writeFile(join(directory,'report.json'),JSON.stringify(report,null,2)+'\n',{flag:'wx'});
   console.log(JSON.stringify({report:join(directory,'report.json'),...report},null,2));
   return report;
- }finally{await browser.close();for(const source of sources.values())await source.dispose();}
+ }finally{
+  await browser.close();
+  for(const source of sources.values())await source.dispose();
+ }
 }
 
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){

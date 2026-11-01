@@ -12,7 +12,8 @@ export type Override={language?:Provider;music?:Provider};
 const entry=(value:unknown):Provider|null=>{
  if(!value||typeof value!=='object'||Array.isArray(value))return null;
  const raw=value as Record<string,unknown>;
- if(Object.keys(raw).sort().join()!=='apiKey,baseUrl,model'||!validProvider(raw.baseUrl,raw.model,raw.apiKey))return null;
+ if(Object.keys(raw).sort().join()!=='apiKey,baseUrl,model'
+  ||!validProvider(raw.baseUrl,raw.model,raw.apiKey))return null;
  const host=new URL(raw.baseUrl as string).hostname.replace(/^\[|\]$/g,'');
  if(host==='localhost'||host.endsWith('.localhost')||(isIP(host)&&!publicAddress(host)))return null;
  return {baseUrl:(raw.baseUrl as string).replace(/\/+$/,''),model:raw.model as string,apiKey:raw.apiKey as string,builtIn:false};
@@ -22,11 +23,16 @@ const entry=(value:unknown):Provider|null=>{
 export function parseOverride(header:unknown):Override|null|'invalid'{
  if(header===undefined)return null;
  if(typeof header!=='string'||header.length>4096||!/^[A-Za-z0-9+/=]+$/.test(header))return 'invalid';
- let value:unknown;try{value=JSON.parse(Buffer.from(header,'base64').toString('utf8'));}catch{return 'invalid';}
+ let value:unknown;
+ try{value=JSON.parse(Buffer.from(header,'base64').toString('utf8'));}catch{return 'invalid';}
  if(!value||typeof value!=='object'||Array.isArray(value))return 'invalid';
  const raw=value as Record<string,unknown>,keys=Object.keys(raw);
  if(!keys.length||keys.some(key=>key!=='language'&&key!=='music'))return 'invalid';
  const out:Override={};
- for(const key of keys as ('language'|'music')[]){const provider=entry(raw[key]);if(!provider)return 'invalid';out[key]=provider;}
+ for(const key of keys as ('language'|'music')[]){
+  const provider=entry(raw[key]);
+  if(!provider)return 'invalid';
+  out[key]=provider;
+ }
  return out;
 }

@@ -12,22 +12,28 @@ const name=`wanwu-media-test-${randomUUID()}`;
 const reportFile=path.join(directory,`${name}.json`);
 const fail=async(reason,code=1)=>{
  await writeFile(reportFile,JSON.stringify({status:'blocked',reason,checkedAt:new Date().toISOString()},null,2)+'\n',{flag:'wx'});
- console.error(`${reason}\nReport: ${reportFile}`);process.exit(code);
+ console.error(`${reason}\nReport: ${reportFile}`);
+ process.exit(code);
 };
 let docker='docker',environment=process.env;
 const call=(args)=>spawnSync(docker,args,{encoding:'utf8',maxBuffer:4*1024*1024,env:environment,timeout:15_000});
 let version=call(['--version']);
-if(version.error?.code==='ENOENT'&&process.platform==='darwin'&&existsSync('/Applications/Docker.app/Contents/Resources/bin/docker')){
+if(version.error?.code==='ENOENT'
+ &&process.platform==='darwin'
+ &&existsSync('/Applications/Docker.app/Contents/Resources/bin/docker')){
  docker='/Applications/Docker.app/Contents/Resources/bin/docker';
- environment={...process.env,PATH:`${path.dirname(docker)}:${process.env.PATH??''}`};version=call(['--version']);
+ environment={...process.env,PATH:`${path.dirname(docker)}:${process.env.PATH??''}`};
+ version=call(['--version']);
 }
 if(version.error?.code==='ENOENT')await fail('Docker is not installed. No container/sandbox/resource validation was performed.',78);
 if(version.status!==0)await fail('Docker CLI is unavailable.',78);
-if(process.env.DOCKER_HOST&&!process.env.DOCKER_HOST.startsWith('unix://'))await fail('Remote Docker endpoints are not allowed by this local-only verifier.');
+if(process.env.DOCKER_HOST
+ &&!process.env.DOCKER_HOST.startsWith('unix://'))await fail('Remote Docker endpoints are not allowed by this local-only verifier.');
 const context=process.env.WANWU_TEST_DOCKER_CONTEXT??call(['context','show']).stdout.trim();
 if(!context||context.includes('\n'))await fail('Unable to select a local Docker context.');
 const endpoint=call(['context','inspect',context,'--format','{{.Endpoints.docker.Host}}']);
-if(endpoint.status!==0||!endpoint.stdout.trim().startsWith('unix://'))await fail('This verifier requires a local Unix-socket Docker context; it never targets the ECS.');
+if(endpoint.status!==0
+ ||!endpoint.stdout.trim().startsWith('unix://'))await fail('This verifier requires a local Unix-socket Docker context; it never targets the ECS.');
 const prefix=['--context',context];
 if(call([...prefix,'info','--format','{{.OSType}}']).stdout.trim()!=='linux')await fail('A local Linux Docker engine is required.',78);
 const profile=path.join(directory,`${name}.seccomp.json`);
@@ -42,15 +48,34 @@ function run(args,timeoutMs=30_000){return new Promise((resolve,reject)=>{
  const child=spawn(docker,[...prefix,...args],{cwd:root,env:environment,stdio:['ignore','pipe','pipe']});
  let output='',writeError,timedOut=false,forceTimer;
  const deadline=setTimeout(()=>{
-  timedOut=true;child.kill('SIGTERM');forceTimer=setTimeout(()=>child.kill('SIGKILL'),5000);forceTimer.unref();
+  timedOut=true;
+  child.kill('SIGTERM');
+  forceTimer=setTimeout(()=>child.kill('SIGKILL'),5000);
+  forceTimer.unref();
  },timeoutMs);
- const clear=()=>{clearTimeout(deadline);clearTimeout(forceTimer);};
+ const clear=()=>{
+  clearTimeout(deadline);
+  clearTimeout(forceTimer);
+ };
  const collect=chunk=>{
   if(writeError)return;
-  try{writeSync(log,chunk);process.stdout.write(chunk);output+=chunk.toString();if(output.length>4*1024*1024)output=output.slice(-4*1024*1024);}
-  catch(error){writeError=error;child.kill('SIGTERM');}
+  try{
+   writeSync(log,chunk);
+   process.stdout.write(chunk);
+   output+=chunk.toString();
+   if(output.length>4*1024*1024)output=output.slice(-4*1024*1024);
+  }
+  catch(error){
+   writeError=error;
+   child.kill('SIGTERM');
+  }
  };
- child.stdout.on('data',collect);child.stderr.on('data',collect);child.on('error',error=>{clear();reject(error);});
+ child.stdout.on('data',collect);
+ child.stderr.on('data',collect);
+ child.on('error',error=>{
+  clear();
+  reject(error);
+ });
  child.on('close',code=>{
   clear();
   if(timedOut)return reject(new Error(`Docker test operation timed out after ${timeoutMs} ms.`));
@@ -70,10 +95,12 @@ try{
   '--mount',`type=volume,source=${name},target=/app/artifacts`,name],15*60_000);
  const match=output.match(/^WANWU_MEDIA_CONTAINER_PROOF (.+)$/m);
  if(!match)throw new Error('The container did not produce kernel-backed validation evidence.');
- const proof=JSON.parse(match[1]);if(proof.status!=='pass'||proof.linuxSandboxVerified!==true)throw new Error('The container gate did not pass.');
+ const proof=JSON.parse(match[1]);
+ if(proof.status!=='pass'||proof.linuxSandboxVerified!==true)throw new Error('The container gate did not pass.');
  const prototype=output.match(/^\s*"report":\s*"(\/app\/artifacts\/media-prototype-[A-Za-z0-9]+\/report\.json)"/m)?.[1];
  if(!prototype)throw new Error('Missing prototype artifact path.');
- const exported=path.join(directory,name);await mkdir(exported,{mode:0o700});
+ const exported=path.join(directory,name);
+ await mkdir(exported,{mode:0o700});
  for(const file of ['report.json','mixed.mp3','mixed.wav'])await run(['cp',`${name}:${path.posix.dirname(prototype)}/${file}`,path.join(exported,file)]);
  const imageId=call([...prefix,'inspect',name,'--format','{{.Image}}']).stdout.trim();
  if(!/^sha256:[a-f0-9]{64}$/.test(imageId))throw new Error('Unable to bind evidence to the actual container image.');
@@ -81,15 +108,21 @@ try{
  console.log(`Container evidence: ${reportFile}`);
 }catch(error){
  const state=call([...prefix,'inspect',name,'--format','{{json .State}}']);
- let containerState=null;try{containerState=JSON.parse(state.stdout);}catch{}
+ let containerState=null;
+ try{containerState=JSON.parse(state.stdout);}catch{}
  let measurements=null;
- try{const measured=(await readFile(logFile,'utf8')).match(/^WANWU_MEDIA_CONTAINER_MEASUREMENTS (.+)$/m);if(measured)measurements=JSON.parse(measured[1]);}catch{}
+ try{
+  const measured=(await readFile(logFile,'utf8')).match(/^WANWU_MEDIA_CONTAINER_MEASUREMENTS (.+)$/m);
+  if(measured)measurements=JSON.parse(measured[1]);
+ }catch{}
  await writeFile(reportFile,JSON.stringify({status:'blocked',reason:error.message,checkedAt:new Date().toISOString(),
   context,image:name,seccompSha256,logFile,containerState,measurements},null,2)+'\n',{flag:'wx',mode:0o600});
- console.error(`${error.message}\nReport: ${reportFile}\nLog: ${logFile}`);process.exitCode=1;
+ console.error(`${error.message}\nReport: ${reportFile}\nLog: ${logFile}`);
+ process.exitCode=1;
 }
 finally{
  // Only this invocation's exact test resources; no daemon restart, system prune or old project operations.
- call([...prefix,'rm','--force',name]);call([...prefix,'volume','rm',name]);
+ call([...prefix,'rm','--force',name]);
+ call([...prefix,'volume','rm',name]);
  closeSync(log);
 }

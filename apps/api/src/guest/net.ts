@@ -10,7 +10,10 @@ export type GuestFailureReason='not-open'|'quota'|'timeout'|'failed';
 /** A model step did not give a usable answer; routes turn it into an error reply or an unavailable background. */
 export class GuestFailure extends Error{
  readonly reason:GuestFailureReason;
- constructor(reason:GuestFailureReason){super(reason);this.reason=reason;}
+ constructor(reason:GuestFailureReason){
+  super(reason);
+  this.reason=reason;
+ }
 }
 
 export function publicAddress(ip:string):boolean{
@@ -21,7 +24,8 @@ export function publicAddress(ip:string):boolean{
  }
  if(isIP(ip)===6){
   const lower=ip.toLowerCase();
-  const mapped=/^::ffff:(\d+\.\d+\.\d+\.\d+)$/.exec(lower);if(mapped)return publicAddress(mapped[1]!);
+  const mapped=/^::ffff:(\d+\.\d+\.\d+\.\d+)$/.exec(lower);
+  if(mapped)return publicAddress(mapped[1]!);
   return !(lower==='::'||lower==='::1'||/^f[cd]/.test(lower)||/^fe[89ab]/.test(lower)||lower.startsWith('ff'));
  }
  return false;
@@ -34,7 +38,8 @@ export type Post=(url:string,headers:Record<string,string>,body:unknown,timeoutM
 const guardedLookup=(hostname:string,options:{all?:boolean},callback:(...args:unknown[])=>void)=>{
  lookup(hostname,{all:true},(error,addresses:LookupAddress[])=>{
   if(error)return callback(error);
-  if(!addresses.length||!addresses.every(item=>publicAddress(item.address)))return callback(new Error('private-address'));
+  if(!addresses.length
+   ||!addresses.every(item=>publicAddress(item.address)))return callback(new Error('private-address'));
   if(options.all)return callback(null,addresses);
   callback(null,addresses[0]!.address,addresses[0]!.family);
  });
@@ -42,22 +47,37 @@ const guardedLookup=(hostname:string,options:{all?:boolean},callback:(...args:un
 
 export const postJson:Post=(url,headers,body,timeoutMs)=>new Promise((resolve,reject)=>{
  const target=new URL(url);
- if(target.protocol!=='https:'||(isIP(target.hostname.replace(/^\[|\]$/g,''))&&!publicAddress(target.hostname.replace(/^\[|\]$/g,''))))
+ if(target.protocol!=='https:'
+  ||(isIP(target.hostname.replace(/^\[|\]$/g,''))&&!publicAddress(target.hostname.replace(/^\[|\]$/g,''))))
   return reject(new GuestFailure('failed'));
  const payload=Buffer.from(JSON.stringify(body));
  const call=request(target,{method:'POST',lookup:guardedLookup as never,timeout:timeoutMs,
   headers:{...headers,'content-type':'application/json','content-length':String(payload.length),accept:'application/json'}},response=>{
-  const chunks:Buffer[]=[];let size=0;
-  response.on('data',(chunk:Buffer)=>{size+=chunk.length;if(size>1_000_000){call.destroy();reject(new GuestFailure('failed'));}else chunks.push(chunk);});
+  const chunks:Buffer[]=[];
+  let size=0;
+  response.on('data',(chunk:Buffer)=>{
+   size+=chunk.length;
+   if(size>1_000_000){
+    call.destroy();
+    reject(new GuestFailure('failed'));
+   }else chunks.push(chunk);
+  });
   response.on('end',()=>{
-   let json:unknown=null;try{json=JSON.parse(Buffer.concat(chunks).toString('utf8'));}catch{/* status decides */}
+   let json:unknown=null;
+   try{json=JSON.parse(Buffer.concat(chunks).toString('utf8'));}catch{/* status decides */}
    resolve({status:response.statusCode??0,json});
   });
   response.on('error',()=>reject(new GuestFailure('failed')));
  });
- const timer=setTimeout(()=>{call.destroy();reject(new GuestFailure('timeout'));},timeoutMs);
+ const timer=setTimeout(()=>{
+  call.destroy();
+  reject(new GuestFailure('timeout'));
+ },timeoutMs);
  call.on('close',()=>clearTimeout(timer));
- call.on('timeout',()=>{call.destroy();reject(new GuestFailure('timeout'));});
+ call.on('timeout',()=>{
+  call.destroy();
+  reject(new GuestFailure('timeout'));
+ });
  call.on('error',()=>reject(new GuestFailure('failed')));
  call.end(payload);
 });

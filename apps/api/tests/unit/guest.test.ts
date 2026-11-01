@@ -26,7 +26,8 @@ type Call={url:string;headers:Record<string,string>;body:{model:string;messages:
 /** A fake chat/completions service: answers each task with what a good model would send. */
 function fakeModel(answer:(prompt:string)=>unknown,calls:Call[]=[]):Post{
  return async(url,headers,body)=>{
-  const call={url,headers,body} as Call;calls.push(call);
+  const call={url,headers,body} as Call;
+  calls.push(call);
   // Audio requests carry [input_audio, text] parts; the fake reads their text.
   const text=(content:unknown)=>typeof content==='string'?content:Array.isArray(content)?content.map(part=>part?.text??'').join('\n'):'';
   const prompt=call.body.messages.map(message=>text(message.content)).join('\n'),value=answer(prompt);
@@ -45,7 +46,9 @@ async function app(post:Post,options:Partial<GuestConfig>={}){
  await server.register(rateLimit,{global:false});
  server.setErrorHandler((error,_request,reply)=>error instanceof ApiError?reply.code(error.status).send({status:'error',reason:error.reason}):reply.code((error as {statusCode?:number}).statusCode??500).send({status:'error',reason:'internal-error'}));
  const context=guestContext({...config,...options},post);
- guestRoutes(server,context);await server.ready();return {server,context};
+ guestRoutes(server,context);
+ await server.ready();
+ return {server,context};
 }
 async function background(server:Awaited<ReturnType<typeof app>>['server'],step:string,brief:BackgroundBrief=calmLullaby,headers:Record<string,string>={}){
  const start=await server.inject({method:'POST',url:'/api/v1/backgrounds',payload:{step,brief},headers});
@@ -73,7 +76,10 @@ test('the real client refuses plain http, private literals and names that resolv
 test('built-in settings come from their own variables; the music model may stay empty',()=>{
  assert.deepEqual(readGuestConfig({}),{language:null,music:null,audio:null,dailyLimit:2000});
  const read=readGuestConfig({WANWU_LLM_BASE_URL:language.baseUrl+'/',WANWU_LLM_MODEL:'qwen3.8-flash',WANWU_LLM_API_KEY:key,WANWU_GUEST_AI_DAILY_LIMIT:'50'});
- assert.equal(read.language?.baseUrl,language.baseUrl);assert.equal(read.music,null);assert.equal(read.audio,null);assert.equal(read.dailyLimit,50);
+ assert.equal(read.language?.baseUrl,language.baseUrl);
+ assert.equal(read.music,null);
+ assert.equal(read.audio,null);
+ assert.equal(read.dailyLimit,50);
  assert.equal(readGuestConfig({WANWU_LLM_BASE_URL:language.baseUrl,WANWU_LLM_MODEL:'qwen3.8-flash',WANWU_LLM_API_KEY:key,WANWU_AUDIO_MODEL:'qwen3.8-omni-flash'}).audio?.model,'qwen3.8-omni-flash');
  assert.throws(()=>readGuestConfig({WANWU_AUDIO_MODEL:'qwen3.8-omni-flash'}),/WANWU_LLM/);
  assert.throws(()=>readGuestConfig({WANWU_LLM_BASE_URL:'http://example.com/v1',WANWU_LLM_MODEL:'m',WANWU_LLM_API_KEY:key}));
@@ -84,7 +90,9 @@ test('built-in settings come from their own variables; the music model may stay 
 test('a visitor override replaces only the kinds it names and refuses anything not exactly right',()=>{
  const own={baseUrl:'https://api.deepseek.com/v1',model:'deepseek-chat',apiKey:key};
  const parsed=parseOverride(encode({language:own}));
- assert.ok(parsed&&parsed!=='invalid');assert.equal(parsed.language?.builtIn,false);assert.equal(parsed.music,undefined);
+ assert.ok(parsed&&parsed!=='invalid');
+ assert.equal(parsed.language?.builtIn,false);
+ assert.equal(parsed.music,undefined);
  assert.equal(parseOverride(undefined),null);
  for(const bad of [{language:{...own,baseUrl:'http://api.deepseek.com/v1'}},{language:{...own,baseUrl:'https://127.0.0.1/v1'}},{language:{...own,baseUrl:'https://localhost/v1'}},
   {language:{...own,baseUrl:'https://[::1]/v1'}},{language:{...own,baseUrl:'https://user:pw@api.deepseek.com/v1'}},{language:{...own,extra:1}},{other:own},{},{language:{...own,apiKey:'short'}}])
@@ -93,10 +101,14 @@ test('a visitor override replaces only the kinds it names and refuses anything n
 });
 
 test('the daily budget resets at midnight in Asia/Shanghai',()=>{
- let now=new Date('2026-10-30T15:59:00Z');const budget=new DailyBudget(2,()=>now);
- assert.equal(budget.take(),true);assert.equal(budget.take(),true);assert.equal(budget.take(),false);
+ let now=new Date('2026-10-30T15:59:00Z');
+ const budget=new DailyBudget(2,()=>now);
+ assert.equal(budget.take(),true);
+ assert.equal(budget.take(),true);
+ assert.equal(budget.take(),false);
  assert.equal(budget.retryAfter(),60);
- now=new Date('2026-10-30T16:00:01Z');assert.equal(budget.take(),true);
+ now=new Date('2026-10-30T16:00:01Z');
+ assert.equal(budget.take(),true);
 });
 
 test('status says which built-in models are set up, nothing more',async()=>{
@@ -107,24 +119,33 @@ test('status says which built-in models are set up, nothing more',async()=>{
 });
 
 test('mood words: the model only chooses a preset, thinking is off on 百炼, the key never leaves the auth header',async()=>{
- const calls:Call[]=[];const {server}=await app(fakeModel(good,calls));
+ const calls:Call[]=[];
+ const {server}=await app(fakeModel(good,calls));
  const reply=await server.inject({method:'POST',url:'/api/v1/moods/interpret',payload:{text:' 有点想睡觉 '}});
- assert.equal(reply.statusCode,200);assert.deepEqual(reply.json(),{nearest:'calm',model:'qwen3.8-flash',promptVersion:'mood-words-prompt-v1'});
- assert.equal(calls[0]!.url,`${language.baseUrl}/chat/completions`);assert.equal(calls[0]!.body.enable_thinking,false);
- assert.equal(calls[0]!.headers.authorization,`Bearer ${key}`);assert.equal(JSON.stringify(calls[0]!.body).includes(key),false);
+ assert.equal(reply.statusCode,200);
+ assert.deepEqual(reply.json(),{nearest:'calm',model:'qwen3.8-flash',promptVersion:'mood-words-prompt-v1'});
+ assert.equal(calls[0]!.url,`${language.baseUrl}/chat/completions`);
+ assert.equal(calls[0]!.body.enable_thinking,false);
+ assert.equal(calls[0]!.headers.authorization,`Bearer ${key}`);
+ assert.equal(JSON.stringify(calls[0]!.body).includes(key),false);
  for(const text of ['','一二三四五六七八九十一二三',3])assert.equal((await server.inject({method:'POST',url:'/api/v1/moods/interpret',payload:{text}})).statusCode,400);
  const odd=await app(fakeModel(()=>({nearest:'sleepy'})));
  assert.equal((await odd.server.inject({method:'POST',url:'/api/v1/moods/interpret',payload:{text:'困'}})).json().nearest,null);
 });
 
 test('talk: replies in the protocol shape for the page to check again; unusable replies fail',async()=>{
- const calls:Call[]=[];const {server}=await app(fakeModel(good,calls));
+ const calls:Call[]=[];
+ const {server}=await app(fakeModel(good,calls));
  const work=await server.inject({method:'POST',url:'/api/v1/talk/work',payload:workBrief});
- assert.equal(work.statusCode,200);const body=work.json() as {lines:{kind:string;line:string}[];tryThis:string;promptVersion:string};
- assert.equal(body.lines.length,workBrief.facts.length);assert.equal(body.lines[0]!.kind,workBrief.facts[0]!.kind);assert.equal(body.promptVersion,'work-talk-prompt-v1');
+ assert.equal(work.statusCode,200);
+ const body=work.json() as {lines:{kind:string;line:string}[];tryThis:string;promptVersion:string};
+ assert.equal(body.lines.length,workBrief.facts.length);
+ assert.equal(body.lines[0]!.kind,workBrief.facts[0]!.kind);
+ assert.equal(body.promptVersion,'work-talk-prompt-v1');
  for(const name of PERSONAL_NAMES)assert.equal(JSON.stringify(calls).includes(name),false,'names never reach the model');
  const textbook=await server.inject({method:'POST',url:'/api/v1/talk/textbook',payload:textbookBrief});
- assert.equal(textbook.statusCode,200);assert.ok('feature' in (textbook.json() as object));
+ assert.equal(textbook.statusCode,200);
+ assert.ok('feature' in (textbook.json() as object));
  const bad=await app(fakeModel(()=>'这不是 JSON'));
  assert.equal((await bad.server.inject({method:'POST',url:'/api/v1/talk/work',payload:workBrief})).statusCode,502);
  assert.equal((await bad.server.inject({method:'POST',url:'/api/v1/talk/textbook',payload:textbookBrief})).statusCode,502);
@@ -143,16 +164,20 @@ test('failures become the reasons the page already handles',async()=>{
  const spent=await app(fakeModel(good),{dailyLimit:1});
  assert.equal((await spent.server.inject({method:'POST',url:'/api/v1/moods/interpret',payload:{text:'开心'}})).statusCode,200);
  const over=await spent.server.inject({method:'POST',url:'/api/v1/moods/interpret',payload:{text:'开心'}});
- assert.equal(over.statusCode,429);assert.ok(Number(over.headers['retry-after'])>0||over.json().reason==='rate-limited');
+ assert.equal(over.statusCode,429);
+ assert.ok(Number(over.headers['retry-after'])>0||over.json().reason==='rate-limited');
  assert.equal((await spent.server.inject({method:'POST',url:'/api/v1/moods/interpret',payload:{text:'开心'},headers:{[OVERRIDE_HEADER]:'%%%'}})).statusCode,400);
 });
 
 test('a visitor override is used for its kind and does not spend the built-in budget',async()=>{
- const calls:Call[]=[];const {server}=await app(fakeModel(good,calls),{dailyLimit:0});
+ const calls:Call[]=[];
+ const {server}=await app(fakeModel(good,calls),{dailyLimit:0});
  const own={baseUrl:'https://api.deepseek.com/v1',model:'deepseek-chat',apiKey:key};
  const reply=await server.inject({method:'POST',url:'/api/v1/moods/interpret',payload:{text:'开心'},headers:{[OVERRIDE_HEADER]:encode({language:own})}});
- assert.equal(reply.statusCode,200);assert.equal(calls[0]!.url,'https://api.deepseek.com/v1/chat/completions');
- assert.equal(calls[0]!.body.model,'deepseek-chat');assert.equal('enable_thinking' in calls[0]!.body,false);
+ assert.equal(reply.statusCode,200);
+ assert.equal(calls[0]!.url,'https://api.deepseek.com/v1/chat/completions');
+ assert.equal(calls[0]!.body.model,'deepseek-chat');
+ assert.equal('enable_thinking' in calls[0]!.body,false);
 });
 
 test('AI notes: the idea is developed with the local harmony, inside the piece, avoiding the child where it can',async()=>{
@@ -171,7 +196,10 @@ test('AI notes: the idea is developed with the local harmony, inside the piece, 
 test('background jobs: notes-ai ready, audio-ai not open yet, failures and teaching music fall through',async()=>{
  const {server}=await app(fakeModel(good));
  const ready=await background(server,'notes-ai') as {status:string;source:string;notes:unknown[];promptVersion:string};
- assert.equal(ready.status,'ready');assert.equal(ready.source,'notes-ai');assert.ok(ready.notes.length>0);assert.equal(ready.promptVersion,'background-notes-prompt-v1');
+ assert.equal(ready.status,'ready');
+ assert.equal(ready.source,'notes-ai');
+ assert.ok(ready.notes.length>0);
+ assert.equal(ready.promptVersion,'background-notes-prompt-v1');
  assert.deepEqual(await background(server,'audio-ai'),{status:'unavailable',reason:'not-open'});
  assert.deepEqual(await background(server,'notes-ai',{...calmLullaby,textbook:null,teachingMusic:{musicId:'m1'}}),{status:'unavailable',reason:'not-open'});
  const bad=await app(fakeModel(()=>({motifDegrees:[1],motifBeats:[1]})));
@@ -189,13 +217,20 @@ const checkedOf=(reply:{json():unknown})=>reply.json() as {source:string;checked
 const isAudio=(call:Call)=>Array.isArray(call.body.messages.at(-1)!.content);
 
 test('textbook features: the audio model hears the excerpt; its checked answer comes back',async()=>{
- const calls:Call[]=[];const {server}=await app(fakeModel(()=>featuresReply,calls));
+ const calls:Call[]=[];
+ const {server}=await app(fakeModel(()=>featuresReply,calls));
  const reply=await server.inject({method:'POST',url:'/api/v1/textbook/features',payload:{brief:featuresBrief,audio:Buffer.from('fake mp3').toString('base64')}});
  assert.equal(reply.statusCode,200);
  const body=reply.json() as {rhythmCell:number[];source:string;model:string;childLine:string;tempoBpm:number;promptVersion:string};
- assert.deepEqual(body.rhythmCell,[.5,.5,1]);assert.equal(body.source,'audio');assert.equal(body.model,'qwen3.8-omni-flash');assert.equal(body.tempoBpm,96);
- assert.equal(body.promptVersion,'textbook-features-prompt-v3');assert.equal(checkedOf(reply).checked,'accepted');
- assert.equal(calls.length,1);assert.ok(isAudio(calls[0]!));assert.equal((calls[0]!.body as unknown as {reasoning_effort:string}).reasoning_effort,'none');
+ assert.deepEqual(body.rhythmCell,[.5,.5,1]);
+ assert.equal(body.source,'audio');
+ assert.equal(body.model,'qwen3.8-omni-flash');
+ assert.equal(body.tempoBpm,96);
+ assert.equal(body.promptVersion,'textbook-features-prompt-v3');
+ assert.equal(checkedOf(reply).checked,'accepted');
+ assert.equal(calls.length,1);
+ assert.ok(isAudio(calls[0]!));
+ assert.equal((calls[0]!.body as unknown as {reasoning_effort:string}).reasoning_effort,'none');
  const sent=(call:Call)=>((call.body.messages.at(-1)!.content as unknown as {input_audio?:{format:string}}[])[0]!.input_audio!.format);
  assert.equal(sent(calls[0]!),'mp3');
  // The page sends a WAV excerpt (RIFF header): it goes to the model as WAV.
@@ -204,9 +239,12 @@ test('textbook features: the audio model hears the excerpt; its checked answer c
 });
 
 test('textbook features: no excerpt, or the audio model failing, falls to the language model with numbers only; neither → 502',async()=>{
- const calls:Call[]=[];const {server}=await app(fakeModel(()=>featuresReply,calls));
+ const calls:Call[]=[];
+ const {server}=await app(fakeModel(()=>featuresReply,calls));
  const numbersOnly=(await server.inject({method:'POST',url:'/api/v1/textbook/features',payload:{brief:featuresBrief}})).json() as {source:string};
- assert.equal(numbersOnly.source,'language');assert.equal(isAudio(calls[0]!),false);assert.ok(calls[0]!.body.messages.at(-1)!.content.includes('没有附音频'));
+ assert.equal(numbersOnly.source,'language');
+ assert.equal(isAudio(calls[0]!),false);
+ assert.ok(calls[0]!.body.messages.at(-1)!.content.includes('没有附音频'));
  // The language model heard nothing: its rhythm, metre and tempo are not taken, only its mood and words.
  const guessing=await app(fakeModel(()=>({...featuresReply,rhythmCell:[1,1,1],meter:3,tempo:'half'})));
  const guessed=checkedOf(await guessing.server.inject({method:'POST',url:'/api/v1/textbook/features',payload:{brief:featuresBrief}}));

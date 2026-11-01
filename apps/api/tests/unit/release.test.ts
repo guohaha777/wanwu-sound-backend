@@ -22,7 +22,8 @@ test('restore CLI rejects malformed and production database URLs without printin
  const file=fileURLToPath(new URL('../../src/maintenance/restore-cli.ts',import.meta.url)),secret='do-not-print-this-restore-probe';
  for(const url of [secret,`postgresql://wanwu_owner:${secret}@127.0.0.1:1/wanwu_sound`]){
   const result=spawnSync(process.execPath,[file],{encoding:'utf8',timeout:8000,env:{...process.env,WANWU_RESTORE_DATABASE_URL:url}});
-  assert.equal(result.status,1);assert.equal((result.stdout+result.stderr).includes(secret),false);
+  assert.equal(result.status,1);
+  assert.equal((result.stdout+result.stderr).includes(secret),false);
   assert.match(result.stderr,/Isolated restore failed/);
  }
 });

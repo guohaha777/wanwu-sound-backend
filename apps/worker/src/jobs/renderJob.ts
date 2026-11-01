@@ -18,9 +18,13 @@ type Ref={id:string;checksum:string;playbackChecksum:string;key:string;durationM
 export async function renderJob(context:CloudContext,renderId:string,jobId:string,scratch:string,tools:MediaTools,bundle:string,catalogue:Map<string,TrustedSource>,lease=randomUUID()){
  const started=Date.now(),phase=(name:string)=>console.log(JSON.stringify({event:'wanwu-render-phase',phase:name,elapsedMs:Date.now()-started}));
  const snapshot=await transaction(context.pool,async tx=>{
-  const initial=(await tx.query('SELECT work_id FROM render_artifacts WHERE id=$1',[renderId])).rows[0];if(!initial)return null;
+  const initial=(await tx.query('SELECT work_id FROM render_artifacts WHERE id=$1',[renderId])).rows[0];
+  if(!initial)return null;
   const work=(await tx.query('SELECT * FROM works WHERE id=$1 AND deleted_at IS NULL FOR UPDATE',[initial.work_id])).rows[0];
-  if(!work){await tx.query("UPDATE render_artifacts SET status='failed',failure='work-deleted',lease_id=NULL,updated_at=now() WHERE id=$1 AND job_id=$2 AND status IN ('queued','processing')",[renderId,jobId]);return null;}
+  if(!work){
+   await tx.query("UPDATE render_artifacts SET status='failed',failure='work-deleted',lease_id=NULL,updated_at=now() WHERE id=$1 AND job_id=$2 AND status IN ('queued','processing')",[renderId,jobId]);
+   return null;
+  }
   const row=(await tx.query(`SELECT r.*,s.content,s.source_refs,s.rules,s.renderer_version,s.timbre_version FROM render_artifacts r
    JOIN work_snapshots s ON s.work_id=r.work_id AND s.revision=r.revision WHERE r.id=$1`,[renderId])).rows[0];
   if(!row||row.status==='ready'||row.job_id!==jobId)return null;
@@ -28,7 +32,8 @@ export async function renderJob(context:CloudContext,renderId:string,jobId:strin
   const sources=await tx.query('SELECT id,status FROM sources WHERE id=ANY($1::text[]) ORDER BY id FOR SHARE',[refs.map(ref=>ref.id)]);
   const blocked=sources.rows.length!==refs.length||sources.rows.some(source=>source.status!=='ready')?'source-disabled':
    !(await tx.query('SELECT id FROM accounts WHERE id=$1 AND status=\'active\'',[work.owner_id])).rowCount?'account-disabled':null;
-  await tx.query('UPDATE render_artifacts SET status=\'processing\',lease_id=$2,failure=NULL,updated_at=now() WHERE id=$1',[renderId,lease]);return {...row,blocked};
+  await tx.query('UPDATE render_artifacts SET status=\'processing\',lease_id=$2,failure=NULL,updated_at=now() WHERE id=$1',[renderId,lease]);
+  return {...row,blocked};
  });
  if(!snapshot)return;
  if(snapshot.blocked)throw new MediaError(snapshot.blocked);
@@ -36,10 +41,13 @@ export async function renderJob(context:CloudContext,renderId:string,jobId:strin
   ||Object.keys(RULE_VERSIONS).some(key=>snapshot.rules[key]!==RULE_VERSIONS[key as keyof typeof RULE_VERSIONS]))throw new MediaError('renderer-incompatible');
  const sources=new Map<string,NormalizedSource>(),sourceLimits:Record<string,number>={},sourceFacts:NonNullable<RenderInput['sourceFacts']>={};
  for(const ref of snapshot.source_refs as Ref[]){
-  const file=join(scratch,`${randomUUID()}.wav`);await context.store.download(ref.key,file,12*1024*1024,undefined,tools.signal);
-  const bytes=(await stat(file)).size;if(await fileChecksum(file)!==ref.playbackChecksum)throw new MediaError('source-changed');
+  const file=join(scratch,`${randomUUID()}.wav`);
+  await context.store.download(ref.key,file,12*1024*1024,undefined,tools.signal);
+  const bytes=(await stat(file)).size;
+  if(await fileChecksum(file)!==ref.playbackChecksum)throw new MediaError('source-changed');
   if(ref.durationMs>45_500){
-   if(!ref.catalogue||catalogue.get(ref.id)?.checksum!==ref.checksum)throw new MediaError('untrusted-example');sourceLimits[ref.id]=60;
+   if(!ref.catalogue||catalogue.get(ref.id)?.checksum!==ref.checksum)throw new MediaError('untrusted-example');
+   sourceLimits[ref.id]=60;
   }
   sourceFacts[ref.id]={checksum:ref.playbackChecksum,analysis:snapshot.content.arrangement.units.find((unit:{sourceId:string})=>unit.sourceId===ref.id).analysis};
   sources.set(ref.id,{path:file,sourceChecksum:ref.checksum,normalizedChecksum:ref.playbackChecksum,bytes,durationMs:ref.durationMs,channels:2,dispose:async()=>{}});
@@ -48,18 +56,34 @@ export async function renderJob(context:CloudContext,renderId:string,jobId:strin
  const input:RenderInput={arrangement:snapshot.content.arrangement,settings:snapshot.content.settings,rules:snapshot.rules,sourceLimits,sourceFacts,
   textbook:snapshot.content.settings.inspiration.kind==='textbook'?textbookTrack(snapshot.content.settings.inspiration.entryId):null};
  global.gc?.(); // Download/hash buffers are no longer needed while Chromium owns the heavy audio work.
- const {browser,identity}=await openRenderer(),abort=()=>void browser.close();tools.signal?.addEventListener('abort',abort,{once:true});
+ const {browser,identity}=await openRenderer(),abort=()=>void browser.close();
+ tools.signal?.addEventListener('abort',abort,{once:true});
  let wave:Uint8Array;
- try{phase('browser-started');const output=await renderInBrowser(browser,bundle,input,sources,180_000);wave=output.wav;phase('web-audio-complete');}
- finally{tools.signal?.removeEventListener('abort',abort);await browser.close();}
+ try{
+  phase('browser-started');
+  const output=await renderInBrowser(browser,bundle,input,sources,180_000);
+  wave=output.wav;
+  phase('web-audio-complete');
+ }
+ finally{
+  tools.signal?.removeEventListener('abort',abort);
+  await browser.close();
+ }
  tools.signal?.throwIfAborted();
- const wav=join(scratch,'finished.wav'),mp3=join(scratch,'finished.mp3');await writeFile(wav,wave,{flag:'wx',mode:0o600});
- const result=await encodeMp3(wav,mp3,tools),key=context.store.key('renders');phase('encoded');
+ const wav=join(scratch,'finished.wav'),mp3=join(scratch,'finished.mp3');
+ await writeFile(wav,wave,{flag:'wx',mode:0o600});
+ const result=await encodeMp3(wav,mp3,tools),key=context.store.key('renders');
+ phase('encoded');
  await context.pool.query('INSERT INTO stored_objects(object_key,kind,render_id) VALUES($1,\'render\',$2)',[key,renderId]);
- await context.store.put(key,mp3,'audio/mpeg');const checksum=sha256(await readFile(mp3)),bytes=(await stat(mp3)).size;
+ await context.store.put(key,mp3,'audio/mpeg');
+ const checksum=sha256(await readFile(mp3)),bytes=(await stat(mp3)).size;
  tools.signal?.throwIfAborted();
  await transaction(context.pool,async tx=>{
-  const work=await tx.query('SELECT id FROM works WHERE id=$1 AND deleted_at IS NULL FOR UPDATE',[snapshot.work_id]);if(!work.rowCount){await tx.query("UPDATE render_artifacts SET status='failed',failure='work-deleted',lease_id=NULL,updated_at=now() WHERE id=$1 AND lease_id=$2",[renderId,lease]);return;}
+  const work=await tx.query('SELECT id FROM works WHERE id=$1 AND deleted_at IS NULL FOR UPDATE',[snapshot.work_id]);
+  if(!work.rowCount){
+   await tx.query("UPDATE render_artifacts SET status='failed',failure='work-deleted',lease_id=NULL,updated_at=now() WHERE id=$1 AND lease_id=$2",[renderId,lease]);
+   return;
+  }
   const refs=snapshot.source_refs as Ref[],sources=await tx.query('SELECT id,status FROM sources WHERE id=ANY($1::text[]) ORDER BY id FOR SHARE',[refs.map(ref=>ref.id)]);
   if(sources.rows.some(source=>source.status!=='ready'))throw new MediaError('source-disabled');
   const updated=await tx.query(`UPDATE render_artifacts SET status='ready',object_key=$3,checksum=$4,bytes=$5,duration_ms=$6,lease_id=NULL,updated_at=now()

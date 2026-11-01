@@ -7,7 +7,8 @@ import {installMediaQueue} from '../jobs/mediaQueue.ts';
 export async function bootstrap(pool:Pool,password:string){
  if(Buffer.byteLength(password)<32)throw new Error('The app database password must contain at least 32 bytes');
  const identity=await pool.query('SELECT current_database() AS name,current_user AS role');
- if(!/^wanwu_sound(?:_test_[a-f0-9]{8})?$/.test(identity.rows[0]?.name)||identity.rows[0]?.role!=='wanwu_owner')throw new Error('Refusing non-Wanwu bootstrap');
+ if(!/^wanwu_sound(?:_test_[a-f0-9]{8})?$/.test(identity.rows[0]?.name)
+  ||identity.rows[0]?.role!=='wanwu_owner')throw new Error('Refusing non-Wanwu bootstrap');
  const exists=await pool.query("SELECT 1 FROM pg_roles WHERE rolname='wanwu_app'");
  if(!exists.rows.length){
   const statement=await pool.query<{statement:string}>("SELECT format('CREATE ROLE wanwu_app LOGIN NOINHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD %L',$1::text) AS statement",[password]);
@@ -19,9 +20,14 @@ export async function bootstrap(pool:Pool,password:string){
  if(memberships.rows.length)throw new Error('The application role must not inherit cluster roles');
  const connection=pool.options.connectionString;
  if(!connection)throw new Error('The dedicated owner connection URL is required');
- const appUrl=new URL(connection);appUrl.username='wanwu_app';appUrl.password=password;
+ const appUrl=new URL(connection);
+ appUrl.username='wanwu_app';
+ appUrl.password=password;
  const probe=new pg.Client({connectionString:appUrl.toString(),connectionTimeoutMillis:5000});
- try{await probe.connect();await probe.query('SELECT 1');}
+ try{
+  await probe.connect();
+  await probe.query('SELECT 1');
+ }
  catch{throw new Error('The application password does not match the existing role; bootstrap does not rotate credentials');}
  finally{await probe.end();}
  await pool.query('REVOKE ALL ON SCHEMA public FROM PUBLIC');

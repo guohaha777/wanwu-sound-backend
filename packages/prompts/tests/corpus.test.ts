@@ -16,12 +16,15 @@ test('a bad corpus edit is reported in plain words, naming the line',()=>{
  hints.hints.pitch.low!.lines[0]='低低的声音真棒，这个声音的音域很低，像青蛙在池塘边一直一直一直一直一直一直一直叫。';
  const problems=soundHintsProblems(hints).join('\n');
  assert.match(problems,/sound-hints\.pitch\.low\.lines\[0\]：有 \d+ 个字，超过上限 36/);
- assert.match(problems,/不对任何人说的话「真棒」/);assert.match(problems,/术语「音域」/);
+ assert.match(problems,/不对任何人说的话「真棒」/);
+ assert.match(problems,/术语「音域」/);
  delete (hints.hints.pattern as Record<string,unknown>).once;
  assert.match(soundHintsProblems(hints).join('\n'),/sound-hints\.pattern\.once 至少要有一句/);
- const discoveries=structuredClone(DISCOVERIES);discoveries.kinds.repeat.line='「{nmae}」出现了 {times} 次。';
+ const discoveries=structuredClone(DISCOVERIES);
+ discoveries.kinds.repeat.line='「{nmae}」出现了 {times} 次。';
  assert.match(discoveriesProblems(discoveries).join('\n'),/discoveries\.repeat\.line 用了不认识的占位符 \{nmae\}/);
- const talk=structuredClone(TEXTBOOK_TALK);delete (talk.tasks as Record<string,unknown>).answer;
+ const talk=structuredClone(TEXTBOOK_TALK);
+ delete (talk.tasks as Record<string,unknown>).answer;
  assert.match(textbookTalkProblems(talk).join('\n'),/textbook-talk\.tasks\.answer 应该是一句话/);
 });
 

@@ -13,8 +13,10 @@ import {guestContext,guestRoutes} from './routes.ts';
 
 const viaFetch:Post=async(url,headers,body,timeoutMs)=>{
  const abort=AbortSignal.timeout(timeoutMs);
- try{const response=await fetch(url,{method:'POST',headers:{...headers,'content-type':'application/json'},body:JSON.stringify(body),signal:abort});
-  return {status:response.status,json:await response.json().catch(()=>null)};}
+ try{
+  const response=await fetch(url,{method:'POST',headers:{...headers,'content-type':'application/json'},body:JSON.stringify(body),signal:abort});
+  return {status:response.status,json:await response.json().catch(()=>null)};
+  }
  catch{throw new GuestFailure(abort.aborted?'timeout':'failed');}
 };
 const app=Fastify({logger:{level:'info'},bodyLimit:256*1024});

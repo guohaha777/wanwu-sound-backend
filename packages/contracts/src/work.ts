@@ -32,7 +32,10 @@ export type Inspiration={kind:'none'}
 export type ComposeSettings={background:BackgroundLayer;inspiration:Inspiration};
 
 export const DEFAULT_BACKGROUND_VOLUME=.5;
-export const DEFAULT_COMPOSE_SETTINGS:ComposeSettings={background:{enabled:true,instruments:[],volume:DEFAULT_BACKGROUND_VOLUME},inspiration:{kind:'none'}};
+export const DEFAULT_COMPOSE_SETTINGS:ComposeSettings={
+ background:{enabled:true,instruments:[],volume:DEFAULT_BACKGROUND_VOLUME},
+ inspiration:{kind:'none'},
+};
 
 /**
  * Who may see a saved work. Only the server decides and enforces this; the front end shows the choice. Anything wider
@@ -72,7 +75,10 @@ export type SavedWork={
  savedAt:string;
 };
 
-export function cleanWorkTitle(value:string){const clean=[...value.replace(/\s+/g,' ').trim()].slice(0,WORK_TITLE_MAX).join('');return clean||null;}
+export function cleanWorkTitle(value:string){
+ const clean=[...value.replace(/\s+/g,' ').trim()].slice(0,WORK_TITLE_MAX).join('');
+ return clean||null;
+}
 
 const nonEmpty=(value:unknown):value is string=>typeof value==='string'&&value.length>0;
 export function isValidInspiration(value:unknown):value is Inspiration{
@@ -81,25 +87,41 @@ export function isValidInspiration(value:unknown):value is Inspiration{
  if(raw.kind==='none')return true;
  // A `variation` kept by an older version (换几种样子, removed 2026-10-30) is ignored: the song plays as it is.
  if(raw.kind==='textbook')return nonEmpty(raw.entryId);
- return raw.kind==='teaching-music'&&nonEmpty(raw.musicId)&&nonEmpty(raw.name)&&Number.isInteger(raw.durationMs)&&(raw.durationMs as number)>0;
+ return raw.kind==='teaching-music'
+  &&nonEmpty(raw.musicId)
+  &&nonEmpty(raw.name)
+  &&Number.isInteger(raw.durationMs)
+  &&(raw.durationMs as number)>0;
 }
 
 export function parseComposeSettings(value:unknown):ComposeSettings|null{
  if(!value||typeof value!=='object')return null;
- const raw=value as Record<string,unknown>,background=raw.background as Record<string,unknown>|null;
+ const raw=value as Record<string,unknown>;
+ const background=raw.background as Record<string,unknown>|null;
  if(!background||typeof background!=='object'||typeof background.enabled!=='boolean')return null;
  const instruments=background.instruments;
- if(!Array.isArray(instruments)||instruments.length>MAX_INSTRUMENTS||!instruments.every(nonEmpty)||new Set(instruments).size!==instruments.length)return null;
- if(typeof background.volume!=='number'||!Number.isFinite(background.volume)||background.volume<0||background.volume>1)return null;
+ // Instruments: at most MAX_INSTRUMENTS ids, none empty, none twice.
+ if(!Array.isArray(instruments)
+  ||instruments.length>MAX_INSTRUMENTS
+  ||!instruments.every(nonEmpty)
+  ||new Set(instruments).size!==instruments.length)return null;
+ if(typeof background.volume!=='number'
+  ||!Number.isFinite(background.volume)
+  ||background.volume<0
+  ||background.volume>1)return null;
  if(!isValidInspiration(raw.inspiration))return null;
  return raw as ComposeSettings;
 }
 
 export function isRendering(value:unknown):value is Rendering{
  if(!value||typeof value!=='object')return false;
- const raw=value as Record<string,unknown>,rules=raw.rules as Record<string,unknown>|null;
- return BACKGROUND_SOURCES.includes(raw.background as BackgroundSource)&&(raw.background==='local-rules'?raw.prompt===null:nonEmpty(raw.prompt))
-  &&!!rules&&typeof rules==='object'
+ const raw=value as Record<string,unknown>;
+ const rules=raw.rules as Record<string,unknown>|null;
+ // The local rules use no prompt; every AI step names its prompt version.
+ return BACKGROUND_SOURCES.includes(raw.background as BackgroundSource)
+  &&(raw.background==='local-rules'?raw.prompt===null:nonEmpty(raw.prompt))
+  &&!!rules
+  &&typeof rules==='object'
   &&['analysis','shaping','background','mix'].every(key=>nonEmpty(rules[key]));
 }
 

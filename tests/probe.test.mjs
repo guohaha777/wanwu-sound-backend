@@ -5,7 +5,8 @@ const json=(status,body)=>new Response(JSON.stringify(body),{status,headers:{'Co
 const fixture=(health,auth)=>async url=>url.endsWith('/auth/me')?auth():health();
 test('a healthy entry and unauthenticated real session endpoint pass only the read-only gate',async()=>{
  const result=await probe(undefined,undefined,fixture(()=>json(200,{status:'ok'}),()=>json(401,{status:'error',reason:'needs-account'})));
- assert.equal(result.status,'pass');assert.match(result.scope,/not a login/);
+ assert.equal(result.status,'pass');
+ assert.match(result.scope,/not a login/);
 });
 test('HTTP 200 HTML from SPA fallback is not accepted as a working API',async()=>{
  const result=await probe(undefined,undefined,fixture(()=>new Response('<html>old frontend</html>',{headers:{'Content-Type':'text/html'}}),()=>json(401,{reason:'needs-account'})));
@@ -20,6 +21,8 @@ test('network failure and unexpected public auth response do not pass',async()=>
  assert.equal((await probe(undefined,undefined,fixture(()=>json(200,{status:'ok'}),()=>json(200,{account:{id:'must-not-log-account'}})))).status,'blocked-session-entry');
 });
 test('probe refuses credentials, query strings and non-HTTPS destinations',async()=>{
- const credentialUrl=new URL('https://example.com');credentialUrl.username='fixture-user';credentialUrl.password='fixture-password';
+ const credentialUrl=new URL('https://example.com');
+ credentialUrl.username='fixture-user';
+ credentialUrl.password='fixture-password';
  for(const url of ['http://localhost',credentialUrl.href,'https://example.com?secret=x','https://example.com/path'])await assert.rejects(probe(url));
 });

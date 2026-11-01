@@ -7,11 +7,19 @@ import {fill,unknownPlaceholders} from '../fill.ts';
 import {avoidList,neverSayList} from '../style.ts';
 
 export type PromptFile={
- version:string;task:string;model:'language'|'music'|'audio';status:'open'|'closed';temperature:number;lines:string[];
- words?:Record<string,unknown>;example?:unknown;[extra:string]:unknown;
+ version:string;
+ task:string;
+ model:'language'|'music'|'audio';
+ status:'open'|'closed';
+ temperature:number;
+ lines:string[];
+ words?:Record<string,unknown>;
+ example?:unknown;
+ [extra:string]:unknown;
 };
 export type PromptSpec={
- task:string;model:PromptFile['model'];
+ task:string;
+ model:PromptFile['model'];
  /** Placeholders the lines may use. */
  placeholders:readonly string[];
  /** Other templates in the file (dot path) and the placeholders each may use. */
@@ -22,16 +30,22 @@ export type PromptSpec={
  example?:(example:unknown)=>string[];
 };
 
-export const at=(file:unknown,path:string)=>path.split('.').reduce<unknown>((value,key)=>value&&typeof value==='object'?(value as Record<string,unknown>)[key]:undefined,file);
+/** The value at a dot path (`words.mood.sad`), or undefined. */
+export const at=(file:unknown,path:string)=>path.split('.').reduce<unknown>((value,key)=>value&&typeof value==='object'
+ ?(value as Record<string,unknown>)[key]
+ :undefined,file);
 
 export function promptProblems(file:PromptFile,spec:PromptSpec){
- const name=`${spec.task}`,problems:string[]=[];
+ const name=`${spec.task}`;
+ const problems:string[]=[];
  if(typeof file.version!=='string'||!file.version)problems.push(`${name}.version 应该是版本名`);
  if(file.task!==spec.task)problems.push(`${name}.task 应该是 ${spec.task}`);
  if(file.model!==spec.model)problems.push(`${name}.model 应该是 ${spec.model}`);
  if(file.status!=='open'&&file.status!=='closed')problems.push(`${name}.status 只能是 open / closed`);
- if(typeof file.temperature!=='number'||file.temperature<0||file.temperature>1.5)problems.push(`${name}.temperature 应该在 0–1.5 之间`);
- if(!Array.isArray(file.lines)||!file.lines.length||!file.lines.every(line=>typeof line==='string'&&line.trim()))problems.push(`${name}.lines 应该是一行行的文字`);
+ if(typeof file.temperature!=='number'||file.temperature<0||file.temperature>1.5)
+  problems.push(`${name}.temperature 应该在 0–1.5 之间`);
+ if(!Array.isArray(file.lines)||!file.lines.length||!file.lines.every(line=>typeof line==='string'&&line.trim()))
+  problems.push(`${name}.lines 应该是一行行的文字`);
  else file.lines.forEach((line,i)=>problems.push(...unknownPlaceholders(`${name}.lines[${i}]`,line,spec.placeholders)));
  for(const [path,allowed] of Object.entries(spec.templates??{})){
   const text=at(file,path);
@@ -40,9 +54,16 @@ export function promptProblems(file:PromptFile,spec:PromptSpec){
  }
  for(const [path,keys] of Object.entries(spec.tables??{})){
   const table=at(file,path);
-  if(!table||typeof table!=='object'){problems.push(`${name}.${path} 缺少`);continue;}
-  for(const key of keys)if(typeof (table as Record<string,unknown>)[key]!=='string'||!(table as Record<string,string>)[key]!.trim())problems.push(`${name}.${path}.${key} 缺少`);
-  for(const key of Object.keys(table))if(!keys.includes(key))problems.push(`${name}.${path}.${key} 不认识（拼错了？）`);
+  if(!table||typeof table!=='object'){
+   problems.push(`${name}.${path} 缺少`);
+   continue;
+  }
+  // Every key filled in, and no key the task does not know.
+  for(const key of keys)
+   if(typeof (table as Record<string,unknown>)[key]!=='string'||!(table as Record<string,string>)[key]!.trim())
+    problems.push(`${name}.${path}.${key} 缺少`);
+  for(const key of Object.keys(table))
+   if(!keys.includes(key))problems.push(`${name}.${path}.${key} 不认识（拼错了？）`);
  }
  if(spec.example)problems.push(...spec.example(file.example).map(problem=>`${name}.example：${problem}`));
  return problems;
@@ -58,16 +79,30 @@ export const SYSTEM_SPEC:PromptSpec={task:'system',model:'language',placeholders
 export const SYSTEM_PROMPT=loadPrompt(systemFile as PromptFile,SYSTEM_SPEC);
 
 /** What is sent for one request: the shared system prompt (language and audio tasks), the task prompt, and its settings. */
-export type BuiltPrompt={task:string;version:string;system:string|null;prompt:string;temperature:number;model:PromptFile['model']};
+export type BuiltPrompt={
+ task:string;
+ version:string;
+ system:string|null;
+ prompt:string;
+ temperature:number;
+ model:PromptFile['model'];
+};
 
 export function buildPrompt(file:PromptFile,values:Readonly<Record<string,string|number>>):BuiltPrompt{
  const lines=file.lines.map(line=>fill(line,values)).filter(line=>line.trim());
  return {
-  task:file.task,version:file.version,model:file.model,temperature:file.temperature,
-  system:file.model!=='music'?SYSTEM_PROMPT.lines.map(line=>fill(line,{childAvoid:avoidList(),neverSay:neverSayList()})).join('\n'):null,
+  task:file.task,
+  version:file.version,
+  model:file.model,
+  temperature:file.temperature,
+  // The music model gets no system prompt, and its lines are joined into one description.
+  system:file.model!=='music'
+   ?SYSTEM_PROMPT.lines.map(line=>fill(line,{childAvoid:avoidList(),neverSay:neverSayList()})).join('\n')
+   :null,
   prompt:lines.join(file.model!=='music'?'\n':' '),
  };
 }
 /** A word from a table, by key (the tables are checked to cover every key when loaded). */
-export const word=(file:PromptFile,path:string,key:string|number)=>String((at(file,path) as Record<string,string>)[String(key)]);
+export const word=(file:PromptFile,path:string,key:string|number)=>
+ String((at(file,path) as Record<string,string>)[String(key)]);
 export const exampleJson=(file:PromptFile)=>JSON.stringify(file.example);

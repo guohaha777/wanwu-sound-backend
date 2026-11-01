@@ -18,8 +18,10 @@ test('registration validates exact fields, independent username, passphrases and
 });
 test('passwords preserve whitespace and Unicode, refuse excess length and unpaired surrogates',()=>{
  assert.equal(validPassword(' 一句可以用来作为口令的中文句子 '),true);
- assert.equal(validPassword('x'.repeat(128)),true);assert.equal(validPassword('x'.repeat(129)),false);
- assert.equal(validPassword('😀'.repeat(15)),true);assert.equal(validPassword('x'.repeat(15)+'\uD800'),false);
+ assert.equal(validPassword('x'.repeat(128)),true);
+ assert.equal(validPassword('x'.repeat(129)),false);
+ assert.equal(validPassword('😀'.repeat(15)),true);
+ assert.equal(validPassword('x'.repeat(15)+'\uD800'),false);
 });
 test('only explicit dedicated database roles/names and HTTPS session configuration are accepted',()=>{
  assert.throws(()=>dedicatedDatabaseUrl('postgresql://postgres:fake@localhost/postgres','owner'));
@@ -36,10 +38,15 @@ test('only explicit dedicated database roles/names and HTTPS session configurati
  assert.equal(readConfig({WANWU_SESSION_SECRET:randomToken()}).cloudAuthMode,'disabled');
 });
 test('opaque credentials are random, stored as digests and compared without coercing headers',()=>{
- const first=randomToken(),second=randomToken();assert.equal(first.length,43);assert.ok(first!==second);
- assert.ok(/^[a-f0-9]{64}$/.test(tokenDigest(first)));assert.ok(tokenDigest(first)!==first);
- assert.equal(sameToken(first,first),true);assert.equal(sameToken(first,second),false);
- assert.equal(sameToken([first],first),false);assert.equal(sameToken(undefined,undefined),false);
+ const first=randomToken(),second=randomToken();
+ assert.equal(first.length,43);
+ assert.ok(first!==second);
+ assert.ok(/^[a-f0-9]{64}$/.test(tokenDigest(first)));
+ assert.ok(tokenDigest(first)!==first);
+ assert.equal(sameToken(first,first),true);
+ assert.equal(sameToken(first,second),false);
+ assert.equal(sameToken([first],first),false);
+ assert.equal(sameToken(undefined,undefined),false);
 });
 test('error envelopes keep the v0.6 string status and refuse accidental private fields',()=>{
  assert.ok(parseApiFailure({status:'error',reason:'needs-account',requestId:'test-request'}));
@@ -48,12 +55,20 @@ test('error envelopes keep the v0.6 string status and refuse accidental private 
  assert.equal(parseApiFailure({status:'error',reason:'needs-account',requestId:'test-request',password:'not-a-real-password'}),null);
 });
 test('native Argon2id uses the planned cost, independent salts, and a bounded verifier queue',async()=>{
- const passwords=new Passwords();await passwords.ready();
+ const passwords=new Passwords();
+ await passwords.ready();
  const first=await passwords.hash(password),second=await passwords.hash(password);
- const fields=first.split('$');assert.equal(fields[1],'argon2id');assert.equal(fields[2],'v=19');
- const costs=Object.fromEntries(fields[3]!.split(',').map(part=>{const [key,value]=part.split('=');return [key,Number(value)];}));
- assert.deepEqual(costs,{m:19456,t:2,p:1});assert.ok(first!==second);
- assert.equal(await passwords.verify(first,password),true);assert.equal(await passwords.verify(first,'a wrong disposable passphrase'),false);
+ const fields=first.split('$');
+ assert.equal(fields[1],'argon2id');
+ assert.equal(fields[2],'v=19');
+ const costs=Object.fromEntries(fields[3]!.split(',').map(part=>{
+  const [key,value]=part.split('=');
+  return [key,Number(value)];
+ }));
+ assert.deepEqual(costs,{m:19456,t:2,p:1});
+ assert.ok(first!==second);
+ assert.equal(await passwords.verify(first,password),true);
+ assert.equal(await passwords.verify(first,'a wrong disposable passphrase'),false);
  assert.equal(await passwords.verify(null,password),false);
  const results=await Promise.allSettled(Array.from({length:12},()=>passwords.hash(password)));
  assert.equal(results.filter(result=>result.status==='fulfilled').length,6);

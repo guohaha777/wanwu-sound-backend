@@ -10,7 +10,9 @@ test('frontend handoff rejects traversal, secret, backend and Git metadata paths
  for(const value of ['package.json','package-lock.json','netlify.toml','apps/web/src/app/App.tsx','packages/contracts/src/api.ts','packages/audio-engine/src/render.ts'])assert.equal(safeRelative(value),value);
 });
 test('frontend bundle and shared snapshots match committed handoff fingerprints',async()=>{
- const {manifest}=await bundle();assert.ok(manifest.files.length>50);assert.ok(manifest.sharedFiles.length>20);
+ const {manifest}=await bundle();
+ assert.ok(manifest.files.length>50);
+ assert.ok(manifest.sharedFiles.length>20);
  assert.equal(manifest.baseCommit,'35000af3005609b6b02356023dba680233d69cd8');
  assert.ok(!manifest.files.some(file=>file.path.includes('cloud-browser')||file.path.startsWith('apps/api')));
 });
@@ -28,6 +30,10 @@ test('baseline validation detects changed content and missing or conflicting new
 });
 test('handoff does not follow a frontend directory symlink outside the checkout',async()=>{
  const dir=await mkdtemp(path.join(tmpdir(),'wanwu-handoff-'));
- try{await mkdir(path.join(dir,'apps'));await symlink(tmpdir(),path.join(dir,'apps/web'));await assert.rejects(inspectFiles(dir,[{path:'apps/web/file',before:null}],'before'),/symlink/);}
+ try{
+  await mkdir(path.join(dir,'apps'));
+  await symlink(tmpdir(),path.join(dir,'apps/web'));
+  await assert.rejects(inspectFiles(dir,[{path:'apps/web/file',before:null}],'before'),/symlink/);
+ }
  finally{await rm(dir,{recursive:true,force:true});}
 });

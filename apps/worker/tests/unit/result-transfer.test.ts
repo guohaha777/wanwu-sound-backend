@@ -18,7 +18,11 @@ test('WAV IPC rejects missing, oversized, fractional and out-of-order transfers 
   [MAX_RESULT_BYTES+1,0,new Uint8Array(1)],[44,0,new Uint8Array(45)],
   [100,0.5,new Uint8Array(44)],[100,0,new Uint8Array(0)],
   [MAX_RESULT_BYTES,0,new Uint8Array(RESULT_CHUNK_BYTES+1)]] as const){
-  const receiver=new ResultReceiver();assert.equal(receiver.accept(total,offset,chunk),'invalid');assert.equal(receiver.result,null);
+  const receiver=new ResultReceiver();
+  assert.equal(receiver.accept(total,offset,chunk),'invalid');
+  assert.equal(receiver.result,null);
  }
- const receiver=new ResultReceiver();assert.equal(receiver.accept(100,1,new Uint8Array(1)),'conflict');assert.equal(receiver.result,null);
+ const receiver=new ResultReceiver();
+ assert.equal(receiver.accept(100,1,new Uint8Array(1)),'conflict');
+ assert.equal(receiver.result,null);
 });

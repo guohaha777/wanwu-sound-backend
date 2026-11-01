@@ -18,7 +18,8 @@ const storeError=(error:unknown)=>{
 /** Hashed identifiers, real PostgreSQL persistence, and logout tombstones so a
  * late concurrent response cannot recreate a just-revoked session. */
 export class PgSessionStore implements SessionStore{
- readonly pool:Pool;constructor(pool:Pool){this.pool=pool;}
+ readonly pool:Pool;
+ constructor(pool:Pool){this.pool=pool;}
  set(id:string,session:Session,callback:(error?:unknown)=>void){
   void this.persist(id,session).then(()=>callback(),error=>callback(storeError(error)));
  }
@@ -44,7 +45,10 @@ export class PgSessionStore implements SessionStore{
    [digest,session.accountId??null,session.authVersion??null,data,created,expires,absolute]);
    if(result.rowCount!==1)throw new ApiError(401,'needs-account');
    await client.query('COMMIT');
-  }catch(error){await client.query('ROLLBACK');throw error;}finally{client.release();}
+  }catch(error){
+   await client.query('ROLLBACK');
+   throw error;
+  }finally{client.release();}
  }
  get(id:string,callback:(error:unknown,session?:Session|null)=>void){
   void this.pool.query<{data:Session}>(`SELECT s.data FROM sessions s LEFT JOIN accounts a ON a.id=s.account_id
@@ -68,6 +72,9 @@ export class PgSessionStore implements SessionStore{
     VALUES($1::varchar,COALESCE((SELECT absolute_expires_at FROM sessions WHERE digest=$1::varchar),now()+INTERVAL '7 days')) ON CONFLICT DO NOTHING`,[digest]);
    await client.query('DELETE FROM sessions WHERE digest=$1',[digest]);
    await client.query('COMMIT');
-  }catch(error){await client.query('ROLLBACK');throw error;}finally{client.release();}
+  }catch(error){
+   await client.query('ROLLBACK');
+   throw error;
+  }finally{client.release();}
  }
 }

@@ -17,28 +17,42 @@ import {buildPrompt,exampleJson,loadPrompt,word} from './files.ts';
 import type {PromptFile} from './files.ts';
 import {readReply} from './reply.ts';
 
+/** A prompt file's example reply is checked by the task's own acceptance: its notes are the problems. */
 const examples=(accept:(value:unknown)=>Acceptance<unknown>)=>(value:unknown)=>accept(value).notes;
+/** Reads a reply and accepts it; a reply that is not JSON is rejected with `none`. */
 function read<T>(text:string,accept:(value:unknown)=>Acceptance<T>,none:T){
  const reply=readReply(text);
- return {repairs:reply.repairs,acceptance:'problem' in reply?{status:'rejected' as const,value:none,notes:[reply.problem]}:accept(reply.value)};
+ return {
+  repairs:reply.repairs,
+  acceptance:'problem' in reply
+   ?{status:'rejected' as const,value:none,notes:[reply.problem]}
+   :accept(reply.value),
+ };
 }
 
 // ----- 向导联想 -----
 export type SoundHintBrief={dimension:SoundDimension;value:string;kind:SoundKind|null};
 export const SOUND_HINT_PROMPT=loadPrompt(soundHintFile as PromptFile,{
- task:'sound-hint',model:'language',placeholders:['option','dimension','kind','hintMax','examples','example'],
+ task:'sound-hint',
+ model:'language',
+ placeholders:['option','dimension','kind','hintMax','examples','example'],
  tables:{
-  'words.dimension':SOUND_DIMENSIONS,'words.kind':[...SOUND_KINDS,'unknown'],
-  ...Object.fromEntries(SOUND_DIMENSIONS.map(dimension=>[`words.option.${dimension}`,SOUND_CHOICES[dimension] as readonly string[]])),
+  'words.dimension':SOUND_DIMENSIONS,
+  'words.kind':[...SOUND_KINDS,'unknown'],
+  ...Object.fromEntries(SOUND_DIMENSIONS
+   .map(dimension=>[`words.option.${dimension}`,SOUND_CHOICES[dimension] as readonly string[]])),
  },
  example:examples(acceptSoundHint),
 });
 export function buildSoundHint(brief:SoundHintBrief){
  const file=SOUND_HINT_PROMPT;
  return buildPrompt(file,{
-  option:word(file,`words.option.${brief.dimension}`,brief.value),dimension:word(file,'words.dimension',brief.dimension),
-  kind:word(file,'words.kind',brief.kind??'unknown'),hintMax:STYLE.slots.hint.maxChars,
-  examples:hintLines(brief.dimension,brief.value,brief.kind).map(line=>`  ${line}`).join('\n'),example:exampleJson(file),
+  option:word(file,`words.option.${brief.dimension}`,brief.value),
+  dimension:word(file,'words.dimension',brief.dimension),
+  kind:word(file,'words.kind',brief.kind??'unknown'),
+  hintMax:STYLE.slots.hint.maxChars,
+  examples:hintLines(brief.dimension,brief.value,brief.kind).map(line=>`  ${line}`).join('\n'),
+  example:exampleJson(file),
  });
 }
 export const readSoundHint=(text:string)=>read(text,acceptSoundHint,null);
@@ -46,35 +60,72 @@ export const readSoundHint=(text:string)=>read(text,acceptSoundHint,null);
 // ----- 心情“自己写” -----
 export type MoodWordsBrief={text:string};
 export const MOOD_WORDS_PROMPT=loadPrompt(moodWordsFile as PromptFile,{
- task:'mood-words',model:'language',placeholders:['text','moods','example'],tables:{'words.mood':MOODS},example:examples(acceptMood),
+ task:'mood-words',
+ model:'language',
+ placeholders:['text','moods','example'],
+ tables:{'words.mood':MOODS},
+ example:examples(acceptMood),
 });
 export function buildMoodWords(brief:MoodWordsBrief){
  const file=MOOD_WORDS_PROMPT;
- return buildPrompt(file,{text:brief.text,moods:MOODS.map(mood=>`· ${mood}：${word(file,'words.mood',mood)}`).join('\n'),example:exampleJson(file)});
+ return buildPrompt(file,{
+  text:brief.text,
+  moods:MOODS.map(mood=>`· ${mood}：${word(file,'words.mood',mood)}`).join('\n'),
+  example:exampleJson(file),
+ });
 }
 export const readMoodWords=(text:string)=>read(text,acceptMood,null);
 
 // ----- 课本歌曲的文字（开发期，结果再由人耳核对） -----
-/** The song's title and numbers, and the lines already written for other songs (so a different rhythm gets a different line). */
-export type TextbookWordsBrief=Pick<TextbookTrack,'title'|'tempoBpm'|'meter'|'rhythmCell'|'onsetDensity'|'pitchRange'|'brightness'|'mode'|'repetition'>
+/**
+ * The song's title and numbers, and the lines already written for other songs (so a different rhythm gets a different
+ * line).
+ */
+export type TextbookWordsBrief=Pick<TextbookTrack,
+ 'title'|'tempoBpm'|'meter'|'rhythmCell'|'onsetDensity'|'pitchRange'|'brightness'|'mode'|'repetition'>
  &{others?:readonly Pick<TextbookTrack,'title'|'tempoBpm'|'rhythmCell'|'childLine'>[]};
 export const TEXTBOOK_WORDS_PROMPT=loadPrompt(textbookWordsFile as PromptFile,{
- task:'textbook-words',model:'language',
- placeholders:['title','tempo','metre','rhythm','density','range','brightness','mode','repetition','others','moods','childLineMax','example'],
+ task:'textbook-words',
+ model:'language',
+ placeholders:[
+  'title','tempo','metre','rhythm','density','range','brightness','mode','repetition','others','moods',
+  'childLineMax','example',
+ ],
  templates:{otherLine:['title','rhythm','tempo','childLine'],'words.noOthers':[]},
- tables:{'words.density':DENSITIES,'words.brightness':BRIGHTNESSES,'words.mode':TEXTBOOK_MODES,'words.level':LEVELS,'words.mood':MOODS},
+ tables:{
+  'words.density':DENSITIES,
+  'words.brightness':BRIGHTNESSES,
+  'words.mode':TEXTBOOK_MODES,
+  'words.level':LEVELS,
+  'words.mood':MOODS,
+ },
  example:examples(acceptTextbookWords),
 });
 export function buildTextbookWords(brief:TextbookWordsBrief){
  const file=TEXTBOOK_WORDS_PROMPT;
- const others=(brief.others??[]).filter(other=>other.title!==brief.title)
-  .map(other=>fill(file.otherLine as string,{title:other.title,rhythm:`[${other.rhythmCell.join(', ')}]`,tempo:other.tempoBpm,childLine:other.childLine})).join('；');
+ const others=(brief.others??[])
+  .filter(other=>other.title!==brief.title)
+  .map(other=>fill(file.otherLine as string,{
+   title:other.title,
+   rhythm:`[${other.rhythmCell.join(', ')}]`,
+   tempo:other.tempoBpm,
+   childLine:other.childLine,
+  }))
+  .join('；');
  return buildPrompt(file,{
-  title:brief.title,others:others||word(file,'words','noOthers'),
-  tempo:brief.tempoBpm,metre:metreNames()[brief.meter],rhythm:`[${brief.rhythmCell.join(', ')}] 拍`,
-  density:word(file,'words.density',brief.onsetDensity),range:`MIDI ${brief.pitchRange.low}–${brief.pitchRange.high}`,
-  brightness:word(file,'words.brightness',brief.brightness),mode:word(file,'words.mode',brief.mode),repetition:word(file,'words.level',brief.repetition),
-  moods:MOODS.map((mood:MoodId)=>`${mood}=${word(file,'words.mood',mood)}`).join('，'),childLineMax:STYLE.slots.childLine.maxChars,example:exampleJson(file),
+  title:brief.title,
+  others:others||word(file,'words','noOthers'),
+  tempo:brief.tempoBpm,
+  metre:metreNames()[brief.meter],
+  rhythm:`[${brief.rhythmCell.join(', ')}] 拍`,
+  density:word(file,'words.density',brief.onsetDensity),
+  range:`MIDI ${brief.pitchRange.low}–${brief.pitchRange.high}`,
+  brightness:word(file,'words.brightness',brief.brightness),
+  mode:word(file,'words.mode',brief.mode),
+  repetition:word(file,'words.level',brief.repetition),
+  moods:MOODS.map((mood:MoodId)=>`${mood}=${word(file,'words.mood',mood)}`).join('，'),
+  childLineMax:STYLE.slots.childLine.maxChars,
+  example:exampleJson(file),
  });
 }
 export const readTextbookWords=(text:string)=>read(text,acceptTextbookWords,null);

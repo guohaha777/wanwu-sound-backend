@@ -22,8 +22,12 @@ export function pickRhythm(candidates:readonly RhythmCandidate[],meter:number):n
  let best:RhythmCandidate|null=null,bestScore=-1;
  for(const candidate of candidates){
   // An even pulse counts for less than half: it is everywhere in a recording (accompaniment), so it wins on numbers alone.
-  const variety=new Set(candidate.cell).size-1,score=candidate.bars*(variety?1+.6*Math.min(2,variety):.4);
-  if(score>bestScore){bestScore=score;best=candidate;}
+  const variety=new Set(candidate.cell).size-1;
+  const score=candidate.bars*(variety?1+.6*Math.min(2,variety):.4);
+  if(score>bestScore){
+   bestScore=score;
+   best=candidate;
+  }
  }
  return best?[...best.cell]:new Array<number>(meter).fill(1);
 }

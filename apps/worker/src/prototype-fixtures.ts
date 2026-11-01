@@ -39,9 +39,11 @@ export async function writePrototypeSources(directory:string,input:RenderInput){
   const files=new Map<string,string>();
   for(const [index,id] of EXAMPLES.entries()){
    const item=manifest.find(entry=>entry.id===id);
-   if(!item||!new RegExp(`^data/catalogue/previews/${id}\\.[a-f0-9]+\\.mp3$`).test(item.path))throw new Error('missing-published-example');
+   if(!item
+    ||!new RegExp(`^data/catalogue/previews/${id}\\.[a-f0-9]+\\.mp3$`).test(item.path))throw new Error('missing-published-example');
    const file=fileURLToPath(new URL(item.path,root)),bytes=await readFile(file);
-   if(bytes.length!==item.bytes||createHash('sha256').update(bytes).digest('hex')!==item.sha256)throw new Error('example-checksum-mismatch');
+   if(bytes.length!==item.bytes
+    ||createHash('sha256').update(bytes).digest('hex')!==item.sha256)throw new Error('example-checksum-mismatch');
    files.set(`source:${index}`,file);
   }
   return files;
@@ -51,7 +53,8 @@ export async function writePrototypeSources(directory:string,input:RenderInput){
  for(const [index,id] of [...new Set(input.arrangement.units.map(unit=>unit.sourceId))].entries()){
   const file=join(directory,`synthetic-${index}.wav`);
   const seconds=input.arrangement.id.endsWith(':short')?2:45;
-  await writeFile(file,syntheticWave(seconds,220+index*37,2),{flag:'wx'});files.set(id,file);
+  await writeFile(file,syntheticWave(seconds,220+index*37,2),{flag:'wx'});
+  files.set(id,file);
  }
  return files;
 }

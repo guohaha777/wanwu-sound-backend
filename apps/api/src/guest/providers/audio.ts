@@ -9,7 +9,13 @@ import type {Post} from '../net.ts';
 /** The excerpt's format from its first bytes: a RIFF header (base64 `UklGR`) is WAV, anything else is taken as mp3. */
 export const excerptFormat=(base64:string):'wav'|'mp3'=>base64.startsWith('UklGR')?'wav':'mp3';
 
-export async function chatWithAudio(post:Post,provider:Provider,built:BuiltPrompt,audioBase64:string,timeoutMs:number):Promise<string>{
+export async function chatWithAudio(
+ post:Post,
+ provider:Provider,
+ built:BuiltPrompt,
+ audioBase64:string,
+ timeoutMs:number,
+):Promise<string>{
  const body={
   model:provider.model,temperature:built.temperature,modalities:['text'],response_format:{type:'json_object'},reasoning_effort:'none',stream:false,
   messages:[...(built.system?[{role:'system',content:built.system}]:[]),

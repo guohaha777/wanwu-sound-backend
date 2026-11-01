@@ -9,7 +9,8 @@ const frameMs=ANALYSIS_RULES.frameSeconds*1000*3;
 
 test('one sound: silence around it is trimmed and it is the only unit',()=>{
  const result=analyseSamples([join(silence(1),tone(.9,800),silence(.5))],RATE);
- assert.equal(result.kind,'one');assert.equal(result.units.length,1);
+ assert.equal(result.kind,'one');
+ assert.equal(result.units.length,1);
  assert.ok(Math.abs(result.main!.startMs-1000)<=frameMs,'starts at the sound, not at 0');
  assert.equal(result.lengthBand,'medium');
  assert.ok(isSoundAnalysis(result));
@@ -18,7 +19,8 @@ test('one sound: silence around it is trimmed and it is the only unit',()=>{
 test('a series: separate sounds with quiet between them, each found in order',()=>{
  const croak=tone(.25,600);
  const result=analyseSamples([join(silence(.3),croak,silence(.6),croak,silence(.6),croak,silence(.4))],RATE);
- assert.equal(result.kind,'series');assert.equal(result.units.length,3);
+ assert.equal(result.kind,'series');
+ assert.equal(result.units.length,3);
  assert.equal(result.lengthBand,'short');
  assert.ok(result.units.every((unit,i)=>i===0||unit.startMs>result.units[i-1]!.endMs));
 });
@@ -38,7 +40,9 @@ test('brightness puts low, middle and high sounds in their bands',()=>{
 
 test('an empty recording is reported as silent, never invented',()=>{
  const result=analyseSamples([silence(2)],RATE);
- assert.equal(result.silent,true);assert.equal(result.main,null);assert.deepEqual(result.units,[]);
+ assert.equal(result.silent,true);
+ assert.equal(result.main,null);
+ assert.deepEqual(result.units,[]);
  assert.equal(result.durationMs,2000);
 });
 
