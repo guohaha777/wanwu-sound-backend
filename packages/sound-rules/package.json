@@ -16,6 +16,7 @@
   "./mix": "./src/mix.ts",
   "./ai-compose": "./src/aiCompose.ts",
   "./composition-identity": "./src/compositionIdentity.ts",
+  "./kept-background": "./src/keptBackground.ts",
   "./textbook-match": "./src/textbookMatch.ts",
   "./schema": "./src/schema.ts"
  }

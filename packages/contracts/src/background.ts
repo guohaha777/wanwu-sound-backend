@@ -214,6 +214,40 @@ export const validNotes=(notes:unknown,seconds:number)=>Array.isArray(notes)
   &&note.accent>=0
   &&note.accent<=1);
 
+/**
+ * 作品留住的背景: the composed background a saved piece keeps (AI 作曲 or 程序自编) — the notes the child heard and the
+ * frame they were written in — so the shelf, the server and 音乐小发现 play that music instead of rebuilding the plain
+ * one. Absent on pieces saved before 2026-11-01 and for an AI audio file (its link does not last): those play the
+ * local background as before.
+ */
+export type KeptBackground={
+ tempo:number;
+ metre:Metre;
+ mode:TextbookMode;
+ /** MIDI note of the key centre. */
+ tonic:number;
+ /** Where the tonic lands for the ending, in seconds. */
+ cadenceAt:number;
+ notes:BackgroundNoteData[];
+};
+/** The longest piece is 45 s chosen + 5 s overrun; no kept note may ring past this. */
+const KEPT_SECONDS_MAX=60;
+export const KEPT_NOTES_MAX=4000;
+export function isKeptBackground(value:unknown):value is KeptBackground{
+ if(!value||typeof value!=='object'||Array.isArray(value))return false;
+ const raw=value as Record<string,unknown>;
+ return finite(raw.tempo)
+  &&raw.tempo>0
+  &&oneOf([2,3,4],raw.metre)
+  &&oneOf(TEXTBOOK_MODES,raw.mode)
+  &&finite(raw.tonic)
+  &&finite(raw.cadenceAt)
+  &&raw.cadenceAt>=0
+  &&Array.isArray(raw.notes)
+  &&raw.notes.length<=KEPT_NOTES_MAX
+  &&validNotes(raw.notes,KEPT_SECONDS_MAX);
+}
+
 /** Validates what the server sends back before the page plays it. */
 export function parseBackgroundResult(value:unknown,seconds:number):BackgroundResult|null{
  if(!value||typeof value!=='object')return null;

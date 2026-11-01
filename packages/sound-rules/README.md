@@ -212,3 +212,5 @@
 AI 成曲身份与种子在 `src/compositionIdentity.ts`：按有序的声音时间、特征、来源内容标记和生成次数取种子，不按作品 ID 取种子。`ai-compose.v1.json` 当前内容版本 `ai-compose-v2`；修改 AI 提示词或音符解释时升级此版本，使前端缓存失效。普通背景与声场规则不受影响。
 
 成曲乐器编配独立于作曲：`src/orchestration.ts`，参数在 `rules/orchestration.v1.json`（版本记入 `RULE_VERSIONS.orchestration`，改参数时升级）；单选有音高乐器独奏，小鼓领奏并将原和声压至 0.35，多选按声部分工，无主奏声部时加入兼容和声，缺鼓点时按拍子及孩子声音占用补入轻节奏。音频入口 `audio-engine/orchestration` 供成曲、书架、导出共用；原声场继续使用原始渲染入口。
+
+作品留住的背景在 `src/keptBackground.ts`（11-01）：保存作品时，成曲正在放的 AI 作曲 / 程序自编的音符连同速度、拍子、调式、主音、结束点存进作品的 `rendering.composed`（契约 `KeptBackground`）；书架播放和服务器渲染（`renderWork` 的 `composed`）有它就按它放，长度、淡入淡出、让一让和配器仍按本地规则。没有它的旧作品、AI 整段音频照旧按规则重建。成曲播放也经同一个 `keptPlan`。

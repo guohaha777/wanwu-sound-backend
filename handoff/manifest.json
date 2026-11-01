@@ -25,7 +25,7 @@
     },
     {
       "path": "packages/contracts/src/background.ts",
-      "sha256": "d76e3a2ec21ba12a20469670be5abc9b624905aa3f575ab36cb8261b4eb7762b"
+      "sha256": "30b40a468037c19b9dba3487dfe872f801f798bab498afe2c15e5199096b10c8"
     },
     {
       "path": "packages/contracts/src/cloud.ts",
@@ -45,15 +45,15 @@
     },
     {
       "path": "packages/contracts/src/work.ts",
-      "sha256": "db7db9b86d800652c853ea3c4a1d2be1a837434e6c9d0903848db26308866c47"
+      "sha256": "7e47cb8164b7f9351213810abd47e0a0f3dd62957541296ccc3d47d064d8c0f1"
     },
     {
       "path": "packages/sound-rules/README.md",
-      "sha256": "b7a4fc1050c61b02ce0a087b29680462c71fa9913207c4608ef6e66e91e2da54"
+      "sha256": "fc855197c22c67174b1bd7acac097672fab61637dfe5bc0ea40a9edd3f7a9e33"
     },
     {
       "path": "packages/sound-rules/package.json",
-      "sha256": "62b4c5e4178f34e30ae4ffe859421a2e03c8fab0be801e420262f87035eac51d"
+      "sha256": "65b3b9ad750b2929120254d044d129b9b1bc379882d9c5166e471d7f2d52d6ca"
     },
     {
       "path": "packages/sound-rules/rules/ai-compose.v1.json",
@@ -106,6 +106,10 @@
     {
       "path": "packages/sound-rules/src/compositionIdentity.ts",
       "sha256": "067aeba5d971933a23d999cb980bac3ee6183dec1b692717999bd0de10b383da"
+    },
+    {
+      "path": "packages/sound-rules/src/keptBackground.ts",
+      "sha256": "b05cc11a325c8213f9ce8e0820ffc7e11c32c4a13b3b7b3e948587611f876c2f"
     },
     {
       "path": "packages/sound-rules/src/mix.ts",
@@ -197,7 +201,7 @@
     },
     {
       "path": "packages/audio-engine/src/render.ts",
-      "sha256": "8c6fa9250b2bdd126269c08f45370cdcd8404e517cdea0c770074dc58d55a226"
+      "sha256": "84e3f5cb4579e34b240406b4e6a3d809df4b68aef074250a02ae7dfd0a61e172"
     },
     {
       "path": "packages/audio-engine/src/shaping.ts",

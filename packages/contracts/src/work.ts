@@ -6,8 +6,8 @@
 // child's sounds, their excerpts or their placement.
 import {parseArrangement} from './arrangement.ts';
 import type {Arrangement} from './arrangement.ts';
-import {BACKGROUND_SOURCES,PROGRAM_SOURCES} from './background.ts';
-import type {BackgroundSource,RuleVersions} from './background.ts';
+import {BACKGROUND_SOURCES,PROGRAM_SOURCES,isKeptBackground} from './background.ts';
+import type {BackgroundSource,KeptBackground,RuleVersions} from './background.ts';
 
 export const WORK_CONTRACT_VERSION='work-v1' as const;
 
@@ -50,7 +50,13 @@ export const VISIBILITIES:readonly Visibility[]=['private','class','school','reg
  * the arrangement with these same rules, so an old work is mixed again the way it was made. `prompt` is the version of
  * the prompt that made an AI background (from its result); null for the local one, which no model touched.
  */
-export type Rendering={background:BackgroundSource;prompt:string|null;rules:RuleVersions};
+export type Rendering={
+ background:BackgroundSource;
+ prompt:string|null;
+ rules:RuleVersions;
+ /** The composed notes the child heard (AI 作曲 / 程序自编); absent = the background is rebuilt from the rules. */
+ composed?:KeptBackground;
+};
 
 /**
  * Where sharing a work stands (POST /api/v1/works/{id}/share). Any visibility wider than `private` is reviewed first;
@@ -122,7 +128,8 @@ export function isRendering(value:unknown):value is Rendering{
   &&(PROGRAM_SOURCES.includes(raw.background as BackgroundSource)?raw.prompt===null:nonEmpty(raw.prompt))
   &&!!rules
   &&typeof rules==='object'
-  &&['analysis','shaping','background','mix'].every(key=>nonEmpty(rules[key]));
+  &&['analysis','shaping','background','mix'].every(key=>nonEmpty(rules[key]))
+  &&(raw.composed===undefined||isKeptBackground(raw.composed));
 }
 
 export function isWorkShare(value:unknown):value is WorkShare{

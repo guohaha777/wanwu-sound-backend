@@ -1,5 +1,7 @@
 import {parseArrangement} from '@wanwu-v2/contracts/arrangement';
 import type {Arrangement} from '@wanwu-v2/contracts/arrangement';
+import {isKeptBackground} from '@wanwu-v2/contracts/background';
+import type {KeptBackground} from '@wanwu-v2/contracts/background';
 import {parseComposeSettings} from '@wanwu-v2/contracts/work';
 import type {ComposeSettings} from '@wanwu-v2/contracts/work';
 import type {TextbookTrack} from '@wanwu-v2/contracts/textbook';
@@ -8,6 +10,7 @@ import {analyseSamples} from '@wanwu-v2/sound-rules/analysis';
 import {backgroundPlan} from '@wanwu-v2/sound-rules/background';
 import {MIX_RULES,RULE_VERSIONS} from '@wanwu-v2/sound-rules/rules';
 import {planClip,shapeKey} from '@wanwu-v2/sound-rules/shaping';
+import {keptPlan} from '@wanwu-v2/sound-rules/kept-background';
 import {renderShaped} from './shaping.ts';
 import {renderArrangedBackground} from './orchestration.ts';
 import {LOCAL_INSTRUMENTS} from './instruments.ts';
@@ -22,6 +25,8 @@ export type RenderInput={
  settings:ComposeSettings;
  textbook:TextbookTrack|null;
  rules:typeof RULE_VERSIONS;
+ /** The composed notes the piece kept (AI 作曲 / 程序自编); absent = the background is rebuilt from the rules. */
+ composed?:KeptBackground|null;
  /** Internal worker-only bounds, derived from a hash-verified bundled catalogue; never accepted in work JSON. */
  sourceLimits?:Record<string,number>;
  /** Worker-only facts from an immutable server snapshot, after verifying each derivative's exact SHA-256. */
@@ -36,6 +41,7 @@ function validate(input:RenderInput){
  if(!input.rules
   ||Object.entries(RULE_VERSIONS).some(([key,value])=>input.rules[key as keyof typeof RULE_VERSIONS]!==value))
   throw new Error('renderer-incompatible');
+ if(input.composed!=null&&!isKeptBackground(input.composed))throw new Error('invalid-background');
  const {inspiration,background}=input.settings;
  if(inspiration.kind==='teaching-music')throw new Error('not-open');
  if(input.textbook
@@ -172,7 +178,7 @@ export async function renderWork(
    textbook:inspiration.kind==='textbook'&&input.textbook?input.textbook:null,
   });
   const chosen=background.instruments.map(id=>LOCAL_INSTRUMENTS.find(instrument=>instrument.id===id)!);
-  const under=await renderArrangedBackground(plan,chosen,timedEvents(arrangement).map(({start,end})=>({start,end})));
+  const under=await renderArrangedBackground(input.composed?keptPlan(plan,input.composed):plan,chosen,timedEvents(arrangement).map(({start,end})=>({start,end})));
   const node=ctx.createBufferSource();
   const gain=ctx.createGain();
   node.buffer=under;
