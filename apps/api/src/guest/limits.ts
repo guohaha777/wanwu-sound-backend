@@ -1,6 +1,6 @@
 // Spending guard for the built-in model settings: one total per day (Asia/Shanghai). Per-address limits are the
 // existing @fastify/rate-limit route option (GUEST_RATE_LIMIT). A visitor's own settings do not use this budget.
-export const GUEST_RATE_LIMIT = { config: { rateLimit: { max: 20, timeWindow: 10 * 60_000 } } };
+export const GUEST_RATE_LIMIT = { config: { rateLimit: { max: 100, timeWindow: 10 * 60_000 } } };
 
 const day = (now: Date) => new Date(now.getTime() + 8 * 3600_000).toISOString().slice(0, 10);
 
