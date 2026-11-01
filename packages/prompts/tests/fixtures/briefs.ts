@@ -1,6 +1,6 @@
 // Fixed sample inputs for checking prompts without a model. Names are made up and deliberately personal-looking, so the
 // tests can prove they never reach a prompt.
-import type {BackgroundBrief} from '@wanwu-v2/contracts/background';
+import type {BackgroundBrief,BriefSound} from '@wanwu-v2/contracts/background';
 import type {Discovery,TextbookTalkBrief,WorkTalkBrief} from '@wanwu-v2/contracts/talk';
 import {tokenizeFacts} from '../../src/accept.ts';
 import {textbookTalk} from '../../src/corpus.ts';
@@ -23,17 +23,25 @@ export const textbookBrief:TextbookTalkBrief={
  local:textbookTalk(lullaby,'together','声音1'),
 };
 
-const rules={analysis:'analysis-v2',shaping:'shaping-v3',background:'background-v1',mix:'mix-v1'};
+const rules={analysis:'analysis-v2',shaping:'shaping-v3',background:'background-v1',mix:'mix-v2'};
+const sound=(n:number,start:number,end:number,extra:Partial<BriefSound>={}):BriefSound=>({
+ n,start,end,pitch:'mid',length:'medium',contour:null,intensity:'medium',pattern:'once',kind:'one',brightness:'mid',...extra,
+});
+/** A calm, sparse piece: high, rising sounds early, one long one later. */
 export const calmLullaby:BackgroundBrief={
- version:'background-request-v1',workId:'work:fixture-1',seconds:30,sounding:[{start:1,end:3},{start:2,end:5},{start:20,end:24}],
- tempo:66,metre:3,mode:'major',mood:'calm',arrangement:{density:'sparse',repetition:'medium',register:'high'},
- textbook:{id:'tb:mock:lullaby',tempoBpm:66,meter:3,rhythmCell:[2,1],onsetDensity:'sparse',pitchRange:{low:57,high:69},brightness:'dark',mode:'major',repetition:'medium',mood:'calm'},
- teachingMusic:null,instruments:['marimba'],rules,
+ version:'background-request-v2',workId:'work:fixture-1',seconds:30,mood:'calm',
+ sounds:[sound(1,1,3,{pitch:'high',contour:'rising',intensity:'soft'}),sound(2,2,5,{pitch:'high',length:'long',kind:'texture'}),
+  sound(1,20,24,{pitch:'high',contour:'rising',intensity:'soft'})],
+ attempt:0,previous:null,instruments:['marimba'],rules,
 };
+/** A busy, happy piece of short, loud, repeating low sounds. */
 export const busyNoSong:BackgroundBrief={
- version:'background-request-v1',workId:'work:fixture-2',seconds:20,sounding:Array.from({length:10},(_,i)=>({start:i*2,end:i*2+1.5})),
- tempo:100,metre:4,mode:'major',mood:'happy',arrangement:{density:'busy',repetition:'high',register:'low'},
- textbook:null,teachingMusic:null,instruments:[],rules,
+ version:'background-request-v2',workId:'work:fixture-2',seconds:20,mood:'happy',
+ sounds:Array.from({length:10},(_,i)=>sound(1+i%2,i*2,i*2+1.5,{pitch:'low',length:'short',intensity:'loud',pattern:'repeat',contour:'falling'})),
+ attempt:0,previous:null,instruments:[],rules,
 };
-export const quietNoMood:BackgroundBrief={...busyNoSong,workId:'work:fixture-3',seconds:45,sounding:[{start:40,end:44}],mood:null,tempo:76,arrangement:{density:'sparse',repetition:'low',register:'medium'}};
+export const quietNoMood:BackgroundBrief={...busyNoSong,workId:'work:fixture-3',seconds:45,mood:null,sounds:[sound(1,40,44,{brightness:'dark'})]};
 export const BACKGROUND_BRIEFS=[calmLullaby,busyNoSong,quietNoMood];
+/** A textbook song's features (the textbook-words task, not the AI background). */
+export const lullabyFeatures={id:'tb:mock:lullaby',tempoBpm:66,meter:3 as const,rhythmCell:[2,1],onsetDensity:'sparse' as const,
+ pitchRange:{low:57,high:69},brightness:'dark' as const,mode:'major' as const,repetition:'medium' as const,mood:'calm' as const};

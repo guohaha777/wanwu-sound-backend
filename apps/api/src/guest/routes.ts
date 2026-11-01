@@ -8,10 +8,10 @@ import {MOODS} from '@wanwu-v2/contracts/arrangement';
 import {AI_BACKGROUND_STEPS,isBackgroundBrief,parseBackgroundResult} from '@wanwu-v2/contracts/background';
 import type {AiBackgroundStep,BackgroundBrief,BackgroundResult,BackgroundUnavailable} from '@wanwu-v2/contracts/background';
 import {isTextbookTalk,isTextbookTalkBrief,isWorkTalkBrief,isWorkTalkReply} from '@wanwu-v2/contracts/talk';
-import {buildBackgroundNotes,buildMoodWords,buildTextbookFeatures,buildTextbookTalk,buildWorkTalk,isTextbookFeaturesBrief,readBackgroundNotes,readMoodWords,readReply,readTextbookFeatures,readTextbookTalk,readWorkTalk} from '@wanwu-v2/prompts/tasks';
+import {buildBackgroundCompose,buildMoodWords,readBackgroundCompose,buildTextbookFeatures,buildTextbookTalk,buildWorkTalk,isTextbookFeaturesBrief,readMoodWords,readReply,readTextbookFeatures,readTextbookTalk,readWorkTalk} from '@wanwu-v2/prompts/tasks';
 import type {BuiltPrompt} from '@wanwu-v2/prompts/tasks';
 import {ApiError} from '../errors.ts';
-import {developIdea} from './aiNotes.ts';
+import {composeNotes} from '@wanwu-v2/sound-rules/ai-compose';
 import type {GuestConfig,Provider} from './config.ts';
 import {BackgroundJobs} from './jobs.ts';
 import {DailyBudget,GUEST_RATE_LIMIT} from './limits.ts';
@@ -19,14 +19,15 @@ import {GuestFailure,postJson} from './net.ts';
 import type {Post} from './net.ts';
 import {OVERRIDE_HEADER,parseOverride} from './override.ts';
 import {chat} from './providers/language.ts';
-import {chatWithAudio} from './providers/audio.ts';
+import {chatVoice,chatWithAudio} from './providers/audio.ts';
 import {generateAudio} from './providers/music.ts';
 
 /**
- * Server waits a little less than the page (talk 10 s, AI notes 8 s, AI audio 60 s), so the page hears why. Mood words
- * are short; talk rewords up to nine facts and takes qwen3.8-flash 4–6 s (measured 2026-10-30) while the corpus shows.
+ * Server waits a little less than the page (talk 10 s, AI composing 20 s per model, AI audio 60 s), so the page hears
+ * why. Mood words are short; talk rewords up to nine facts and takes qwen3.8-flash 4–6 s (measured 2026-10-30) while the
+ * corpus shows; a composition plan is longer and asks the model to think.
  */
-export const GUEST_TIMEOUT_MS={mood:5_500,talk:9_500,notes:7_000,audio:55_000,listen:7_500,features:4_500} as const;
+export const GUEST_TIMEOUT_MS={mood:5_500,talk:9_500,compose:19_000,audio:55_000,listen:7_500,features:4_500} as const;
 /** A teaching-music excerpt: about 30 s of low-bitrate mono mp3 (≈ 180 KB); the request may carry up to 1.2 MB of base64. */
 const EXCERPT_MAX_CHARS=1_200_000;
 export type GuestContext={config:GuestConfig;post:Post;budget:DailyBudget;jobs:BackgroundJobs};
@@ -150,17 +151,21 @@ export function guestRoutes(app:FastifyInstance,context:GuestContext){
 
  const unavailable=(reason:BackgroundUnavailable):BackgroundResult=>({status:'unavailable',reason});
  const runStep=async(step:AiBackgroundStep,brief:BackgroundBrief,language:Provider|null,music:Provider|null):Promise<BackgroundResult>=>{
-  // Teaching-music analysis is not open: a brief that needs it has no AI background.
-  if(brief.teachingMusic)return unavailable('not-open');
-  const provider=step==='audio-ai'?music:language;
+  // The music model makes audio; the voice model (built in only) and the text model compose a plan the program plays.
+  const provider=step==='audio-ai'?music:step==='voice-ai'?context.config.audio:language;
   if(!provider)return unavailable('not-open');
   if(spend(provider))return unavailable('quota');
   try{
    if(step==='audio-ai')return parseBackgroundResult(await generateAudio(provider,brief),brief.seconds)??unavailable('failed');
-   const prompt=buildBackgroundNotes(brief,context.jobs.attempt(brief.workId));
-   const idea=readBackgroundNotes(await chat(context.post,provider,prompt,GUEST_TIMEOUT_MS.notes)).acceptance.value;
-   if(!idea)return unavailable('failed');
-   const result:BackgroundResult={status:'ready',source:'notes-ai',notes:developIdea(brief,idea),model:provider.builtIn?provider.model:'visitor',promptVersion:prompt.version};
+   const prompt=buildBackgroundCompose(brief);
+   const reply=step==='voice-ai'
+    ?await chatVoice(context.post,provider,prompt,GUEST_TIMEOUT_MS.compose)
+    :await chat(context.post,provider,prompt,GUEST_TIMEOUT_MS.compose);
+   const read=readBackgroundCompose(reply,brief).acceptance;
+   if(!read.value)return unavailable('failed');
+   const {plan}=read.value;
+   const result:BackgroundResult={status:'ready',source:step,notes:composeNotes(brief,plan).notes,plan,
+    model:provider.builtIn?provider.model:'visitor',promptVersion:prompt.version};
    return parseBackgroundResult(result,brief.seconds)??unavailable('failed');
   }catch(error){return unavailable(error instanceof GuestFailure?error.reason:'failed');}
  };
@@ -172,7 +177,7 @@ export function guestRoutes(app:FastifyInstance,context:GuestContext){
    ||!isBackgroundBrief(body.brief))throw new ApiError(400,'invalid-request');
   const step=body.step as AiBackgroundStep,brief=body.brief,started=Date.now(),{language,music}=providers(request);
   const jobId=context.jobs.start(async()=>{const result=await runStep(step,brief,language,music);
-   outcome(request,step,started,result.status==='ready'?'ok':result.reason,step==='audio-ai'?music:language);return result;});
+   outcome(request,step,started,result.status==='ready'?'ok':result.reason,step==='audio-ai'?music:step==='voice-ai'?context.config.audio:language);return result;});
   if(!jobId)throw new ApiError(503,'busy');
   return reply.code(202).send({jobId});
  });

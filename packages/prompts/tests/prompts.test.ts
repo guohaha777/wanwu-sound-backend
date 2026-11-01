@@ -1,17 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {STYLE} from '../src/style.ts';
-import {PROMPT_VERSIONS,TASKS,TASK_IDS,buildBackgroundAudio,buildBackgroundNotes,buildMoodWords,buildSoundHint,buildTextbookTalk,buildTextbookWords,buildWorkTalk,promptProblems,sectionCounts,soundingPercent} from '../src/tasks/index.ts';
+import {PROMPT_VERSIONS,TASKS,TASK_IDS,buildBackgroundAudio,buildBackgroundCompose,buildMoodWords,buildSoundHint,buildTextbookTalk,buildTextbookWords,buildWorkTalk,promptProblems} from '../src/tasks/index.ts';
 import type {BuiltPrompt,PromptFile} from '../src/tasks/index.ts';
 import {WORK_TALK_PROMPT} from '../src/tasks/talk.ts';
-import {BACKGROUND_BRIEFS,PERSONAL_NAMES,calmLullaby,textbookBrief,workBrief} from './fixtures/briefs.ts';
+import {BACKGROUND_BRIEFS,PERSONAL_NAMES,busyNoSong,calmLullaby,lullabyFeatures,quietNoMood,textbookBrief,workBrief} from './fixtures/briefs.ts';
 
 /** Every request built from the fixed samples. */
 const built:[string,BuiltPrompt][]=[
- ...BACKGROUND_BRIEFS.flatMap((brief,i)=>[[`background-audio#${i}`,buildBackgroundAudio(brief)],[`background-notes#${i}`,buildBackgroundNotes(brief)]] as [string,BuiltPrompt][]),
+ ...BACKGROUND_BRIEFS.flatMap((brief,i)=>[[`background-audio#${i}`,buildBackgroundAudio(brief)],[`background-compose#${i}`,buildBackgroundCompose(brief)]] as [string,BuiltPrompt][]),
  ['work-talk',buildWorkTalk(workBrief)],['textbook-talk',buildTextbookTalk(textbookBrief)],
  ['sound-hint',buildSoundHint({dimension:'pattern',value:'repeat',kind:'texture'})],['mood-words',buildMoodWords({text:'有点想家'})],
- ['textbook-words',buildTextbookWords({...calmLullaby.textbook!,title:'摇篮曲',others:[{title:'小火车',tempoBpm:116,rhythmCell:[.5,.5,1],childLine:'越跑越欢快'}]})],
+ ['textbook-words',buildTextbookWords({...lullabyFeatures,title:'摇篮曲',others:[{title:'小火车',tempoBpm:116,rhythmCell:[.5,.5,1],childLine:'越跑越欢快'}]})],
 ];
 
 test('every prompt file loads; each task has a version and a fallback',()=>{
@@ -62,18 +62,35 @@ test('work talk: each fact with its local sentence, sounds only as tokens',()=>{
  assert.match(prompt,/不超过 45 个字/);
 });
 
-test('AI notes: four sections counted from the sounding spans; asking again asks for a different motif',()=>{
- assert.deepEqual(sectionCounts(calmLullaby).map(section=>section.count),[2,0,1,0]);
- assert.equal(soundingPercent(calmLullaby),27);
- assert.doesNotMatch(buildBackgroundNotes(calmLullaby).prompt,/第 \d 次/);
- assert.match(buildBackgroundNotes(calmLullaby,2).prompt,/这是第 3 次/);
- assert.match(buildBackgroundNotes(calmLullaby).prompt,/借「课本歌曲」的节奏：三拍子，节奏型 \[2, 1\]/);
- assert.ok(!buildBackgroundNotes(calmLullaby).prompt.includes('摇篮曲'),'the brief carries features, not the song');
+test('AI compose: every sound with its features as words, the ranges, the style card and the program\'s reference',()=>{
+ const built=buildBackgroundCompose(calmLullaby);
+ assert.match(built.prompt,/· 声音1 第 1–3 秒：高、中等长、往上走、轻、出现一次、单个的声音、不明不暗/);
+ assert.match(built.prompt,/· 声音2 第 2–5 秒：高、长、走向没选、不轻不响、出现一次、连成一片的声音、不明不暗/);
+ assert.match(built.prompt,/心情：平静/);
+ assert.match(built.prompt,/拍子 3（三拍子）、4（四拍子）/);
+ assert.match(built.prompt,/【风格卡】[a-z]+「/);
+ assert.match(built.prompt,/【程序的参考方案】速度 \d+/);
+ assert.match(built.prompt,/【上一首】第一次，没有上一首/);
+ assert.doesNotMatch(built.prompt,/第 \d+ 首伴奏/);
+ // The composer's role is added to the shared system prompt.
+ assert.match(built.system!,/只返回一个合法的 JSON 对象/);
+ assert.match(built.system!,/你是给小学低年级孩子的作品写伴奏的作曲家/);
+ assert.equal(built.temperature,.9);
 });
 
-test('AI backgrounds take the colour the local rules take: the child\'s mood, else the song\'s, else none',()=>{
- const songOnly={...calmLullaby,mood:null};
- assert.match(buildBackgroundAudio(songOnly).prompt,/情绪：平静、舒展/);
- assert.match(buildBackgroundNotes(songOnly).prompt,/【心情】平静/);
- assert.match(buildBackgroundAudio({...songOnly,textbook:null}).prompt,/情绪：自然、中性/);
+test('AI compose: asking again carries what the last one chose and asks for four changes',()=>{
+ const reference=(prompt:string)=>prompt.match(/【程序的参考方案】(.+)/)![1]!;
+ const first=reference(buildBackgroundCompose(busyNoSong).prompt);
+ const again=buildBackgroundCompose({...busyNoSong,attempt:2,previous:{tempo:100,metre:4,mode:'major',tonicShift:0,progressions:['1-5-6-4'],
+  pattern:'ostinato',bass:'pulse',drums:'march',motif:{degrees:[0,2,4],beats:[.5,.5,1]},answer:'mirror',
+  sections:[{density:'sparse',register:'mid',dynamics:'soft'},{density:'sparse',register:'high',dynamics:'soft'},{density:'medium',register:'mid',dynamics:'soft'},{density:'sparse',register:'low',dynamics:'soft'}],style:'march'}}).prompt;
+ assert.match(again,/【上一首】速度 100，4 拍，major/);
+ assert.match(again,/这是为这首小曲写的第 3 首伴奏：至少换 4 项/);
+ assert.notEqual(reference(again),first,'the reference changes with the try');
+});
+
+test('AI backgrounds follow the child\'s mood only, never a song',()=>{
+ assert.match(buildBackgroundAudio(calmLullaby).prompt,/情绪：平静、舒展/);
+ assert.match(buildBackgroundAudio(quietNoMood).prompt,/情绪：自然、中性/);
+ for(const brief of BACKGROUND_BRIEFS)assert.doesNotMatch(buildBackgroundCompose(brief).prompt,/课本/);
 });

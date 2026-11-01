@@ -28,3 +28,20 @@ export async function chatWithAudio(
  if(typeof content!=='string'||!content.trim())throw new GuestFailure('failed');
  return content;
 }
+
+/**
+ * The same model asked with words only (AI 作曲, the voice step): no excerpt, the prompt alone; the reply is the
+ * composer's JSON, checked like the text model's.
+ */
+export async function chatVoice(post:Post,provider:Provider,built:BuiltPrompt,timeoutMs:number):Promise<string>{
+ const body={
+  model:provider.model,temperature:built.temperature,modalities:['text'],response_format:{type:'json_object'},reasoning_effort:'none',stream:false,
+  messages:[...(built.system?[{role:'system',content:built.system}]:[]),{role:'user',content:built.prompt}],
+ };
+ const reply=await post(`${provider.baseUrl}/chat/completions`,{authorization:`Bearer ${provider.apiKey}`},body,timeoutMs);
+ if(reply.status===429)throw new GuestFailure('quota');
+ if(reply.status<200||reply.status>=300)throw new GuestFailure('failed');
+ const content=(reply.json as {choices?:{message?:{content?:unknown}}[]}|null)?.choices?.[0]?.message?.content;
+ if(typeof content!=='string'||!content.trim())throw new GuestFailure('failed');
+ return content;
+}

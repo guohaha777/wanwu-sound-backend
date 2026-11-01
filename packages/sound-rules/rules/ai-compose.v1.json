@@ -1,0 +1,60 @@
+{
+ "version": "ai-compose-v1",
+ "features": {
+  "loudness": {"softBelowDb": -32, "loudAboveDb": -20},
+  "brightness": {"darkBelowHz": 1500, "brightAboveHz": 3500}
+ },
+ "density": {"sparseBelowPerBar": 0.5, "busyAbovePerBar": 1.2, "sparseCoverage": 0.3, "busyCoverage": 0.6},
+ "tempo": {"span": 12, "shift": 8, "min": 56, "max": 132},
+ "tonicShift": {"min": -5, "max": 5},
+ "moods": {
+  "none": {"tempo": 84, "metres": [2, 3, 4], "modes": ["major", "pentatonic", "minor", "dorian"], "progressions": ["1-6-4-5", "1-4-5-1", "1-5-6-4", "6-4-1-5", "1-4-1-5"], "bass": ["hold", "pulse", "walk", "ostinato"], "drums": ["none", "heartbeat", "march", "skip", "waltz", "groove"]},
+  "happy": {"tempo": 100, "metres": [2, 4], "modes": ["major", "pentatonic"], "progressions": ["1-5-6-4", "1-4-5-1", "1-6-2-5", "1-3-4-5", "4-5-3-6"], "bass": ["pulse", "walk", "ostinato"], "drums": ["march", "skip", "groove"]},
+  "calm": {"tempo": 70, "metres": [3, 4], "modes": ["major", "pentatonic", "dorian"], "progressions": ["1-4-1-5", "1-6-4-5", "4-1-4-5", "1-3-4-1"], "bass": ["none", "hold"], "drums": ["none", "heartbeat"]},
+  "lively": {"tempo": 112, "metres": [2, 4], "modes": ["major", "pentatonic"], "progressions": ["1-4-5-1", "1-5-4-5", "1-6-4-5", "2-5-1-6"], "bass": ["pulse", "walk", "ostinato"], "drums": ["march", "skip", "groove"]},
+  "sad": {"tempo": 62, "metres": [3, 4], "modes": ["minor", "pentatonic"], "progressions": ["1-6-4-5", "1-4-1-5", "1-7-6-5", "1-4-7-3"], "bass": ["none", "hold"], "drums": ["none", "heartbeat"]},
+  "angry": {"tempo": 96, "metres": [2, 4], "modes": ["minor", "dorian"], "progressions": ["1-6-7-1", "1-4-5-1", "1-7-6-7", "1-6-4-5"], "bass": ["pulse", "ostinato"], "drums": ["march", "groove"]},
+  "scared": {"tempo": 72, "metres": [3, 4], "modes": ["minor", "pentatonic"], "progressions": ["1-4-1-5", "1-6-1-5", "1-2-1-5"], "bass": ["none", "hold"], "drums": ["none", "heartbeat"]},
+  "curious": {"tempo": 88, "metres": [2, 3, 4], "modes": ["dorian", "pentatonic", "major"], "progressions": ["1-4-1-4", "1-2-4-1", "1-7-4-1", "1-5-2-4"], "bass": ["hold", "walk", "ostinato"], "drums": ["none", "skip", "waltz"]}
+ },
+ "patterns": {
+  "once": ["block", "arpeggio"],
+  "repeat": ["ostinato", "arpeggio"],
+  "bursts": ["offbeat", "arpeggio"],
+  "fade-in": ["pad", "block"],
+  "texture": ["pad", "block"],
+  "long": ["pad", "arpeggio"],
+  "short": ["offbeat", "ostinato"]
+ },
+ "bass": {"soft": ["none", "hold"], "medium": ["hold", "pulse", "walk"], "loud": ["pulse", "walk", "ostinato"]},
+ "drums": {
+  "quiet": ["none", "heartbeat"],
+  "textureShare": 0.5,
+  "patterns": {
+   "heartbeat": {"2": [[0, 0.6], [0.35, 0.35]], "3": [[0, 0.6], [0.35, 0.35]], "4": [[0, 0.6], [0.35, 0.35], [2, 0.5], [2.35, 0.3]]},
+   "march": {"2": [[0, 1], [1, 0.55]], "4": [[0, 1], [1, 0.5], [2, 0.8], [3, 0.5]]},
+   "skip": {"2": [[0, 0.9], [0.75, 0.45], [1, 0.6], [1.75, 0.45]], "4": [[0, 0.9], [0.75, 0.45], [1, 0.6], [1.75, 0.45], [2, 0.8], [2.75, 0.45], [3, 0.6], [3.75, 0.45]]},
+   "waltz": {"3": [[0, 1], [1, 0.45], [2, 0.45]]},
+   "groove": {"4": [[0, 1], [1.5, 0.55], [2, 0.8], [3, 0.5], [3.5, 0.45]]}
+  }
+ },
+ "motif": {"notes": [2, 6], "degree": [-7, 7], "beats": {"short": [0.25, 1], "medium": [0.5, 2], "long": [1, 4]}},
+ "sections": {"busyShare": 0.4, "dynamics": {"soft": 0.45, "medium": 0.65, "loud": 0.85}, "rest": {"sparse": 2, "medium": 1, "busy": 0}},
+ "variety": {"minChanged": 4, "tempoStep": 6},
+ "styles": [
+  {"id": "lullaby", "name": "摇篮曲", "moods": ["none", "calm", "sad", "scared"], "hint": "轻轻摇晃，长音多，像哄人睡觉"},
+  {"id": "walk", "name": "林间散步", "moods": ["none", "calm", "curious", "happy"], "hint": "不快不慢，一步一步往前走"},
+  {"id": "rain", "name": "雨中小路", "moods": ["none", "calm", "sad", "curious"], "hint": "点点滴滴，短音轻轻落下"},
+  {"id": "ballad", "name": "民谣", "moods": ["none", "calm", "happy", "sad"], "hint": "像有人轻轻哼唱的小调，句子完整"},
+  {"id": "rhyme", "name": "童谣", "moods": ["none", "happy", "lively", "curious"], "hint": "简单好记，像拍手歌"},
+  {"id": "march", "name": "小进行曲", "moods": ["none", "happy", "lively", "angry"], "hint": "整整齐齐，有精神地向前"},
+  {"id": "dance", "name": "小舞曲", "moods": ["none", "happy", "lively"], "hint": "轻快地转圈跳舞"},
+  {"id": "waltz", "name": "圆舞曲", "moods": ["none", "calm", "happy", "curious"], "hint": "一二三，一二三，像荡秋千"},
+  {"id": "explore", "name": "探险", "moods": ["none", "curious", "scared", "lively"], "hint": "东张西望，忽上忽下地试探"},
+  {"id": "hide", "name": "捉迷藏", "moods": ["none", "curious", "scared", "lively"], "hint": "躲一躲，停一停，再悄悄出来"},
+  {"id": "storm", "name": "雷雨前", "moods": ["none", "angry", "scared"], "hint": "低处有力，紧张地等着"},
+  {"id": "festival", "name": "赶集", "moods": ["none", "happy", "lively"], "hint": "热热闹闹，你一句我一句"},
+  {"id": "night", "name": "夜晚", "moods": ["none", "calm", "sad", "scared"], "hint": "安静、留白多，远处有一点光"},
+  {"id": "sunrise", "name": "日出", "moods": ["none", "happy", "calm"], "hint": "从低到高，慢慢亮起来"}
+ ]
+}

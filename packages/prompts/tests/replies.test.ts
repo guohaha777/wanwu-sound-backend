@@ -2,8 +2,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {acceptMood,acceptSoundHint,acceptTextbookWords,restoreNames} from '../src/accept.ts';
-import {acceptMusicIdea,readBackgroundNotes,readMoodWords,readReply,readTextbookTalk,readTextbookWords,readWorkTalk} from '../src/tasks/index.ts';
-import {textbookBrief,tokenized,workBrief} from './fixtures/briefs.ts';
+import {buildBackgroundCompose,readBackgroundCompose,readMoodWords,readReply,readTextbookTalk,readTextbookWords,readWorkTalk} from '../src/tasks/index.ts';
+import {calmLullaby,textbookBrief,tokenized,workBrief} from './fixtures/briefs.ts';
 
 const good={lines:[
  {kind:'opening',line:'先是「声音1」，「声音2」马上跟着来。'},
@@ -71,14 +71,22 @@ test('textbook talk: the feature must name the song; each part falls back on its
  assert.equal(readTextbookTalk(JSON.stringify({...reply,meeting:'你的「声音2」踩在拍子上。'}),textbookBrief).acceptance.value.meeting,null);
 });
 
-test('AI notes: an idea is repaired where the meaning is clear, refused when there is no motif',()=>{
- const idea={motifDegrees:[0,2,4,2],motifBeats:[1,.5,.5,2],sections:[{density:'sparse',register:'mid'},{density:'medium',register:'mid'},{density:'medium',register:'high'},{density:'sparse',register:'low'}],bassPulse:'slow'};
- assert.equal(readBackgroundNotes(JSON.stringify(idea)).acceptance.status,'accepted');
- const messy=acceptMusicIdea({motifDegrees:[0,2.4,9,1,0],motifBeats:[1,.3,6],sections:[{density:'loud',register:'mid'}],bassPulse:'fast'});
- assert.equal(messy.status,'partly');
- assert.deepEqual(messy.value,{motifDegrees:[0,2,7],motifBeats:[1,.25,4],sections:[{density:'medium',register:'mid'},{density:'medium',register:'mid'},{density:'medium',register:'mid'},{density:'medium',register:'mid'}],bassPulse:'slow'});
- assert.equal(acceptMusicIdea({motifDegrees:[0],motifBeats:[1],sections:[],bassPulse:'slow'}).status,'rejected');
- assert.match(acceptMusicIdea({...idea,motifDegrees:[0,1,0,1]}).notes.join(),/没有跳进/);
+test('AI compose: a plan inside the ranges is taken; anything outside is replaced by the program\'s and noted',()=>{
+ const reference=buildBackgroundCompose(calmLullaby).prompt.match(/【程序的参考方案】速度 (\d+)，(\d) 拍/)!;
+ const plan={tempo:Number(reference[1]),metre:Number(reference[2]),mode:'major',tonicShift:2,progressions:['1-4-1-5'],pattern:'block',bass:'hold',
+  drums:'none',motif:{degrees:[0,2,1,4],beats:[1,1,1,2]},answer:'mirror',
+  sections:[{density:'sparse',register:'mid',dynamics:'soft'},{density:'medium',register:'high',dynamics:'medium'},{density:'sparse',register:'mid',dynamics:'soft'},{density:'medium',register:'low',dynamics:'medium'}],style:'lullaby'};
+ const good=readBackgroundCompose(JSON.stringify(plan),calmLullaby).acceptance;
+ assert.equal(good.status,'accepted',good.notes.join());
+ assert.deepEqual(good.value!.plan.motif,plan.motif);
+ const wild=readBackgroundCompose(JSON.stringify({...plan,tempo:200,pattern:'rock',drums:'groove',motif:{degrees:[0,9.4,-12],beats:[.3,9,1]}}),calmLullaby).acceptance;
+ assert.equal(wild.status,'partly');
+ assert.ok(wild.value!.plan.tempo<=90,'tempo pulled into the calm range');
+ assert.notEqual(wild.value!.plan.pattern,'rock');
+ assert.notEqual(wild.value!.plan.drums,'groove','calm allows no groove');
+ assert.deepEqual(wild.value!.plan.motif,{degrees:[0,7,-7],beats:[.5,2,1]});
+ assert.match(wild.notes.join('；'),/速度改到/);
+ assert.equal(readBackgroundCompose('not json',calmLullaby).acceptance.status,'rejected');
 });
 
 test('mood words, the textbook card words and hints: only the allowed answers',()=>{

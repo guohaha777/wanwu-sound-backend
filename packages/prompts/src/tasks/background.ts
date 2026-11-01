@@ -1,197 +1,200 @@
-// The two AI backgrounds. Both start from the same anonymous BackgroundBrief the local background uses.
-// - background-audio (Fun-Music): the program turns the brief into a description; the model makes the audio freely.
-//   Only the audio's length and format can be checked afterwards (parseBackgroundResult); the mix rules keep it under
-//   the child.
-// - background-notes (千问): the model writes only an idea — one motif, four sections, a bass pulse. The server develops
-//   it with the shared rules, fits it into the gaps between the child's sounds and checks every note.
+// The AI backgrounds. All start from the same anonymous BackgroundBrief (the child's piece, no textbook song) and the
+// program's reading of it (@wanwu-v2/sound-rules/ai-compose: portrait, ranges, style card, reference plan).
+// - background-audio (AI music model): the program describes its reference plan in words; the model makes audio freely.
+//   Only the audio's length and format can be checked afterwards (parseBackgroundResult).
+// - background-compose (AI voice model, then AI text model): the model is the composer — it chooses inside the ranges
+//   and writes a motif; the program checks the plan (fitPlan) and writes every note (composeNotes).
 import {MOODS} from '@wanwu-v2/contracts/arrangement';
-import type {BackgroundBrief} from '@wanwu-v2/contracts/background';
-import {DENSITIES,LEVELS,TEXTBOOK_MODES} from '@wanwu-v2/contracts/textbook';
-import type {Density} from '@wanwu-v2/contracts/textbook';
-import audioFile from '../../prompts/background-audio.v1.json' with {type:'json'};
-import notesFile from '../../prompts/background-notes.v1.json' with {type:'json'};
+import {COMPOSE_ANSWERS,COMPOSE_BASS,COMPOSE_DRUMS,COMPOSE_PATTERNS,BRIGHTNESSES} from '@wanwu-v2/contracts/background';
+import type {BackgroundBrief,ComposePlan} from '@wanwu-v2/contracts/background';
+import {SOUND_CHOICES,SOUND_KINDS} from '@wanwu-v2/contracts/sound';
+import {DENSITIES,TEXTBOOK_MODES} from '@wanwu-v2/contracts/textbook';
+import {composeView,fitPlan} from '@wanwu-v2/sound-rules/ai-compose';
+import type {FittedPlan} from '@wanwu-v2/sound-rules/ai-compose';
+import audioFile from '../../prompts/background-audio.v2.json' with {type:'json'};
+import composeFile from '../../prompts/background-compose.v1.json' with {type:'json'};
 import type {Acceptance} from '../accept.ts';
 import {fill} from '../fill.ts';
-import {buildPrompt,exampleJson,loadPrompt,word} from './files.ts';
+import {buildPrompt,loadPrompt,word} from './files.ts';
 import type {PromptFile} from './files.ts';
 import {readReply} from './reply.ts';
 
 const METRES=['2','3','4'];
-/** The child's sounds in time order, overlapping ones joined. */
-const merged=(brief:BackgroundBrief)=>{
- const spans=[...brief.sounding].sort((a,b)=>a.start-b.start);
- const out:{start:number;end:number}[]=[];
- for(const span of spans){
-  const last=out.at(-1);
-  if(last&&span.start<=last.end)last.end=Math.max(last.end,span.end);
-  else out.push({...span});
- }
- return out;
-};
-const rhythmOf=(brief:BackgroundBrief)=>brief.textbook?`[${brief.textbook.rhythmCell.join(', ')}]`:'';
-/** The colour, as the local rules choose it: the child's mood, else the textbook song's mood, else none. */
-export const colourOf=(brief:BackgroundBrief)=>brief.mood??brief.textbook?.mood??'none';
+const round1=(value:number)=>Math.round(value*10)/10;
 
-// ----- AI 生成背景（Fun-Music 描述词） -----
+// ----- AI 音乐模型（描述词） -----
 export const BACKGROUND_AUDIO_PROMPT=loadPrompt(audioFile as PromptFile,{
  task:'background-audio',
  model:'music',
- placeholders:['seconds','mood','tempo','metre','mode','energy','room','register','textbook'],
- templates:{room:['percent'],'words.textbook':['metre','rhythm'],'words.noTextbook':[]},
+ placeholders:['seconds','mood','tempo','metre','mode','style','accompaniment','energy','room','register'],
+ templates:{room:['percent']},
  tables:{
   'words.metre':METRES,
   'words.mode':TEXTBOOK_MODES,
   'words.mood':['none',...MOODS],
   'words.energy':DENSITIES,
-  'words.register':LEVELS,
+  'words.register':SOUND_CHOICES.pitch,
+  'words.accompaniment':COMPOSE_PATTERNS,
  },
 });
 
-/** How much of the piece the child's sounds fill (0–100). */
-export const soundingPercent=(brief:BackgroundBrief)=>Math.round(100*merged(brief)
- .reduce((sum,span)=>sum+Math.min(span.end,brief.seconds)-Math.max(span.start,0),0)/brief.seconds);
-
+/** The music model hears the program's reference plan in words: mood, tempo, metre, mode, style, accompaniment, room. */
 export function buildBackgroundAudio(brief:BackgroundBrief){
  const file=BACKGROUND_AUDIO_PROMPT;
- const textbook=brief.textbook
-  ?fill(word(file,'words','textbook'),{metre:word(file,'words.metre',brief.metre),rhythm:rhythmOf(brief)})
-  :word(file,'words','noTextbook');
+ const {portrait,reference,style}=composeView(brief);
  return buildPrompt(file,{
   seconds:Math.round(brief.seconds),
-  mood:word(file,'words.mood',colourOf(brief)),
-  tempo:Math.round(brief.tempo),
-  metre:word(file,'words.metre',brief.metre),
-  mode:word(file,'words.mode',brief.mode),
-  energy:word(file,'words.energy',brief.arrangement.density),
-  room:fill(file.room as string,{percent:soundingPercent(brief)}),
-  register:word(file,'words.register',brief.arrangement.register),
-  textbook,
+  mood:word(file,'words.mood',portrait.mood),
+  tempo:reference.tempo,
+  metre:word(file,'words.metre',reference.metre),
+  mode:word(file,'words.mode',reference.mode),
+  style:style.name,
+  accompaniment:word(file,'words.accompaniment',reference.pattern),
+  energy:word(file,'words.energy',portrait.density),
+  room:fill(file.room as string,{percent:Math.round(portrait.coverage*100)}),
+  register:word(file,'words.register',portrait.register),
  });
 }
 
-// ----- AI 写音符（千问写动机） -----
-export type MusicIdea={
- motifDegrees:number[];
- motifBeats:number[];
- sections:{density:Density;register:'low'|'mid'|'high'}[];
- bassPulse:'none'|'slow'|'steady';
-};
-const REGISTERS=['low','mid','high'] as const;
-const PULSES=['none','slow','steady'] as const;
-
-/**
- * Checks an idea and repairs what can be repaired without changing what the model meant: numbers rounded and clamped,
- * lists cut to the same length, a missing section filled in. Fewer than two notes is refused (the chain moves on).
- */
-export function acceptMusicIdea(value:unknown):Acceptance<MusicIdea|null>{
- const raw=value&&typeof value==='object'?value as Record<string,unknown>:null;
- const notes:string[]=[];
- /** Only the finite numbers of a list. */
- const numbers=(list:unknown)=>Array.isArray(list)
-  ?list.filter((item):item is number=>typeof item==='number'&&Number.isFinite(item))
-  :[];
- if(!raw)return {status:'rejected',value:null,notes:['回复不是 JSON 对象']};
- let degrees=numbers(raw.motifDegrees);
- let beats=numbers(raw.motifBeats);
- if(degrees.length!==beats.length){
-  notes.push(`音级 ${degrees.length} 个、时值 ${beats.length} 个，按少的对齐`);
-  const n=Math.min(degrees.length,beats.length);
-  degrees=degrees.slice(0,n);
-  beats=beats.slice(0,n);
- }
- if(degrees.length>6){
-  notes.push('动机超过 6 个音，只留前 6 个');
-  degrees=degrees.slice(0,6);
-  beats=beats.slice(0,6);
- }
- if(degrees.length<2)return {status:'rejected',value:null,notes:[...notes,'动机少于 2 个音']};
- const clampedDegrees=degrees.map(degree=>Math.max(-7,Math.min(7,Math.round(degree))));
- const clampedBeats=beats.map(beat=>Math.max(.25,Math.min(4,Math.round(beat*4)/4)));
- if(clampedDegrees.some((degree,i)=>degree!==degrees[i]))notes.push('音级取整到 -7–7');
- if(clampedBeats.some((beat,i)=>beat!==beats[i]))notes.push('时值取到 0.25–4 拍、四分之一拍');
- const given=Array.isArray(raw.sections)?raw.sections:[];
- if(given.length!==4)notes.push(`段落应该是 4 段，回复有 ${given.length} 段，按 4 段补齐或截断`);
- const sections=[0,1,2,3].map(i=>{
-  const section=given[i] as Record<string,unknown>|undefined;
-  const density=DENSITIES.includes(section?.density as Density)?section!.density as Density:'medium';
-  const register=REGISTERS.includes(section?.register as never)
-   ?section!.register as MusicIdea['sections'][number]['register']
-   :'mid';
-  if(section&&(density!==section.density||register!==section.register))
-   notes.push(`第 ${i+1} 段的 density / register 不认识，改成 medium / mid`);
-  return {density,register};
- });
- const bassPulse=PULSES.includes(raw.bassPulse as never)?raw.bassPulse as MusicIdea['bassPulse']:'slow';
- if(bassPulse!==raw.bassPulse)notes.push('bassPulse 不认识，改成 slow');
- const idea={motifDegrees:clampedDegrees,motifBeats:clampedBeats,sections,bassPulse};
- // A motif without a leap of two steps or more may sound flat: noted, still used.
- if(!idea.motifDegrees.some((degree,i)=>i>0&&Math.abs(degree-idea.motifDegrees[i-1]!)>=2))
-  notes.push('提醒：动机没有跳进，可能听着平淡（仍可用）');
- return {status:notes.some(note=>!note.startsWith('提醒'))?'partly':'accepted',value:idea,notes};
-}
-
-export const BACKGROUND_NOTES_PROMPT=loadPrompt(notesFile as PromptFile,{
- task:'background-notes',
+// ----- AI 作曲（语音模型、文本模型） -----
+type ComposeFile=PromptFile&{system:string[];soundLine:string;sectionLine:string;styleLine:string;retry:string;plan:string};
+export const BACKGROUND_COMPOSE_PROMPT=loadPrompt(composeFile as ComposeFile,{
+ task:'background-compose',
  model:'language',
- placeholders:['seconds','tempo','metre','mode','mood','moodHint','textbook','sections','retry','example'],
+ placeholders:['seconds','mood','density','coverage','kinds','count','lean','sounds','sections','tempoMin','tempoMax','metres',
+  'modes','shiftMin','shiftMax','progressions','patterns','bass','drums','notesMin','notesMax','beatsMin','beatsMax','style',
+  'reference','previous','retry'],
  templates:{
-  sectionLine:['name','start','end','count'],
+  soundLine:['n','start','end','pitch','length','contour','intensity','pattern','kind','brightness'],
+  sectionLine:['name','start','end','count','full'],
+  styleLine:['id','name','hint'],
   retry:['attempt'],
-  'words.textbook':['metre','rhythm'],
-  'words.noTextbook':[],
+  'words.lean.register':['value'],
+  'words.lean.contour':['value'],
+  'words.lean.intensity':['value'],
+  'words.lean.length':['value'],
+  'words.lean.noContour':[],
+  'words.first':[],
+  plan:['tempo','metre','mode','tonicShift','progressions','pattern','bass','drums','degrees','beats','answer','sections','style'],
  },
  tables:{
+  'words.mood':['none',...MOODS],
+  'words.density':DENSITIES,
+  'words.pitch':SOUND_CHOICES.pitch,
+  'words.length':SOUND_CHOICES.duration,
+  'words.contour':[...SOUND_CHOICES.contour,'none'],
+  'words.intensity':SOUND_CHOICES.intensity,
+  'words.pattern':SOUND_CHOICES.pattern,
+  'words.kind':SOUND_KINDS,
+  'words.brightness':BRIGHTNESSES,
+  'words.full':['yes'],
   'words.section':['0','1','2','3'],
   'words.metre':METRES,
   'words.mode':TEXTBOOK_MODES,
-  'words.mood':['none',...MOODS],
-  'words.moodHint':['none',...MOODS],
- },
- example:value=>{
-  const result=acceptMusicIdea(value);
-  return result.status==='accepted'?[]:result.notes;
+  'words.patternName':COMPOSE_PATTERNS,
+  'words.bass':COMPOSE_BASS,
+  'words.drums':COMPOSE_DRUMS,
+  'words.answer':COMPOSE_ANSWERS,
  },
 });
+if(!(composeFile as ComposeFile).system.every(line=>typeof line==='string'&&line.trim()))
+ throw new Error('提示词文件有误：background-compose.system 应该是一行行的文字');
 
-/** The piece in four equal parts, and how many of the child's sounds start in each. */
-export function sectionCounts(brief:BackgroundBrief){
- const part=brief.seconds/4;
- return [0,1,2,3].map(i=>({
-  start:Math.round(i*part),
-  end:Math.round((i+1)*part),
-  // The last part also counts a sound that starts exactly at its end.
-  count:brief.sounding.filter(span=>span.start>=i*part&&(span.start<(i+1)*part||i===3)).length,
- }));
-}
-
-/** `attempt` counts from 0; asking again for the same piece says so, so the motif changes. */
-export function buildBackgroundNotes(brief:BackgroundBrief,attempt=0){
- const file=BACKGROUND_NOTES_PROMPT;
- const sections=sectionCounts(brief)
-  .map((section,i)=>fill(file.sectionLine as string,{name:word(file,'words.section',i),...section}))
-  .join('\n');
- const textbook=brief.textbook
-  ?fill(word(file,'words','textbook'),{metre:word(file,'words.metre',brief.metre),rhythm:rhythmOf(brief)})
-  :word(file,'words','noTextbook');
- return buildPrompt(file,{
-  seconds:Math.round(brief.seconds),
-  tempo:Math.round(brief.tempo),
-  metre:word(file,'words.metre',brief.metre),
-  mode:word(file,'words.mode',brief.mode),
-  mood:word(file,'words.mood',colourOf(brief)),
-  moodHint:word(file,'words.moodHint',colourOf(brief)),
-  textbook,
-  sections,
-  retry:attempt>0?fill(file.retry as string,{attempt:attempt+1}):'',
-  example:exampleJson(file),
+/** A plan in one line of words (the reference, and what the last background chose). */
+function planLine(plan:ComposePlan){
+ const file=BACKGROUND_COMPOSE_PROMPT;
+ return fill(file.plan,{
+  tempo:plan.tempo,
+  metre:plan.metre,
+  mode:plan.mode,
+  tonicShift:plan.tonicShift,
+  progressions:plan.progressions.join(' / '),
+  pattern:plan.pattern,
+  bass:plan.bass,
+  drums:plan.drums,
+  degrees:`[${plan.motif.degrees.join(', ')}]`,
+  beats:`[${plan.motif.beats.join(', ')}]`,
+  answer:plan.answer,
+  sections:plan.sections.map(section=>`${section.density}/${section.register}/${section.dynamics}`).join('，'),
+  style:plan.style,
  });
 }
-export function readBackgroundNotes(text:string){
+
+/** The composer's prompt for this piece and try; the system part adds the composer's role to the shared one. */
+export function buildBackgroundCompose(brief:BackgroundBrief){
+ const file=BACKGROUND_COMPOSE_PROMPT;
+ const {portrait:view,ranges:range,style,reference}=composeView(brief);
+ const list=(path:string,items:readonly (string|number)[])=>items.map(item=>word(file,path,item)).join('、');
+ const lean=[
+  fill(word(file,'words.lean','register'),{value:word(file,'words.pitch',view.register)}),
+  view.contour
+   ?fill(word(file,'words.lean','contour'),{value:word(file,'words.contour',view.contour)})
+   :word(file,'words.lean','noContour'),
+  fill(word(file,'words.lean','intensity'),{value:word(file,'words.intensity',view.intensity)}),
+  fill(word(file,'words.lean','length'),{value:word(file,'words.length',view.length)}),
+ ].join('；');
+ const sounds=brief.sounds.map(sound=>fill(file.soundLine,{
+  n:sound.n,
+  start:round1(sound.start),
+  end:round1(sound.end),
+  pitch:word(file,'words.pitch',sound.pitch),
+  length:word(file,'words.length',sound.length),
+  contour:word(file,'words.contour',sound.contour??'none'),
+  intensity:word(file,'words.intensity',sound.intensity),
+  pattern:word(file,'words.pattern',sound.pattern),
+  kind:word(file,'words.kind',sound.kind),
+  brightness:word(file,'words.brightness',sound.brightness),
+ })).join('\n');
+ const sections=view.sections.map((section,i)=>fill(file.sectionLine,{
+  name:word(file,'words.section',i),
+  start:Math.round(section.start),
+  end:Math.round(section.end),
+  count:section.count,
+  full:section.full?word(file,'words.full','yes'):'',
+ })).join('\n');
+ const built=buildPrompt(file,{
+  seconds:Math.round(brief.seconds),
+  mood:word(file,'words.mood',view.mood),
+  density:word(file,'words.density',view.density),
+  coverage:Math.round(view.coverage*100),
+  kinds:view.kinds,
+  count:view.count,
+  lean,
+  sounds,
+  sections,
+  tempoMin:range.tempo[0],
+  tempoMax:range.tempo[1],
+  metres:list('words.metre',range.metres),
+  modes:list('words.mode',range.modes),
+  shiftMin:range.tonicShift[0],
+  shiftMax:range.tonicShift[1],
+  progressions:range.progressions.join('、'),
+  patterns:list('words.patternName',range.patterns),
+  bass:list('words.bass',range.bass),
+  drums:list('words.drums',range.drums),
+  notesMin:range.notes[0],
+  notesMax:range.notes[1],
+  beatsMin:range.beats[0],
+  beatsMax:range.beats[1],
+  style:fill(file.styleLine,{id:style.id,name:style.name,hint:style.hint}),
+  reference:planLine(reference),
+  previous:brief.previous?planLine(brief.previous):word(file,'words','first'),
+  retry:brief.attempt>0?fill(file.retry,{attempt:brief.attempt+1}):'',
+ });
+ return {...built,system:[built.system,...(file as ComposeFile).system].filter(Boolean).join('\n')};
+}
+
+/**
+ * A composer's reply checked against this piece: the plan the program will play (choices outside the ranges replaced,
+ * full quarters kept quiet, a 换一首 that changed too little changed further). Rejected only when it is not a JSON
+ * object; `partly` when the program had to repair something (each repair in `notes`).
+ */
+export function readBackgroundCompose(text:string,brief:BackgroundBrief){
  const read=readReply(text);
- return {
-  repairs:read.repairs,
-  acceptance:'problem' in read
-   ?{status:'rejected' as const,value:null,notes:[read.problem]}
-   :acceptMusicIdea(read.value),
- };
+ if('problem' in read)return {repairs:read.repairs,acceptance:{status:'rejected',value:null,notes:[read.problem]} as Acceptance<FittedPlan|null>};
+ const fitted=fitPlan(read.value,brief);
+ const acceptance:Acceptance<FittedPlan|null>=fitted
+  ?{status:fitted.repairs.length?'partly':'accepted',value:fitted,notes:fitted.repairs}
+  :{status:'rejected',value:null,notes:['回复不是 JSON 对象']};
+ return {repairs:read.repairs,acceptance};
 }

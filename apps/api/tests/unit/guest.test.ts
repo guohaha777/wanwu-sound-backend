@@ -5,7 +5,6 @@ import rateLimit from '@fastify/rate-limit';
 import {parseBackgroundResult} from '@wanwu-v2/contracts/background';
 import type {BackgroundBrief} from '@wanwu-v2/contracts/background';
 import {ApiError} from '../../src/errors.ts';
-import {developIdea} from '../../src/guest/aiNotes.ts';
 import {readGuestConfig} from '../../src/guest/config.ts';
 import type {GuestConfig} from '../../src/guest/config.ts';
 import {DailyBudget} from '../../src/guest/limits.ts';
@@ -13,13 +12,16 @@ import {GuestFailure,postJson,publicAddress} from '../../src/guest/net.ts';
 import type {Post} from '../../src/guest/net.ts';
 import {OVERRIDE_HEADER,parseOverride} from '../../src/guest/override.ts';
 import {guestContext,guestRoutes} from '../../src/guest/routes.ts';
-import {BACKGROUND_BRIEFS,PERSONAL_NAMES,calmLullaby,textbookBrief,workBrief} from '../../../../packages/prompts/tests/fixtures/briefs.ts';
+import {PERSONAL_NAMES,calmLullaby,textbookBrief,workBrief} from '../../../../packages/prompts/tests/fixtures/briefs.ts';
 
 const key='sk-test-not-a-real-key-123456';
 const language={baseUrl:'https://dashscope.aliyuncs.com/compatible-mode/v1',model:'qwen3.8-flash',apiKey:key,builtIn:true};
 const audio={...language,model:'qwen3.8-omni-flash'};
 const config:GuestConfig={language,music:null,audio,dailyLimit:100};
-const idea={motifDegrees:[0,2,4,2],motifBeats:[1,0.5,0.5,2],sections:[{density:'sparse',register:'mid'},{density:'medium',register:'high'},{density:'busy',register:'mid'},{density:'sparse',register:'low'}],bassPulse:'steady'};
+/** A composer's plan a good model might send (the program repairs whatever does not suit the piece). */
+const plan={tempo:70,metre:3,mode:'major',tonicShift:1,progressions:['1-4-1-5'],pattern:'block',bass:'hold',drums:'none',
+ motif:{degrees:[0,2,1,4],beats:[1,1,1,2]},answer:'mirror',style:'lullaby',
+ sections:[{density:'sparse',register:'mid',dynamics:'soft'},{density:'medium',register:'high',dynamics:'medium'},{density:'sparse',register:'mid',dynamics:'soft'},{density:'medium',register:'low',dynamics:'medium'}]};
 const encode=(value:unknown)=>Buffer.from(JSON.stringify(value)).toString('base64');
 
 type Call={url:string;headers:Record<string,string>;body:{model:string;messages:{content:any}[];enable_thinking?:boolean}};
@@ -36,7 +38,7 @@ function fakeModel(answer:(prompt:string)=>unknown,calls:Call[]=[]):Post{
   return {status:200,json:{choices:[{message:{content:typeof value==='string'?value:JSON.stringify(value)}}]}};
  };
 }
-const good=(prompt:string)=>prompt.includes('motifDegrees')?idea
+const good=(prompt:string)=>prompt.includes('作曲方案')?plan
  :prompt.includes('feature')?{feature:'《摇篮曲》是三拍子，嗒— 嗒，像摇篮轻轻晃。',meeting:'「声音1」和重拍碰在一起。',task:'跟着拍手试一试。'}
  :prompt.includes('tryThis')?{lines:workBrief.facts.map(fact=>({kind:fact.kind,line:'这里听起来很有意思。'})),tryThis:'再听一遍试试。'}
  :{nearest:'calm'};
@@ -180,33 +182,31 @@ test('a visitor override is used for its kind and does not spend the built-in bu
  assert.equal('enable_thinking' in calls[0]!.body,false);
 });
 
-test('AI notes: the idea is developed with the local harmony, inside the piece, avoiding the child where it can',async()=>{
- for(const brief of BACKGROUND_BRIEFS){
-  const notes=developIdea(brief,idea as never);
-  assert.ok(parseBackgroundResult({status:'ready',source:'notes-ai',notes,model:'m',promptVersion:'p'},brief.seconds),brief.workId);
-  assert.deepEqual(developIdea(brief,idea as never),notes,'same brief and idea, same notes');
-  const melody=notes.filter(note=>note.part==='melody');
-  assert.ok(melody.every(note=>note.midi>=36&&note.midi<=96));
-  for(const note of melody.slice(0,-1))assert.ok(!brief.sounding.some(span=>note.at<span.end&&note.at+note.length>span.start),`${brief.workId} melody stays out of the child's sounds`);
+test('background jobs: the voice model, then the text model compose a plan the program writes out; failures fall through',async()=>{
+ const calls:Call[]=[];
+ const {server}=await app(fakeModel(good,calls));
+ for(const [step,model] of [['voice-ai','qwen3.8-omni-flash'],['notes-ai','qwen3.8-flash']] as const){
+  const ready=await background(server,step) as {status:string;source:string;notes:{part:string}[];plan:unknown;promptVersion:string};
+  assert.equal(ready.status,'ready',step);
+  assert.equal(ready.source,step);
+  assert.ok(parseBackgroundResult(ready,calmLullaby.seconds),`${step} result is valid`);
+  assert.equal(ready.promptVersion,'background-compose-prompt-v1');
+  assert.ok(new Set(ready.notes.map(note=>note.part)).size>=3,'all parts written, not only a melody');
+  const call=calls.at(-1)!;
+  assert.equal(call.body.model,model);
+  assert.equal(typeof call.body.messages.at(-1)!.content,'string','words only, no audio');
+  assert.match(call.body.messages[0]!.content,/作曲家/);
  }
- const none=developIdea(calmLullaby,{...idea,bassPulse:'none'} as never);
- assert.equal(none.some(note=>note.part==='bass'),false);
-});
-
-test('background jobs: notes-ai ready, audio-ai not open yet, failures and teaching music fall through',async()=>{
- const {server}=await app(fakeModel(good));
- const ready=await background(server,'notes-ai') as {status:string;source:string;notes:unknown[];promptVersion:string};
- assert.equal(ready.status,'ready');
- assert.equal(ready.source,'notes-ai');
- assert.ok(ready.notes.length>0);
- assert.equal(ready.promptVersion,'background-notes-prompt-v1');
  assert.deepEqual(await background(server,'audio-ai'),{status:'unavailable',reason:'not-open'});
- assert.deepEqual(await background(server,'notes-ai',{...calmLullaby,textbook:null,teachingMusic:{musicId:'m1'}}),{status:'unavailable',reason:'not-open'});
- const bad=await app(fakeModel(()=>({motifDegrees:[1],motifBeats:[1]})));
+ const noVoice=await app(fakeModel(good),{audio:null});
+ assert.deepEqual(await background(noVoice.server,'voice-ai'),{status:'unavailable',reason:'not-open'});
+ const bad=await app(fakeModel(()=>'a melody, not a plan'));
  assert.deepEqual(await background(bad.server,'notes-ai'),{status:'unavailable',reason:'failed'});
  const slow=await app(fakeModel(()=>new GuestFailure('timeout')));
- assert.deepEqual(await background(slow.server,'notes-ai'),{status:'unavailable',reason:'timeout'});
- assert.equal((await server.inject({method:'POST',url:'/api/v1/backgrounds',payload:{step:'local-rules',brief:calmLullaby}})).statusCode,400);
+ assert.deepEqual(await background(slow.server,'voice-ai'),{status:'unavailable',reason:'timeout'});
+ for(const step of ['local-rules','program'])
+  assert.equal((await server.inject({method:'POST',url:'/api/v1/backgrounds',payload:{step,brief:calmLullaby}})).statusCode,400,step);
+ assert.equal((await server.inject({method:'POST',url:'/api/v1/backgrounds',payload:{step:'notes-ai',brief:{...calmLullaby,version:'background-request-v1'}}})).statusCode,400,'old briefs are refused');
  assert.equal((await server.inject({method:'GET',url:'/api/v1/backgrounds/00000000-0000-0000-0000-000000000000'})).statusCode,404);
 });
 

@@ -13,6 +13,7 @@
   "./shaping": "./src/shaping.ts",
   "./background": "./src/background.ts",
   "./mix": "./src/mix.ts",
+  "./ai-compose": "./src/aiCompose.ts",
   "./textbook-match": "./src/textbookMatch.ts",
   "./schema": "./src/schema.ts"
  }

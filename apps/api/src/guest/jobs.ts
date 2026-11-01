@@ -3,12 +3,11 @@
 import {randomUUID} from 'node:crypto';
 import type {BackgroundResult} from '@wanwu-v2/contracts/background';
 
-const TTL_MS=10*60_000,MAX_JOBS=2000,MAX_WORKS=5000;
+const TTL_MS=10*60_000,MAX_JOBS=2000;
 export type JobState={status:'pending'}|BackgroundResult;
 
 export class BackgroundJobs{
  private readonly jobs=new Map<string,{state:JobState;expires:number}>();
- private readonly attempts=new Map<string,number>();
  private readonly clock:()=>number;
  constructor(clock:()=>number=Date.now){this.clock=clock;}
  private prune(){
@@ -25,11 +24,4 @@ export class BackgroundJobs{
   return id;
  }
  get(id:string):JobState|null{this.prune();return this.jobs.get(id)?.state??null;}
- /** How many times AI notes were asked for this work: the prompt asks for a different motif from the second time. */
- attempt(workId:string){
-  const count=this.attempts.get(workId)??0;
-  if(!this.attempts.has(workId)&&this.attempts.size>=MAX_WORKS)this.attempts.clear();
-  this.attempts.set(workId,count+1);
-  return count;
- }
 }

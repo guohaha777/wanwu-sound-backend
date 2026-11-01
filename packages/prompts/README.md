@@ -25,8 +25,8 @@ prompts/                     提示词：只在服务端拼装（前端不打包
   system.v1.json             千问各任务共用的系统提示词
   work-talk.v1.json          作品讲解 / 音乐小发现润色 + 一句试一试
   textbook-talk.v1.json      课本讲解润色
-  background-notes.v1.json   AI 写音符：一句动机 + 四段疏密和音区 + 低音律动
-  background-audio.v1.json   AI 生成背景：Fun-Music 描述词
+  background-compose.v1.json AI 作曲（语音模型 → 文本模型）：作曲家 system prompt + 作品画像、可选范围、风格卡、程序参考方案、上一首 → 作曲方案 JSON
+  background-audio.v2.json   AI 音乐模型：按程序参考方案写的描述词（不用课本歌）
   mood-words.v1.json         心情“自己写”→ 最接近的预设心情
   sound-hint.v1.json         向导联想（status: closed，现在只用语料）
   textbook-words.v1.json     课本歌曲的心情和一句话（开发期，结果要人耳核对）

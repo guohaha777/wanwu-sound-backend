@@ -25,7 +25,7 @@
     },
     {
       "path": "packages/contracts/src/background.ts",
-      "sha256": "f6f544e645527e3bf21afaf399f779fc708da31ad6ed3534d3bfb6a8a9c10a27"
+      "sha256": "02a8d90f58b73a85c3f8e03b1b608670445dd1f5d01a0c3d804d53ace17055bc"
     },
     {
       "path": "packages/contracts/src/cloud.ts",
@@ -45,15 +45,19 @@
     },
     {
       "path": "packages/contracts/src/work.ts",
-      "sha256": "8f19d056a35d6637f80bb6ab71d2ad77943188b9219dc5890c2ec26a472d756c"
+      "sha256": "db7db9b86d800652c853ea3c4a1d2be1a837434e6c9d0903848db26308866c47"
     },
     {
       "path": "packages/sound-rules/README.md",
-      "sha256": "8720ce350855d332f304c188ec42f537e5d9f9ff24ba2ae3cf265cac4e83117e"
+      "sha256": "a80d91c365e802bc3b45d1bc77362349f1e6aeaa8037c9f4b7920cc62a807725"
     },
     {
       "path": "packages/sound-rules/package.json",
-      "sha256": "dca64c9647d32d27877eb3f2119fd871650bf20b73a28102c834e7cd2e440e80"
+      "sha256": "24c250622a2049b9998844763dd57c35968f6ca90556bf7e82a07a7e4eed4f77"
+    },
+    {
+      "path": "packages/sound-rules/rules/ai-compose.v1.json",
+      "sha256": "672fab0eac6de59fa54dbb09a064208091ba43364fe82ca454cad6bae76db110"
     },
     {
       "path": "packages/sound-rules/rules/analysis.v2.json",
@@ -78,6 +82,10 @@
     {
       "path": "packages/sound-rules/rules/textbook-match.v1.json",
       "sha256": "2c7235d097bc96ce204801b36ccba175a7451c4dd543ade1e15a07dddd95329a"
+    },
+    {
+      "path": "packages/sound-rules/src/aiCompose.ts",
+      "sha256": "8170ed930b0057b7e5a063d820bf42ebb1c92a64d0d87001a97b991e68afb613"
     },
     {
       "path": "packages/sound-rules/src/analysis.ts",
@@ -118,6 +126,10 @@
     {
       "path": "packages/sound-rules/src/textbookMatch.ts",
       "sha256": "67d41ea52eff8f84442e2b4ed382b72fdb5863362f2a28eec7b463fd518c93d7"
+    },
+    {
+      "path": "packages/sound-rules/tests/ai-compose.test.ts",
+      "sha256": "e53bc032d2d8cfabd62b49397138d0bfaaf4c43ac48c28a2a332c2d480ca899b"
     },
     {
       "path": "packages/sound-rules/tests/analysis.test.ts",
@@ -185,7 +197,7 @@
     },
     {
       "path": "packages/prompts/README.md",
-      "sha256": "b5e7f0b0ab9b723054df2699163209b4c9c7313f66240cad2c0f489417041815"
+      "sha256": "458c4c072157720046be033f072800894ce97483f1728d8c0705cca85476c46b"
     },
     {
       "path": "packages/prompts/corpus/discoveries.v1.json",
@@ -209,15 +221,15 @@
     },
     {
       "path": "packages/prompts/package.json",
-      "sha256": "5049c77906133af11b146672eb0f1a9bd65eed5d4d3943c57fd03dfa8874624e"
+      "sha256": "b15f182f7d45346aa053315d26d28deadc058496328d1d49a5bce641a83ba3ff"
     },
     {
-      "path": "packages/prompts/prompts/background-audio.v1.json",
-      "sha256": "3bc0d77f5b5f4225aa21dc81cc60992c44778134d53b66da838b946a68441e89"
+      "path": "packages/prompts/prompts/background-audio.v2.json",
+      "sha256": "9037daac76dc8e92e167ade01b5132ad6406aed6ff5be939f21cf8efa644c6d7"
     },
     {
-      "path": "packages/prompts/prompts/background-notes.v1.json",
-      "sha256": "966d86f8394f5db027e125a9d5bfa30876956200c5261b6221aaa2d730b11dd6"
+      "path": "packages/prompts/prompts/background-compose.v1.json",
+      "sha256": "d619e4962f30b5f2ff50185939044f1343bc8bdbe13157110f800ea18be3a117"
     },
     {
       "path": "packages/prompts/prompts/explain-system.v1.json",
@@ -293,7 +305,7 @@
     },
     {
       "path": "packages/prompts/src/tasks/background.ts",
-      "sha256": "d11959cf14929955cb47884d65d932b9bf992f151d004f7f95650b06ad2fb5a4"
+      "sha256": "f0e4a4670ec1fde83f5c77b5cf3ac666b7cd51dae9180b9a98a4bf9d225bac7d"
     },
     {
       "path": "packages/prompts/src/tasks/features.ts",
@@ -305,7 +317,7 @@
     },
     {
       "path": "packages/prompts/src/tasks/index.ts",
-      "sha256": "44f29da526d2bb4be1eff70eabfb8b2e3f4ac453d4b2665d150ea1862de95b75"
+      "sha256": "5fadc65742aedba765b092d8bccc9e39d55d6b9441399cffb8456c2c634f96f2"
     },
     {
       "path": "packages/prompts/src/tasks/reply.ts",
@@ -333,15 +345,15 @@
     },
     {
       "path": "packages/prompts/tests/fixtures/briefs.ts",
-      "sha256": "f17f7639b5fb22a838aa173ae3f6a1bfed0f585b49c0b3184d739081c52ed7a7"
+      "sha256": "6e9a036b9675cca86dd795b69af792075fbe96b85ece168965c9acaf8a0c148a"
     },
     {
       "path": "packages/prompts/tests/prompts.test.ts",
-      "sha256": "2372386aa8dba8b4453a3d6096b0e9b3f0e7ae6653b0d4d81539d6d72283d5d0"
+      "sha256": "0243533d24be36efbec5a829d745f009d20bb6b15dfd29e2e9f0d40ea6dccf03"
     },
     {
       "path": "packages/prompts/tests/replies.test.ts",
-      "sha256": "4fc3729ebcb8aa76dc0c20d027b65939f0df811c9e7283a0f227edf758deef44"
+      "sha256": "7eb090d9c99dd3dcb4fba9f9205108cf81a293edc7cb4a2830f20e8468051ab0"
     },
     {
       "path": "packages/music-features/package.json",

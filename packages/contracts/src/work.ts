@@ -6,7 +6,7 @@
 // child's sounds, their excerpts or their placement.
 import {parseArrangement} from './arrangement.ts';
 import type {Arrangement} from './arrangement.ts';
-import {BACKGROUND_SOURCES} from './background.ts';
+import {BACKGROUND_SOURCES,PROGRAM_SOURCES} from './background.ts';
 import type {BackgroundSource,RuleVersions} from './background.ts';
 
 export const WORK_CONTRACT_VERSION='work-v1' as const;
@@ -117,9 +117,9 @@ export function isRendering(value:unknown):value is Rendering{
  if(!value||typeof value!=='object')return false;
  const raw=value as Record<string,unknown>;
  const rules=raw.rules as Record<string,unknown>|null;
- // The local rules use no prompt; every AI step names its prompt version.
+ // The program (alone, or the plain local rules) uses no prompt; every AI step names its prompt version.
  return BACKGROUND_SOURCES.includes(raw.background as BackgroundSource)
-  &&(raw.background==='local-rules'?raw.prompt===null:nonEmpty(raw.prompt))
+  &&(PROGRAM_SOURCES.includes(raw.background as BackgroundSource)?raw.prompt===null:nonEmpty(raw.prompt))
   &&!!rules
   &&typeof rules==='object'
   &&['analysis','shaping','background','mix'].every(key=>nonEmpty(rules[key]));
